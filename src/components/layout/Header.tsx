@@ -16,14 +16,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
 
 export function Header() {
   const { firmData } = useFirm();
+  const router = useRouter();
   const [userName] = useState("Usuário"); // Isso seria obtido do contexto de autenticação
 
   const handleLogout = () => {
-    // Implementar lógica de logout
-    console.log("Logout");
+    // Remove o cookie de autenticação
+    document.cookie = 'auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // Redireciona para a página de login
+    router.push('/login');
   };
 
   return (

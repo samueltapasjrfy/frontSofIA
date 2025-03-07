@@ -1,7 +1,7 @@
 "use client";
 
+import { PublicationsApi } from "@/api/publicationsApi";
 import { Card, CardContent } from "@/components/ui/card";
-import { PublicationStats as Stats } from "@/contexts/PublicationsContext";
 import { 
   FileText, 
   CheckCircle, 
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 interface PublicationStatsProps {
-  stats: Stats;
+  stats: PublicationsApi.Report.Response;
   className?: string;
 }
 
@@ -24,7 +24,7 @@ interface StatCardProps {
   bgColor: string;
 }
 
-function StatCard({ title, value, icon, color, bgColor }: StatCardProps) {
+function StatCard({ title, value, icon, bgColor }: StatCardProps) {
   return (
     <Card className="border shadow-sm">
       <CardContent className="p-6">
@@ -61,7 +61,7 @@ export function PublicationStats({ stats, className }: PublicationStatsProps) {
       />
       <StatCard
         title="Erros"
-        value={stats.error}
+        value={stats.errors}
         icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
         color="text-red-600"
         bgColor="bg-red-100"
@@ -82,7 +82,7 @@ export function PublicationStats({ stats, className }: PublicationStatsProps) {
       />
       <StatCard
         title="Não Classificadas"
-        value={stats.notClassified}
+        value={0}
         icon={<HelpCircle className="h-5 w-5 text-gray-600" />}
         color="text-gray-600"
         bgColor="bg-gray-100"

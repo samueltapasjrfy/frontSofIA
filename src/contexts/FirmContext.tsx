@@ -34,7 +34,7 @@ interface FirmProviderProps {
 
 export function FirmProvider({ children }: FirmProviderProps) {
   const [firmData, setFirmData] = useState<FirmData>(defaultFirmData);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
 
   // Esta função será usada para atualizar os dados do escritório
   // quando integrarmos com a API

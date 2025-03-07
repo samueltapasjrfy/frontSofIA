@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Layout } from "@/components/layout/Layout";
 import { AppProviders } from "@/providers/AppProviders";
+import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sofia - Dashboard Jurídico",
-  description: "Dashboard para análise de publicações jurídicas",
+  title: "Sofia",
+  description: "Sistema de Gestão de Publicações",
 };
 
 export default function RootLayout({
@@ -18,9 +18,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} bg-white`}>
+      <body className={inter.className}>
+        <Toaster />
         <AppProviders>
-          <Layout>{children}</Layout>
+          {children}
         </AppProviders>
       </body>
     </html>

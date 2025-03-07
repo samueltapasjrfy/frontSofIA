@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowUpIcon, ArrowDownIcon, HardHatIcon, AlertTriangleIcon } from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, AlertTriangleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StatCardProps {

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
@@ -16,45 +16,45 @@ import { Upload, AlertCircle } from "lucide-react";
 interface ImportPublicationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (data: { processNumber: string; text: string; publicationId?: string }) => void;
+  onImport: (data: { litigationNumber: string; text: string; idInternal?: string }) => Promise<boolean>;
 }
 
 export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPublicationModalProps) {
-  const [processNumber, setProcessNumber] = useState("");
+  const [litigationNumber, setLitigationNumber] = useState("");
   const [text, setText] = useState("");
-  const [publicationId, setPublicationId] = useState("");
-  const [errors, setErrors] = useState<{ processNumber?: string; text?: string }>({});
+  const [idInternal, setIdInternal] = useState("");
+  const [errors, setErrors] = useState<{ litigationNumber?: string; text?: string }>({});
 
   const validateForm = () => {
-    const newErrors: { processNumber?: string; text?: string } = {};
-    
-    if (!processNumber.trim()) {
-      newErrors.processNumber = "Número do processo é obrigatório";
+    const newErrors: { litigationNumber?: string; text?: string } = {};
+
+    if (!litigationNumber.trim()) {
+      newErrors.litigationNumber = "Número do processo é obrigatório";
     }
-    
+
     if (!text.trim()) {
       newErrors.text = "Texto da publicação é obrigatório";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      onImport({
-        processNumber,
-        text,
-        publicationId: publicationId || undefined
-      });
-      resetForm();
-    }
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    const success = await onImport({
+      litigationNumber,
+      text,
+      idInternal: idInternal || undefined
+    });
+    if (!success) return;
+    resetForm();
   };
 
   const resetForm = () => {
-    setProcessNumber("");
+    setLitigationNumber("");
     setText("");
-    setPublicationId("");
+    setIdInternal("");
     setErrors({});
   };
 
@@ -79,16 +79,16 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
               Número do Processo <span className="text-red-500">*</span>
             </label>
             <Input
-              id="processNumber"
-              value={processNumber}
-              onChange={(e) => setProcessNumber(e.target.value)}
+              id="litigationNumber"
+              value={litigationNumber}
+              onChange={(e) => setLitigationNumber(e.target.value)}
               placeholder="0000000-00.0000.0.00.0000"
-              className={errors.processNumber ? "border-red-500" : ""}
+              className={errors.litigationNumber ? "border-red-500" : ""}
             />
-            {errors.processNumber && (
+            {errors.litigationNumber && (
               <div className="flex items-center text-red-500 text-sm mt-1">
                 <AlertCircle className="h-4 w-4 mr-1" />
-                {errors.processNumber}
+                {errors.litigationNumber}
               </div>
             )}
           </div>
@@ -103,9 +103,8 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
               onChange={(e) => setText(e.target.value)}
               placeholder="Insira o texto completo da publicação..."
               rows={5}
-              className={`min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                errors.text ? "border-red-500" : ""
-              }`}
+              className={`min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.text ? "border-red-500" : ""
+                }`}
             />
             {errors.text && (
               <div className="flex items-center text-red-500 text-sm mt-1">
@@ -116,13 +115,13 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
           </div>
 
           <div className="grid gap-2">
-            <label htmlFor="publicationId" className="text-sm font-medium text-gray-700">
+            <label htmlFor="idInternal" className="text-sm font-medium text-gray-700">
               ID da Publicação <span className="text-gray-400 text-xs">(opcional)</span>
             </label>
             <Input
-              id="publicationId"
-              value={publicationId}
-              onChange={(e) => setPublicationId(e.target.value)}
+              id="idInternal"
+              value={idInternal}
+              onChange={(e) => setIdInternal(e.target.value)}
               placeholder="Identificador único da publicação (se disponível)"
             />
           </div>
@@ -132,7 +131,7 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
           <Button variant="outline" onClick={handleClose} className="mr-2">
             Cancelar
           </Button>
-          <Button 
+          <Button
             onClick={handleSubmit}
             className="bg-primary-blue hover:bg-blue-700 text-white"
           >

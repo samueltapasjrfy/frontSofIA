@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
   Table, 
   TableBody, 
@@ -22,17 +22,21 @@ import {
   Filter,
   X
 } from "lucide-react";
-import { Publication } from "@/contexts/PublicationsContext";
 import { PublicationStatus, PublicationType } from "@/contexts/DashboardContext";
 import { cn } from "@/lib/utils";
-
+import { PublicationsApi } from "@/api/publicationsApi";
+import { PUBLICATION_STATUS } from "@/constants/publications";
+import dayjs from "dayjs";
 interface PublicationsTableProps {
-  publications: Publication[];
+  publications: PublicationsApi.FindAll.Publication[];
   onConfirm: (id: string) => void;
   onDiscard: (id: string) => void;
   onReclassify: (id: string) => void;
   isLoading?: boolean;
   className?: string;
+  total: number;
+  pagination: { page: number; size: number };
+  setPagination: (pagination: { page: number; size: number }) => void;
 }
 
 export function PublicationsTable({ 
@@ -41,10 +45,11 @@ export function PublicationsTable({
   onDiscard, 
   onReclassify, 
   isLoading = false,
-  className 
+  className,
+  total,
+  pagination,
+  setPagination
 }: PublicationsTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filters, setFilters] = useState<{
     processNumber: string;
     text: string;
@@ -59,31 +64,18 @@ export function PublicationsTable({
     confidence: null,
   });
   const [showFilters, setShowFilters] = useState(false);
-
-  // Função para formatar data
-  const formatDate = (date: Date | null) => {
-    if (!date) return "-";
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  const [totalPages, setTotalPages] = useState(Math.ceil(total / pagination.size));
 
   // Função para determinar a cor do badge de status
-  const getStatusColor = (status: PublicationStatus) => {
+  const getStatusColor = (status: number) => {
     switch (status) {
-      case "Classificado":
+      case PUBLICATION_STATUS.COMPLETED:
         return "bg-primary-green text-white";
-      case "Pendente":
+      case PUBLICATION_STATUS.PENDING:
         return "bg-yellow-400 text-black";
-      case "Em Processamento":
+      case PUBLICATION_STATUS.PROCESSING:
         return "bg-primary-blue text-white";
-      case "Não Classificado":
-        return "bg-gray-500 text-white";
-      case "Erro":
+      case PUBLICATION_STATUS.ERROR:
         return "bg-red-500 text-white";
       default:
         return "bg-gray-500 text-white";
@@ -111,32 +103,28 @@ export function PublicationsTable({
   // Aplicar filtros
   const filteredPublications = useMemo(() => {
     return publications.filter(pub => {
-      const matchesProcessNumber = pub.processNumber.toLowerCase().includes(filters.processNumber.toLowerCase());
-      const matchesText = pub.text.toLowerCase().includes(filters.text.toLowerCase());
-      const matchesType = !filters.type || pub.type === filters.type;
-      const matchesStatus = !filters.status || pub.status === filters.status;
+      const matchesProcessNumber = String(pub.litigationNumber || "").toLowerCase().includes(filters.processNumber.toLowerCase());
+      const matchesText = String(pub.text || "").toLowerCase().includes(filters.text.toLowerCase());
+      const matchesType = !filters.type || pub.caseType?.value === filters.type;
+      const matchesStatus = !filters.status || pub.status.value === filters.status;
       const matchesConfidence = !filters.confidence || 
-        (pub.confidence !== null && pub.confidence >= filters.confidence);
+        (pub.classifications?.[0]?.confidence && pub.classifications?.[0]?.confidence >= filters.confidence);
       
       return matchesProcessNumber && matchesText && matchesType && matchesStatus && matchesConfidence;
     });
   }, [publications, filters]);
 
-  // Paginação
-  const paginatedPublications = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredPublications.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredPublications, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(filteredPublications.length / itemsPerPage);
+  useEffect(() => {
+    setTotalPages(Math.ceil(total / pagination.size));
+  }, [total, pagination.size]);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setPagination({ ...pagination, page });
   };
 
   const handleFilterChange = (key: keyof typeof filters, value: string | number | null) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page when filter changes
+    setPagination({ ...pagination, page: 1 }); // Reset to first page when filter changes
   };
 
   const clearFilters = () => {
@@ -147,7 +135,7 @@ export function PublicationsTable({
       status: "",
       confidence: null,
     });
-    setCurrentPage(1);
+    setPagination({ ...pagination, page: 1 });
   };
 
   const toggleFilters = () => {
@@ -279,8 +267,8 @@ export function PublicationsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b">
-              <TableHead className="font-semibold text-gray-700 w-[220px] py-3 whitespace-nowrap">Nº Processo</TableHead>
-              <TableHead className="font-semibold text-gray-700 w-[30%] py-3">Texto</TableHead>
+              <TableHead className="font-semibold text-gray-700 w-[220px] py-3">Nº Processo</TableHead>
+              <TableHead className="font-semibold text-gray-700 w-[20%] py-3">Texto</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Tipo</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[100px] py-3">Confiança</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status</TableHead>
@@ -290,7 +278,7 @@ export function PublicationsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedPublications.length === 0 ? (
+            {filteredPublications.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                   {isLoading ? (
@@ -316,7 +304,7 @@ export function PublicationsTable({
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedPublications.map((publication, index) => (
+              filteredPublications.map((publication, index) => (
                 <TableRow 
                   key={publication.id}
                   className={cn(
@@ -324,39 +312,39 @@ export function PublicationsTable({
                     index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
                   )}
                 >
-                  <TableCell className="font-medium text-gray-700 py-3 whitespace-nowrap">
-                    {publication.processNumber}
+                  <TableCell className="font-medium text-gray-700 py-3" style={{ wordBreak: 'break-all' }}>
+                    {publication.litigationNumber}
                   </TableCell>
                   <TableCell className="text-gray-600 py-3">
-                    {truncateText(publication.text, 120)}
+                    {truncateText(publication.text || "", 120)}
                   </TableCell>
                   <TableCell className="text-gray-600 py-3">
-                    {publication.type || "-"}
+                    {publication.classifications?.[0]?.classification || "-"}
                   </TableCell>
                   <TableCell className="text-center py-3">
-                    {publication.confidence !== null ? (
+                    {publication.classifications?.[0]?.confidence !== null ? (
                       <span className={cn(
                         "font-medium px-2 py-1 rounded-full text-xs inline-block min-w-[50px]",
-                        publication.confidence >= 90 ? "bg-green-100 text-green-800" :
-                        publication.confidence >= 80 ? "bg-blue-100 text-blue-800" :
+                        publication.classifications?.[0]?.confidence && publication.classifications?.[0]?.confidence >= 0.9 ? "bg-green-100 text-green-800" :
+                        publication.classifications?.[0]?.confidence && publication.classifications?.[0]?.confidence >= 0.8 ? "bg-blue-100 text-blue-800" :
                         "bg-yellow-100 text-yellow-800"
                       )}>
-                        {publication.confidence}%
+                        {publication.classifications?.[0]?.confidence ? `${(publication.classifications?.[0]?.confidence * 100).toFixed(0)}%` : "-"}
                       </span>
                     ) : (
                       "-"
                     )}
                   </TableCell>
                   <TableCell className="text-center py-3">
-                    <Badge className={cn(getStatusColor(publication.status), "font-medium")}>
-                      {publication.status}
+                    <Badge className={cn(getStatusColor(publication.status.id), "font-medium")}>
+                      {publication.status.value}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-gray-600 py-3 whitespace-nowrap">
-                    {formatDate(publication.createdAt)}
+                    {dayjs(publication.createdAt || null).format("DD/MM/YYYY HH:mm")}
                   </TableCell>
                   <TableCell className="text-gray-600 py-3 whitespace-nowrap">
-                    {formatDate(publication.processedAt)}
+                    {publication.status.id === PUBLICATION_STATUS.COMPLETED ? dayjs(publication.updatedAt || null).format("DD/MM/YYYY HH:mm") : "-"}
                   </TableCell>
                   <TableCell className="py-3">
                     <div className="flex justify-center gap-1">
@@ -364,7 +352,7 @@ export function PublicationsTable({
                         variant="ghost"
                         size="icon"
                         onClick={() => onConfirm(publication.id)}
-                        disabled={publication.status === "Em Processamento" || publication.status === "Pendente"}
+                        disabled={[PUBLICATION_STATUS.PROCESSING, PUBLICATION_STATUS.PENDING].includes(publication.status.id)}
                         className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
                         title="Confirmar"
                       >
@@ -374,7 +362,7 @@ export function PublicationsTable({
                         variant="ghost"
                         size="icon"
                         onClick={() => onReclassify(publication.id)}
-                        disabled={publication.status === "Em Processamento"}
+                        disabled={[PUBLICATION_STATUS.PROCESSING].includes(publication.status.id)}
                         className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                         title="Reclassificar"
                       >
@@ -401,14 +389,13 @@ export function PublicationsTable({
       {filteredPublications.length > 0 && (
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <div className="flex items-center text-sm text-gray-500">
-            Mostrando {Math.min(filteredPublications.length, (currentPage - 1) * itemsPerPage + 1)} a {Math.min(filteredPublications.length, currentPage * itemsPerPage)} de {filteredPublications.length} resultados
+            Mostrando {Math.min(filteredPublications.length, (pagination.page - 1) * pagination.size + 1)} a {Math.min(filteredPublications.length, pagination.page * pagination.size)} de {filteredPublications.length} resultados
           </div>
           <div className="flex items-center gap-2">
             <select
-              value={itemsPerPage}
+              value={pagination.size}
               onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
+                setPagination({ ...pagination, size: Number(e.target.value), page: 1 });
               }}
               className="rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
@@ -421,44 +408,67 @@ export function PublicationsTable({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="h-8 w-8"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
+                className="h-10 w-10"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNumber;
-                if (totalPages <= 5) {
-                  pageNumber = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNumber = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNumber = totalPages - 4 + i;
-                } else {
-                  pageNumber = currentPage - 2 + i;
+              {(() => {
+                const pages = [];
+                const totalPagesCount = totalPages;
+
+                // Always show first page
+                pages.push(1);
+
+                // Show ellipsis and pages around current page if not near start
+                if (pagination.page > 2) {
+                  pages.push('...');
+                  // Show one page before current page
+                  pages.push(pagination.page - 1);
                 }
-                return (
-                  <Button
-                    key={pageNumber}
-                    variant={currentPage === pageNumber ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handlePageChange(pageNumber)}
-                    className={cn(
-                      "h-8 w-8 p-0",
-                      currentPage === pageNumber && "bg-primary-blue hover:bg-blue-700"
-                    )}
-                  >
-                    {pageNumber}
-                  </Button>
-                );
-              })}
+
+                // Show current page if not already included
+                if (!pages.includes(pagination.page)) {
+                  pages.push(pagination.page);
+                }
+
+                // Show one page after current page if not near end
+                if (pagination.page < totalPagesCount - 1) {
+                  pages.push(pagination.page + 1);
+                  pages.push('...');
+                }
+
+                // Always show last page if there is more than one page
+                if (totalPagesCount > 1 && !pages.includes(totalPagesCount)) {
+                  pages.push(totalPagesCount);
+                }
+
+                return pages.map((pageNumber, index) => (
+                  pageNumber === '...' ? (
+                    <span key={`ellipsis-${index}`} className="px-3 py-1">...</span>
+                  ) : (
+                    <Button
+                      key={pageNumber}
+                      variant={pagination.page === pageNumber ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(pageNumber as number)}
+                      className={cn(
+                        "h-10 w-10 p-0",
+                        pagination.page === pageNumber && "bg-primary-blue hover:bg-blue-700"
+                      )}
+                    >
+                      {pageNumber}
+                    </Button>
+                  )
+                ));
+              })()}
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="h-8 w-8"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page === totalPages}
+                className="h-10 w-10"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

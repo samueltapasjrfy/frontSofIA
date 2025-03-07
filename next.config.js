@@ -7,6 +7,10 @@ const nextConfig = {
     // Desativar a otimização de renderização estática
     optimizeCss: false,
   },
+  output: 'standalone',
+  images: {
+    domains: ['localhost'],
+  },
 };
 
 module.exports = nextConfig; 

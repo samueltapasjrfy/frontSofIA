@@ -1,0 +1,14 @@
+.modal-import-data.dark .phone-masked {
+    color: #fff !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.modal-import-data .validate-column-box {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    min-width: 250px;
+    max-width: 250px;
+    margin: 20px 40px 20px;
+
+}

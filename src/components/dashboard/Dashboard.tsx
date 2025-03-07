@@ -7,10 +7,7 @@ import { BarChart } from "./BarChart";
 import { PieChart } from "./PieChart";
 import { RecentPublications } from "./RecentPublications";
 import { 
-  BarChartIcon, 
   FileText, 
-  BookOpen, 
-  Quote,
   Clock,
   TrendingUp,
   Copy
