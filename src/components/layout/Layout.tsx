@@ -16,21 +16,21 @@ export function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     setIsMounted(true);
-    
+
     // Verificar o estado da sidebar no localStorage
     const savedState = localStorage.getItem('sidebarCollapsed');
     if (savedState) {
       setIsCollapsed(savedState === 'true');
     }
-    
+
     // Adicionar um listener para detectar mudanças no localStorage
     const handleStorageChange = () => {
       const currentState = localStorage.getItem('sidebarCollapsed');
       setIsCollapsed(currentState === 'true');
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
-    
+
     // Também podemos usar um MutationObserver para detectar mudanças no DOM
     const observer = new MutationObserver(() => {
       const currentState = localStorage.getItem('sidebarCollapsed');
@@ -40,9 +40,9 @@ export function Layout({ children }: LayoutProps) {
         setIsCollapsed(false);
       }
     });
-    
+
     observer.observe(document.body, { attributes: true, childList: true, subtree: true });
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       observer.disconnect();
@@ -60,10 +60,9 @@ export function Layout({ children }: LayoutProps) {
           <div className="fixed h-full z-10">
             <Sidebar />
           </div>
-          <div 
-            className={`transition-all duration-300 flex-1 overflow-hidden flex flex-col ${
-              isCollapsed ? "ml-16" : "ml-64"
-            }`}
+          <div
+            className={`transition-all duration-300 flex-1 overflow-hidden flex flex-col ${isCollapsed ? "ml-16" : "ml-64"
+              }`}
           >
             <Header />
             <main className="flex-1 overflow-auto p-6">

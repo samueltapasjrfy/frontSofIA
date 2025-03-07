@@ -4,11 +4,11 @@ import "./globals.css";
 import { AppProviders } from "@/providers/AppProviders";
 import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Sofia",
-  description: "Sistema de Gestão de Publicações",
+  title: "Sofia - Dashboard Jurídico",
+  description: "Dashboard para análise de publicações jurídicas",
 };
 
 export default function RootLayout({
