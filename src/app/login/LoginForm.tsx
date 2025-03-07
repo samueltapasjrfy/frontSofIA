@@ -3,6 +3,17 @@
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { LoginFormSkeleton } from './LoginFormSkeleton'
+import { toast } from 'sonner'
+
+interface LoginResponse {
+  data: {
+    token: string;
+    companies: {
+      id: string;
+      name: string;
+    }[];
+  }
+}
 
 function LoginFormContent() {
   const router = useRouter()
@@ -22,27 +33,31 @@ function LoginFormContent() {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/App`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
 
-      const data = await response.json()
+      const data: LoginResponse = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao fazer login')
+      if (response.ok) {
+        // Salvar o token
+        localStorage.setItem('token', data.data.token)
+        
+        // Salvar os dados da empresa se existirem
+        if (data.data.companies && data.data.companies.length > 0) {
+          const company = data.data.companies[0]
+          localStorage.setItem('companyName', company.name)
+        }
+
+        // Redireciona para a página anterior ou dashboard
+        const from = searchParams.get('from') || '/publicacoes'
+        router.push(from)
+        router.refresh() // Força a atualização do layout
+      } else {
+        toast.error('Credenciais inválidas')
       }
-
-      // Salva o token no cookie
-      document.cookie = `auth-token=${data.data.token}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 dias
-
-      // Redireciona para a página anterior ou dashboard
-      const from = searchParams.get('from') || '/publicacoes'
-      router.push(from)
-      router.refresh() // Força a atualização do layout
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login')
+    } catch (error) {
+      toast.error('Erro ao fazer login')
     } finally {
       setLoading(false)
     }

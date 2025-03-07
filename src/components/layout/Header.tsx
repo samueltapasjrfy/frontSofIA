@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFirm } from "@/contexts/FirmContext";
 import { Button } from "@/components/ui/button";
 import { 
   LogOut, 
   User,
-  ChevronDown
+  ChevronDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,11 +22,18 @@ export function Header() {
   const { firmData } = useFirm();
   const router = useRouter();
   const [userName] = useState("Usuário"); // Isso seria obtido do contexto de autenticação
+  const [companyName, setCompanyName] = useState('Barcelos & Janssen Advogados');
+
+  useEffect(() => {
+    const savedCompanyName = localStorage.getItem('companyName');
+    if (savedCompanyName) {
+      setCompanyName(savedCompanyName);
+    }
+  }, []);
 
   const handleLogout = () => {
-    // Remove o cookie de autenticação
-    document.cookie = 'auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    // Redireciona para a página de login
+    localStorage.removeItem('token');
+    localStorage.removeItem('companyName');
     router.push('/login');
   };
 
@@ -35,7 +42,7 @@ export function Header() {
       <div className="w-48"></div>
       
       <div className="font-semibold text-lg absolute left-1/2 transform -translate-x-1/2 text-white">
-        {firmData.name}
+        {companyName}
       </div>
       
       <DropdownMenu>
