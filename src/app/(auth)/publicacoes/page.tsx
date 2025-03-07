@@ -29,7 +29,7 @@ export default function PublicationsPage() {
     processing: 0,
     pending: 0,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const reclassifyPublication = async (id: string) => {
     console.log(id);
@@ -88,6 +88,7 @@ export default function PublicationsPage() {
     }
     toast.success("Publicação importada com sucesso");
     resetPublications();
+    setIsImportModalOpen(false);
     return true;
   };
 
@@ -110,13 +111,13 @@ export default function PublicationsPage() {
     setStats(response);
   };
 
+  const fetchData = async () => {
+    setIsLoading(true);
+    await fetchPublications();
+    await fetchStats();
+    setIsLoading(false);
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      await fetchPublications();
-      await fetchStats();
-      setIsLoading(false);
-    };
     fetchData();
   }, [pagination.page, pagination.size]);
 
@@ -153,6 +154,7 @@ export default function PublicationsPage() {
         pagination={pagination}
         setPagination={setPagination}
         isLoading={isLoading}
+        onRefresh={fetchData}
       />
 
       <ImportPublicationModal

@@ -20,7 +20,8 @@ import {
   ChevronLeft,
   Search,
   Filter,
-  X
+  X,
+  RefreshCcw
 } from "lucide-react";
 import { PublicationStatus, PublicationType } from "@/contexts/DashboardContext";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ interface PublicationsTableProps {
   onConfirm: (id: string) => void;
   onDiscard: (id: string) => void;
   onReclassify: (id: string) => void;
+  onRefresh: () => void;
   isLoading?: boolean;
   className?: string;
   total: number;
@@ -44,6 +46,7 @@ export function PublicationsTable({
   onConfirm, 
   onDiscard, 
   onReclassify, 
+  onRefresh,
   isLoading = false,
   className,
   total,
@@ -148,7 +151,7 @@ export function PublicationsTable({
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">Publicações</h2>
           <div className="flex gap-2">
-            <Button
+          <Button
               variant="outline"
               size="sm"
               onClick={toggleFilters}
@@ -164,6 +167,18 @@ export function PublicationsTable({
                   {Object.values(filters).filter(v => v !== "" && v !== null).length}
                 </Badge>
               )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRefresh}
+              className={cn(
+                "flex items-center gap-1",
+                showFilters && "bg-blue-50 border-primary-blue text-primary-blue"
+              )}
+            >
+              <RefreshCcw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Recarregar
             </Button>
           </div>
         </div>
@@ -278,29 +293,31 @@ export function PublicationsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPublications.length === 0 ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                  {isLoading ? (
-                    <div className="flex justify-center items-center">
-                      <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-                      Carregando publicações...
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <Search className="h-8 w-8 mb-2 text-gray-400" />
-                      <p>Nenhuma publicação encontrada</p>
-                      {Object.values(filters).some(v => v !== "" && v !== null) && (
-                        <Button
-                          variant="link"
-                          onClick={clearFilters}
-                          className="mt-2 text-primary-blue"
-                        >
-                          Limpar filtros
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex justify-center items-center">
+                    <RefreshCw className="h-5 w-5 animate-spin mr-2" />
+                    Carregando publicações...
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredPublications.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <div className="flex flex-col items-center">
+                    <Search className="h-8 w-8 mb-2 text-gray-400" />
+                    <p>Nenhuma publicação encontrada</p>
+                    {Object.values(filters).some(v => v !== "" && v !== null) && (
+                      <Button
+                        variant="link"
+                        onClick={clearFilters}
+                        className="mt-2 text-primary-blue"
+                      >
+                        Limpar filtros
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
