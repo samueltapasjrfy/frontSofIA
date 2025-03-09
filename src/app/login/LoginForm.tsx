@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { LoginFormSkeleton } from './LoginFormSkeleton'
 import { toast } from 'sonner'
+import Cookies from 'js-cookie'
 
 interface LoginResponse {
   data: {
@@ -43,6 +44,12 @@ function LoginFormContent() {
         // Salvar o token
         localStorage.setItem('token', data.data.token)
         
+        // Salvar o token como cookie
+        Cookies.set('auth-token', data.data.token, { 
+          expires: 7, // expira em 7 dias
+          path: '/' 
+        })
+        
         // Salvar os dados da empresa se existirem
         if (data.data.companies && data.data.companies.length > 0) {
           const company = data.data.companies[0]
@@ -51,6 +58,7 @@ function LoginFormContent() {
 
         // Redireciona para a página anterior ou dashboard
         const from = searchParams.get('from') || '/publicacoes'
+       
         router.push(from)
         router.refresh() // Força a atualização do layout
       } else {
