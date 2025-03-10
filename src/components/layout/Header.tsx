@@ -22,7 +22,7 @@ export function Header() {
   const { firmData } = useFirm();
   const router = useRouter();
   const [userName] = useState("Usuário"); // Isso seria obtido do contexto de autenticação
-  const [companyName, setCompanyName] = useState('Barcelos & Janssen Advogados');
+  const [companyName, setCompanyName] = useState('');
 
   useEffect(() => {
     const savedCompanyName = localStorage.getItem('companyName');

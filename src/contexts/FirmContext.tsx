@@ -14,7 +14,7 @@ interface FirmContextType {
 }
 
 const defaultFirmData: FirmData = {
-  name: "Barcelos & Janssen Advogados",
+  name: "",
   logo: undefined
 };
 
