@@ -167,8 +167,8 @@ export function PublicationsTable({
 
       const matchesConfidence = !filters.confidence ||
         (pub.classifications?.[0]?.confidence && (
-          filters.confidence === 70 
-            ? pub.classifications[0].confidence <= 0.7
+          filters.confidence === 69 
+            ? pub.classifications[0].confidence < 0.7
             : pub.classifications[0].confidence >= (filters.confidence / 100)
         ));
 
@@ -378,7 +378,8 @@ export function PublicationsTable({
                 <option value="">Qualquer</option>
                 <option value="90">90% ou mais</option>
                 <option value="80">80% ou mais</option>
-                <option value="70">70% ou menos</option>
+                <option value="70">70% ou mais</option>
+                <option value="69">menos que 70%</option>
               </select>
             </div>
             <div className="col-span-full flex justify-end">
