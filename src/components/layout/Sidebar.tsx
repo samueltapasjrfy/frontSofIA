@@ -71,36 +71,36 @@ export function Sidebar() {
   };
 
   const sidebarItems = [
-    {
-      icon: <LayoutDashboard size={20} />,
-      label: "Dashboard",
-      href: "/dashboard",
-    },
+    // {
+    //   icon: <LayoutDashboard size={20} />,
+    //   label: "Dashboard",
+    //   href: "/dashboard",
+    // },
     {
       icon: <FileText size={20} />,
       label: "Publicações",
       href: "/publicacoes",
     },
-    {
-      icon: <BookOpen size={20} />,
-      label: "Artigos",
-      href: "/artigos",
-    },
-    {
-      icon: <Scale size={20} />,
-      label: "Citações",
-      href: "/citacoes",
-    },
-    {
-      icon: <BookMarked size={20} />,
-      label: "Biblioteca",
-      href: "/biblioteca",
-    },
-    {
-      icon: <Settings size={20} />,
-      label: "Configurações",
-      href: "/configuracoes",
-    },
+    // {
+    //   icon: <BookOpen size={20} />,
+    //   label: "Artigos",
+    //   href: "/artigos",
+    // },
+    // {
+    //   icon: <Scale size={20} />,
+    //   label: "Citações",
+    //   href: "/citacoes",
+    // },
+    // {
+    //   icon: <BookMarked size={20} />,
+    //   label: "Biblioteca",
+    //   href: "/biblioteca",
+    // },
+    // {
+    //   icon: <Settings size={20} />,
+    //   label: "Configurações",
+    //   href: "/configuracoes",
+    // },
   ];
 
   const sidebarContent = (
