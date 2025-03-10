@@ -33,8 +33,6 @@ import dayjs from "dayjs";
 import PopConfirm from "../ui/popconfirm";
 import { toast } from "sonner";
 import { ReclassifyPublicationModal } from "./ReclassifyPublicationModal";
-import { saveAs } from 'file-saver';
-import * as XLSX from 'xlsx';
 
 interface PublicationsTableProps {
   publications: PublicationsApi.FindAll.Publication[];
@@ -47,6 +45,8 @@ interface PublicationsTableProps {
   pagination: { page: number; size: number };
   setPagination: (pagination: { page: number; size: number }) => void;
 }
+
+type FilterStatus = { type: 'classification' | 'processing'; value: string } | "";
 
 export function PublicationsTable({
   publications,
@@ -62,8 +62,8 @@ export function PublicationsTable({
   const [filters, setFilters] = useState<{
     processNumber: string;
     text: string;
-    type: PublicationType | "";
-    status: PublicationStatus | "";
+    type: string;
+    status: FilterStatus;
     confidence: number | null;
   }>({
     processNumber: "",
@@ -78,10 +78,12 @@ export function PublicationsTable({
   const [selectedPublicationId, setSelectedPublicationId] = useState<string>("");
   const [classifications, setClassifications] = useState<Array<{ value: string, label: string }>>([]);
   const [isExporting, setIsExporting] = useState(false);
+  const [typeOptions, setTypeOptions] = useState<Array<{ id: number, classification: string }>>([]);
+
   const fetchClassifications = async () => {
     try {
       const response = await PublicationsApi.findAllClassifications();
-      console.log(response);
+      setTypeOptions(response.classifications);
       setClassifications(
         response.classifications.map(c => ({
           value: c.id.toString(),
@@ -149,10 +151,16 @@ export function PublicationsTable({
     return publications.filter(pub => {
       const matchesProcessNumber = String(pub.litigationNumber || "").toLowerCase().includes(filters.processNumber.toLowerCase());
       const matchesText = String(pub.text || "").toLowerCase().includes(filters.text.toLowerCase());
-      const matchesType = !filters.type || pub.caseType?.value === filters.type;
-      const matchesStatus = !filters.status || pub.status.value === filters.status;
+      const matchesType = !filters.type || pub.classifications?.[0]?.classification === filters.type;
+      
+      const matchesStatus = !filters.status || (
+        filters.status.type === 'classification' 
+          ? pub.classifications?.[0]?.status.value === filters.status.value
+          : pub.status.value === filters.status.value
+      );
+
       const matchesConfidence = !filters.confidence ||
-        (pub.classifications?.[0]?.confidence && pub.classifications?.[0]?.confidence >= filters.confidence);
+        (pub.classifications?.[0]?.confidence && pub.classifications[0].confidence >= (filters.confidence / 100));
 
       return matchesProcessNumber && matchesText && matchesType && matchesStatus && matchesConfidence;
     });
@@ -166,7 +174,7 @@ export function PublicationsTable({
     setPagination({ ...pagination, page });
   };
 
-  const handleFilterChange = (key: keyof typeof filters, value: string | number | null) => {
+  const handleFilterChange = (key: keyof typeof filters, value: string | number | null | FilterStatus) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setPagination({ ...pagination, page: 1 }); // Reset to first page when filter changes
   };
@@ -311,13 +319,11 @@ export function PublicationsTable({
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="">Todos</option>
-                <option value="Sentença">Sentença</option>
-                <option value="Despacho">Despacho</option>
-                <option value="Decisão">Decisão</option>
-                <option value="Acórdão">Acórdão</option>
-                <option value="Artigo">Artigo</option>
-                <option value="Doutrina">Doutrina</option>
-                <option value="Legislação">Legislação</option>
+                {typeOptions.map((type) => (
+                  <option key={type.id} value={type.classification}>
+                    {type.classification}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -326,16 +332,27 @@ export function PublicationsTable({
               </label>
               <select
                 id="status"
-                value={filters.status}
-                onChange={(e) => handleFilterChange("status", e.target.value)}
+                value={filters.status ? `${filters.status.type}:${filters.status.value}` : ""}
+                onChange={(e) => {
+                  const [type, value] = e.target.value.split(':');
+                  handleFilterChange(
+                    "status",
+                    e.target.value ? { type: type as 'classification' | 'processing', value } : ""
+                  );
+                }}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="">Todos</option>
-                <option value="Classificado">Classificado</option>
-                <option value="Pendente">Pendente</option>
-                <option value="Em Processamento">Em Processamento</option>
-                <option value="Não Classificado">Não Classificado</option>
-                <option value="Erro">Erro</option>
+                <optgroup label="Status de Classificação">
+                  <option value="classification:Pendente">Pendente</option>
+                  <option value="classification:Confirmado">Confirmado</option>
+                  <option value="classification:Reclassificado">Reclassificado</option>
+                </optgroup>
+                <optgroup label="Status de Processamento">
+                  <option value="processing:Pendente">Pendente</option>
+                  <option value="processing:Concluído">Concluído</option>
+                  <option value="processing:Erro">Erro</option>
+                </optgroup>
               </select>
             </div>
             <div>
@@ -351,7 +368,6 @@ export function PublicationsTable({
                 <option value="">Qualquer</option>
                 <option value="90">90% ou mais</option>
                 <option value="80">80% ou mais</option>
-                <option value="70">70% ou mais</option>
               </select>
             </div>
             <div className="col-span-full flex justify-end">
