@@ -33,6 +33,7 @@ import dayjs from "dayjs";
 import PopConfirm from "../ui/popconfirm";
 import { toast } from "sonner";
 import { ReclassifyPublicationModal } from "./ReclassifyPublicationModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PublicationsTableProps {
   publications: PublicationsApi.FindAll.Publication[];
@@ -79,6 +80,8 @@ export function PublicationsTable({
   const [classifications, setClassifications] = useState<Array<{ value: string, label: string }>>([]);
   const [isExporting, setIsExporting] = useState(false);
   const [typeOptions, setTypeOptions] = useState<Array<{ id: number, classification: string }>>([]);
+  const [isTextModalOpen, setIsTextModalOpen] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
 
   const fetchClassifications = async () => {
     try {
@@ -122,6 +125,10 @@ export function PublicationsTable({
           variant="ghost"
           size="sm"
           className="text-primary-blue font-medium hover:bg-blue-50 p-1 h-auto"
+          onClick={() => {
+            setSelectedText(text);
+            setIsTextModalOpen(true);
+          }}
         >
           <span className="sr-only">Ver mais</span>
           <ChevronRight className="h-4 w-4" />
@@ -632,6 +639,17 @@ export function PublicationsTable({
         onConfirm={handleReclassifyConfirm}
         options={classifications}
       />
+
+      <Dialog open={isTextModalOpen} onOpenChange={setIsTextModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Texto da Publicação</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 text-gray-700 whitespace-pre-wrap">
+            {selectedText}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
