@@ -404,7 +404,7 @@ const ModalImportData = ({
             )}
 
             {currentStep === STEPS.VALIDATE_DATE && (
-              <div>
+              <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
                 <p className="mb-4">Total: {rows.length - 1}</p>
                 <Table>
                   <TableHeader>
