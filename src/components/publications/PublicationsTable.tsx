@@ -25,7 +25,6 @@ import {
   ThumbsDown,
   Download
 } from "lucide-react";
-import { PublicationStatus, PublicationType } from "@/contexts/DashboardContext";
 import { cn } from "@/lib/utils";
 import { PublicationsApi } from "@/api/publicationsApi";
 import { CLASSIFICATION_STATUS, PUBLICATION_STATUS } from "@/constants/publications";
@@ -167,7 +166,11 @@ export function PublicationsTable({
       );
 
       const matchesConfidence = !filters.confidence ||
-        (pub.classifications?.[0]?.confidence && pub.classifications[0].confidence >= (filters.confidence / 100));
+        (pub.classifications?.[0]?.confidence && (
+          filters.confidence === 70 
+            ? pub.classifications[0].confidence <= 0.7
+            : pub.classifications[0].confidence >= (filters.confidence / 100)
+        ));
 
       return matchesProcessNumber && matchesText && matchesType && matchesStatus && matchesConfidence;
     });
@@ -375,6 +378,7 @@ export function PublicationsTable({
                 <option value="">Qualquer</option>
                 <option value="90">90% ou mais</option>
                 <option value="80">80% ou mais</option>
+                <option value="70">70% ou menos</option>
               </select>
             </div>
             <div className="col-span-full flex justify-end">
