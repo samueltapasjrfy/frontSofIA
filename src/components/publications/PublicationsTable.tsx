@@ -1,38 +1,45 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  CheckCircle, 
-  Trash2, 
-  RefreshCw, 
+import {
+  Trash2,
+  RefreshCw,
   ChevronRight,
   ChevronLeft,
   Search,
   Filter,
   X,
-  RefreshCcw
+  RefreshCcw,
+  ThumbsUp,
+  ThumbsDown,
+  Download
 } from "lucide-react";
 import { PublicationStatus, PublicationType } from "@/contexts/DashboardContext";
 import { cn } from "@/lib/utils";
 import { PublicationsApi } from "@/api/publicationsApi";
-import { PUBLICATION_STATUS } from "@/constants/publications";
+import { CLASSIFICATION_STATUS, PUBLICATION_STATUS } from "@/constants/publications";
 import dayjs from "dayjs";
+import PopConfirm from "../ui/popconfirm";
+import { toast } from "sonner";
+import { ReclassifyPublicationModal } from "./ReclassifyPublicationModal";
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
+
 interface PublicationsTableProps {
   publications: PublicationsApi.FindAll.Publication[];
   onConfirm: (id: string) => void;
   onDiscard: (id: string) => void;
-  onReclassify: (id: string) => void;
   onRefresh: () => void;
   isLoading?: boolean;
   className?: string;
@@ -41,11 +48,10 @@ interface PublicationsTableProps {
   setPagination: (pagination: { page: number; size: number }) => void;
 }
 
-export function PublicationsTable({ 
-  publications, 
-  onConfirm, 
-  onDiscard, 
-  onReclassify, 
+export function PublicationsTable({
+  publications,
+  onConfirm,
+  onDiscard,
   onRefresh,
   isLoading = false,
   className,
@@ -68,6 +74,25 @@ export function PublicationsTable({
   });
   const [showFilters, setShowFilters] = useState(false);
   const [totalPages, setTotalPages] = useState(Math.ceil(total / pagination.size));
+  const [isReclassifyModalOpen, setIsReclassifyModalOpen] = useState(false);
+  const [selectedPublicationId, setSelectedPublicationId] = useState<string>("");
+  const [classifications, setClassifications] = useState<Array<{ value: string, label: string }>>([]);
+  const [isExporting, setIsExporting] = useState(false);
+  const fetchClassifications = async () => {
+    try {
+      const response = await PublicationsApi.findAllClassifications();
+      console.log(response);
+      setClassifications(
+        response.classifications.map(c => ({
+          value: c.id.toString(),
+          label: c.classification
+        }))
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar classificações");
+    }
+  };
 
   // Função para determinar a cor do badge de status
   const getStatusColor = (status: number) => {
@@ -91,9 +116,9 @@ export function PublicationsTable({
     return (
       <div className="flex items-center gap-2">
         <span className="line-clamp-2">{text.substring(0, maxLength)}...</span>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className="text-primary-blue font-medium hover:bg-blue-50 p-1 h-auto"
         >
           <span className="sr-only">Ver mais</span>
@@ -103,6 +128,22 @@ export function PublicationsTable({
     );
   };
 
+  // Função para determinar a cor do badge de status da classificação
+  const getClassificationStatusColor = (status: number) => {
+    switch (status) {
+      case 1: // PENDING
+        return "bg-yellow-400 text-black";
+      case 2: // CONFIRMED
+        return "bg-primary-green text-white";
+      case 3: // REJECTED
+        return "bg-red-500 text-white";
+      case 4: // RECLASSIFIED
+        return "bg-blue-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
+  };
+
   // Aplicar filtros
   const filteredPublications = useMemo(() => {
     return publications.filter(pub => {
@@ -110,9 +151,9 @@ export function PublicationsTable({
       const matchesText = String(pub.text || "").toLowerCase().includes(filters.text.toLowerCase());
       const matchesType = !filters.type || pub.caseType?.value === filters.type;
       const matchesStatus = !filters.status || pub.status.value === filters.status;
-      const matchesConfidence = !filters.confidence || 
+      const matchesConfidence = !filters.confidence ||
         (pub.classifications?.[0]?.confidence && pub.classifications?.[0]?.confidence >= filters.confidence);
-      
+
       return matchesProcessNumber && matchesText && matchesType && matchesStatus && matchesConfidence;
     });
   }, [publications, filters]);
@@ -145,13 +186,53 @@ export function PublicationsTable({
     setShowFilters(!showFilters);
   };
 
+  const handleReclassifyClick = (publicationId: string) => {
+    setSelectedPublicationId(publicationId);
+    setIsReclassifyModalOpen(true);
+  };
+
+  const handleReclassifyConfirm = async (selectedOption: string) => {
+    if (!selectedPublicationId) return;
+
+    setIsReclassifyModalOpen(false);
+    setSelectedPublicationId("");
+
+    await PublicationsApi.reclassify({
+      idPublication: selectedPublicationId,
+      idClassification: parseInt(selectedOption)
+    });
+
+    toast.success("Publicação reclassificada com sucesso");
+    onRefresh();
+  };
+
+  const btnDisabled = (publication: PublicationsApi.FindAll.Publication) => {
+    return [PUBLICATION_STATUS.PROCESSING].includes(publication.status.id) || publication.classifications?.[0]?.status.id !== CLASSIFICATION_STATUS.PENDING;
+  }
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      await PublicationsApi.exportToXLSX();
+      toast.success('Arquivo exportado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao exportar arquivo');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClassifications();
+  }, []);
+
   return (
     <div className={cn("bg-white border rounded-lg shadow-sm overflow-hidden", className)}>
       <div className="p-4 border-b">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">Publicações</h2>
           <div className="flex gap-2">
-          <Button
+            <Button
               variant="outline"
               size="sm"
               onClick={toggleFilters}
@@ -167,6 +248,16 @@ export function PublicationsTable({
                   {Object.values(filters).filter(v => v !== "" && v !== null).length}
                 </Badge>
               )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              loading={isExporting}
+              onClick={handleExport}
+              className="flex items-center gap-1"
+            >
+              <Download className="h-4 w-4" />
+              Exportar
             </Button>
             <Button
               variant="outline"
@@ -282,9 +373,11 @@ export function PublicationsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b">
-              <TableHead className="font-semibold text-gray-700 w-[220px] py-3">Nº Processo</TableHead>
-              <TableHead className="font-semibold text-gray-700 w-[20%] py-3">Texto</TableHead>
+              <TableHead className="font-semibold text-gray-700 w-[300px] py-3">Nº Processo</TableHead>
+              <TableHead className="font-semibold text-gray-700 w-[10%] py-3">Texto</TableHead>
+              <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Modalidade</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Tipo</TableHead>
+              <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status Classificação</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[100px] py-3">Confiança</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[150px] py-3">Data Inserção</TableHead>
@@ -322,7 +415,7 @@ export function PublicationsTable({
               </TableRow>
             ) : (
               filteredPublications.map((publication, index) => (
-                <TableRow 
+                <TableRow
                   key={publication.id}
                   className={cn(
                     "hover:bg-gray-50 transition-colors",
@@ -336,15 +429,27 @@ export function PublicationsTable({
                     {truncateText(publication.text || "", 120)}
                   </TableCell>
                   <TableCell className="text-gray-600 py-3">
+                    {publication.caseType?.value || "-"}
+                  </TableCell>
+                  <TableCell className="text-gray-600 py-3">
                     {publication.classifications?.[0]?.classification || "-"}
+                  </TableCell>
+                  <TableCell className="text-center py-3">
+                    {publication.classifications?.[0] ? (
+                      <Badge className={cn(getClassificationStatusColor(publication.classifications[0].status.id), "font-medium")}>
+                        {publication.classifications[0].status.value || "-"}
+                      </Badge>
+                    ) : (
+                      "-"
+                    )}
                   </TableCell>
                   <TableCell className="text-center py-3">
                     {publication.classifications?.[0]?.confidence !== null ? (
                       <span className={cn(
                         "font-medium px-2 py-1 rounded-full text-xs inline-block min-w-[50px]",
                         publication.classifications?.[0]?.confidence && publication.classifications?.[0]?.confidence >= 0.9 ? "bg-green-100 text-green-800" :
-                        publication.classifications?.[0]?.confidence && publication.classifications?.[0]?.confidence >= 0.8 ? "bg-blue-100 text-blue-800" :
-                        "bg-yellow-100 text-yellow-800"
+                          publication.classifications?.[0]?.confidence && publication.classifications?.[0]?.confidence >= 0.8 ? "bg-blue-100 text-blue-800" :
+                            "bg-yellow-100 text-yellow-800"
                       )}>
                         {publication.classifications?.[0]?.confidence ? `${(publication.classifications?.[0]?.confidence * 100).toFixed(0)}%` : "-"}
                       </span>
@@ -365,35 +470,46 @@ export function PublicationsTable({
                   </TableCell>
                   <TableCell className="py-3">
                     <div className="flex justify-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onConfirm(publication.id)}
-                        disabled={[PUBLICATION_STATUS.PROCESSING, PUBLICATION_STATUS.PENDING].includes(publication.status.id)}
-                        className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      <PopConfirm
                         title="Confirmar"
+                        description="Tem certeza que deseja confirmar esta publicação?"
+                        onConfirm={async () => onConfirm(publication.id)}
+                        disabled={btnDisabled(publication)}
                       >
-                        <CheckCircle className="h-4 w-4" />
-                      </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={btnDisabled(publication)}
+                          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                          title="Confirmar"
+                        >
+                          <ThumbsUp className="h-4 w-4" />
+                        </Button>
+                      </PopConfirm>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onReclassify(publication.id)}
-                        disabled={[PUBLICATION_STATUS.PROCESSING].includes(publication.status.id)}
+                        onClick={() => handleReclassifyClick(publication.id)}
+                        disabled={btnDisabled(publication)}
                         className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                         title="Reclassificar"
                       >
-                        <RefreshCw className="h-4 w-4" />
+                        <ThumbsDown className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onDiscard(publication.id)}
-                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      <PopConfirm
                         title="Descartar"
+                        description="Tem certeza que deseja descartar esta publicação?"
+                        onConfirm={async () => onDiscard(publication.id)}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          title="Descartar"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </PopConfirm>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -493,6 +609,13 @@ export function PublicationsTable({
           </div>
         </div>
       )}
+
+      <ReclassifyPublicationModal
+        isOpen={isReclassifyModalOpen}
+        onClose={() => setIsReclassifyModalOpen(false)}
+        onConfirm={handleReclassifyConfirm}
+        options={classifications}
+      />
     </div>
   );
 } 

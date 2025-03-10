@@ -1,5 +1,9 @@
 import { http } from "./fetch";
 import { APIResponse } from "./response";
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
+import dayjs from 'dayjs';
+import { PUBLICATION_STATUS } from '@/constants/publications';
 
 export const PublicationsApi = {
     findAll: async (params: PublicationsApi.FindAll.Params): Promise<PublicationsApi.FindAll.Response> => {
@@ -17,8 +21,10 @@ export const PublicationsApi = {
                 return {
                     ...publication,
                     classifications: [{
+                        id: classification.id,
                         classification: classification.classification,
-                        confidence: classification.confidence
+                        confidence: classification.confidence,
+                        status: classification.status
                     }]
                 }
             });
@@ -44,6 +50,84 @@ export const PublicationsApi = {
     getStatusReport: async (): Promise<PublicationsApi.Report.Response> => {
         const response = await http.get<PublicationsApi.Report.Response>('/Publications/report/status');
         return response.data;
+    },
+    reclassify: async (params: PublicationsApi.Reclassify.Params): Promise<void> => {
+        await http.patch(`/Publications/${params.idPublication}/Classification/${params.idClassification}`);
+    },
+    approveClassification: async (params: PublicationsApi.ApproveClassification.Params): Promise<void> => {
+        await http.patch(`/Publications/${params.idPublication}/Classification/${params.idClassification}/approve`);
+    },
+    findAllClassifications: async (): Promise<PublicationsApi.FindAllClassifications.Response> => {
+        const response = await http.get<PublicationsApi.FindAllClassifications.Response>('/Classifications');
+        return response.data;
+    },
+    delete: async (id: string): Promise<void> => {
+        await http.delete(`/Publications/${id}`);
+    },
+    exportToXLSX: async (): Promise<void> => {
+        try {
+            // Buscar todas as publicações sem paginação
+            const response = await http.get<PublicationsApi.FindAll.Response>('/Publications', { 
+                noPagination: true 
+            });
+            
+            // Preparar dados para exportação
+            const data = response.data.publications.map(pub => ({
+                'Nº Processo': pub.litigationNumber || '-',
+                'Texto': pub.text || '-',
+                'Modalidade': pub.caseType?.value || '-',
+                'Tipo': pub.classifications?.[0]?.classification || '-',
+                'Status Classificação': pub.classifications?.[0]?.status.value || '-',
+                'Confiança': pub.classifications?.[0]?.confidence 
+                    ? `${(pub.classifications[0].confidence * 100).toFixed(0)}%` 
+                    : '-',
+                'Status': pub.status.value || '-',
+                'Data Inserção': pub.createdAt 
+                    ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm') 
+                    : '-',
+                'Data Processamento': pub.status.id === PUBLICATION_STATUS.COMPLETED && pub.updatedAt
+                    ? dayjs(pub.updatedAt).format('DD/MM/YYYY HH:mm')
+                    : '-'
+            }));
+
+            // Criar workbook e worksheet
+            const ws = XLSX.utils.json_to_sheet(data);
+
+            // Ajustar largura das colunas
+            const colWidths = [
+                { wch: 25 }, // Nº Processo
+                { wch: 50 }, // Texto
+                { wch: 15 }, // Modalidade
+                { wch: 15 }, // Tipo
+                { wch: 20 }, // Status Classificação
+                { wch: 12 }, // Confiança
+                { wch: 15 }, // Status
+                { wch: 20 }, // Data Inserção
+                { wch: 20 }, // Data Processamento
+            ];
+            ws['!cols'] = colWidths;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Publicações');
+
+            // Gerar arquivo e fazer download
+            const excelBuffer = XLSX.write(wb, { 
+                bookType: 'xlsx', 
+                type: 'array' 
+            });
+            
+            const dataBlob = new Blob([excelBuffer], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            
+            // Nome do arquivo com timestamp
+            const fileName = `publicacoes_${dayjs().format('YYYY-MM-DD_HH-mm')}.xlsx`;
+            
+            saveAs(dataBlob, fileName);
+        } catch (error) {
+            console.error('Erro ao exportar publicações:', error);
+            throw error; // Propagar erro para ser tratado no componente
+        }
     }
 }
 
@@ -58,7 +142,15 @@ export namespace PublicationsApi {
             idInternal: string;
             status: { id: number; value: string };
             caseType?: { id: number; value: string };
-            classifications?: { classification: string, confidence: number }[];
+            classifications?: { 
+                id: number;
+                classification: string;
+                confidence: number;
+                status: {
+                    id: number;
+                    value: string;
+                };
+            }[];
             errorDescription?: string;
             litigationNumber?: string;
             date?: string;
@@ -105,6 +197,30 @@ export namespace PublicationsApi {
         export type Response = {
             idBatch: string;
             publications: Save.Response[];
+        }
+    }
+
+    export namespace Reclassify {
+        export type Params = {
+            idPublication: string;
+            idClassification: number;
+        };
+    }
+
+    export namespace ApproveClassification {
+        export type Params = {
+            idPublication: string;
+            idClassification: number;
+        };
+    }
+
+    export namespace FindAllClassifications {
+        export type Response = {
+            classifications: {
+                id: number;
+                classification: string;
+            }[];
+            total: number;
         }
     }
 }

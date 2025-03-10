@@ -31,16 +31,36 @@ export default function PublicationsPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  const reclassifyPublication = async (id: string) => {
-    console.log(id);
-  };
-
   const discardPublication = async (id: string) => {
-    console.log(id);
+    try {
+      await PublicationsApi.delete(id);
+      toast.success("Publicação descartada com sucesso");
+      await fetchData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao descartar publicação");
+    }
   };
 
   const confirmPublication = async (id: string) => {
-    console.log(id);
+    try {
+      const publication = publications.publications.find(p => p.id === id);
+      if (!publication?.classifications?.[0]) {
+        toast.error("Publicação não possui classificação para aprovar");
+        return;
+      }
+
+      await PublicationsApi.approveClassification({
+        idPublication: id,
+        idClassification: publication.classifications[0].id
+      });
+
+      toast.success("Classificação aprovada com sucesso");
+      await fetchData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao aprovar classificação");
+    }
   };
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -117,6 +137,7 @@ export default function PublicationsPage() {
     await fetchStats();
     setIsLoading(false);
   };
+
   useEffect(() => {
     fetchData();
   }, [pagination.page, pagination.size]);
@@ -150,7 +171,6 @@ export default function PublicationsPage() {
         total={publications.total}
         onConfirm={confirmPublication}
         onDiscard={discardPublication}
-        onReclassify={reclassifyPublication}
         pagination={pagination}
         setPagination={setPagination}
         isLoading={isLoading}

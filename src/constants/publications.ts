@@ -9,3 +9,10 @@ export const PUBLICATION_CASE_TYPE = {
     CIVIL: 1,
     CRIMINAL: 2,
 }
+
+export const CLASSIFICATION_STATUS = {
+    PENDING: 1,
+    CONFIRMED: 2,
+    REJECTED: 3,
+    RECLASSIFIED: 4,
+}
