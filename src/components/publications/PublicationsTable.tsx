@@ -379,7 +379,7 @@ export function PublicationsTable({
               <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Tipo</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status Classificação</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[100px] py-3">Confiança</TableHead>
-              <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status</TableHead>
+              <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status Processamento</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[150px] py-3">Data Inserção</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[150px] py-3">Data Processamento</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[120px] py-3">Ações</TableHead>
