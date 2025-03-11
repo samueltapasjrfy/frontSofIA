@@ -8,7 +8,6 @@ import {
   AlertTriangle, 
   Clock, 
   HelpCircle, 
-  AlertCircle 
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 

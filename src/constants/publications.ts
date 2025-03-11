@@ -16,3 +16,19 @@ export const CLASSIFICATION_STATUS = {
     REJECTED: 3,
     RECLASSIFIED: 4,
 }
+
+export const publicationStatusColors = {
+    [PUBLICATION_STATUS.COMPLETED]: "bg-primary-green text-white",
+    [PUBLICATION_STATUS.PENDING]: "bg-yellow-400 text-black",
+    [PUBLICATION_STATUS.PROCESSING]: "bg-primary-blue text-white",
+    [PUBLICATION_STATUS.ERROR]: "bg-red-500 text-white",
+    default: "bg-gray-500 text-white"
+};
+
+export const classificationStatusColors: Record<string | number, string> = {
+  1: "bg-yellow-400 text-black", // PENDING
+  2: "bg-primary-green text-white", // CONFIRMED
+  3: "bg-red-500 text-white", // REJECTED
+  4: "bg-blue-500 text-white", // RECLASSIFIED
+  default: "bg-gray-500 text-white"
+};

@@ -71,11 +71,11 @@ export function Sidebar() {
   };
 
   const sidebarItems = [
-    // {
-    //   icon: <LayoutDashboard size={20} />,
-    //   label: "Dashboard",
-    //   href: "/dashboard",
-    // },
+    {
+      icon: <LayoutDashboard size={20} />,
+      label: "Dashboard",
+      href: "/dashboard",
+    },
     {
       icon: <FileText size={20} />,
       label: "Publicações",

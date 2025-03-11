@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PublicationsApi } from "@/api/publicationsApi";
-import { CLASSIFICATION_STATUS, PUBLICATION_CASE_TYPE, PUBLICATION_STATUS } from "@/constants/publications";
+import { CLASSIFICATION_STATUS, classificationStatusColors, PUBLICATION_CASE_TYPE, PUBLICATION_STATUS, publicationStatusColors } from "@/constants/publications";
 import dayjs from "dayjs";
 import PopConfirm from "../ui/popconfirm";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useClassifications } from "@/hooks/useClassifications";
 import { usePublications } from "@/hooks/usePublications";
 import { usePublicationStats } from "@/hooks/usePublicationStats";
+import ModalViewText from "../modalViewText";
 
 interface PublicationsTableProps {
   onConfirm: (publication: PublicationsApi.FindAll.Publication) => void;
@@ -75,17 +76,10 @@ export function PublicationsTable({
   const { getClassificationsQuery, changeFilter: changeFilterClassifications } = useClassifications(PUBLICATION_CASE_TYPE.CIVIL);
   const { getClassificationsQuery: allClassifications } = useClassifications();
 
-  // Função para determinar a cor do badge de status
-  const statusColors = {
-    [PUBLICATION_STATUS.COMPLETED]: "bg-primary-green text-white",
-    [PUBLICATION_STATUS.PENDING]: "bg-yellow-400 text-black",
-    [PUBLICATION_STATUS.PROCESSING]: "bg-primary-blue text-white",
-    [PUBLICATION_STATUS.ERROR]: "bg-red-500 text-white",
-    default: "bg-gray-500 text-white"
-  };
+
 
   const getStatusColor = (status: number) => {
-    return statusColors[status] || statusColors.default;
+    return publicationStatusColors[status] || publicationStatusColors.default;
   };
 
   // Função para truncar texto e adicionar "ver mais"
@@ -110,14 +104,7 @@ export function PublicationsTable({
     );
   };
 
-  // Função para determinar a cor do badge de status da classificação
-  const classificationStatusColors: Record<string | number, string> = {
-    1: "bg-yellow-400 text-black", // PENDING
-    2: "bg-primary-green text-white", // CONFIRMED
-    3: "bg-red-500 text-white", // REJECTED
-    4: "bg-blue-500 text-white", // RECLASSIFIED
-    default: "bg-gray-500 text-white"
-  };
+
 
   const getClassificationStatusColor = (status: number) => {
     return classificationStatusColors[status] || classificationStatusColors.default;
@@ -304,7 +291,7 @@ export function PublicationsTable({
             </div>
             <div>
               <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo
+                Tipo Publicação
               </label>
               <select
                 id="type"
@@ -385,13 +372,13 @@ export function PublicationsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b">
-              <TableHead className="font-semibold text-gray-700 py-3 min-w-[230px] max-w-[230px]">Nº Processo</TableHead>
-              <TableHead className="font-semibold text-gray-700 min-w-[200px] max-w-[200px] py-3">Texto</TableHead>
+              <TableHead className="font-semibold text-gray-700 py-3 w-[200px]">Nº Processo</TableHead>
+              <TableHead className="font-semibold text-gray-700 py-3 w-[100px]">Texto</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Modalidade</TableHead>
-              <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Tipo</TableHead>
-              <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status Classificação</TableHead>
+              <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Tipo Publicação</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[100px] py-3">Confiança</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status Processamento</TableHead>
+              <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Validação</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[150px] py-3">Data Inserção</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[150px] py-3">Data Processamento</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[120px] py-3">Ações</TableHead>
@@ -438,22 +425,13 @@ export function PublicationsTable({
                     {publication.litigationNumber}
                   </TableCell>
                   <TableCell className="text-gray-600 py-3">
-                    {truncateText(publication.text || "", 120)}
+                    {truncateText(publication.text || "", 50)}
                   </TableCell>
                   <TableCell className="text-gray-600 py-3">
                     {publication.caseType?.value || "-"}
                   </TableCell>
                   <TableCell className="text-gray-600 py-3">
                     {publication.classifications?.[0]?.classification || "-"}
-                  </TableCell>
-                  <TableCell className="text-center py-3">
-                    {publication.classifications?.[0] ? (
-                      <Badge className={cn(getClassificationStatusColor(publication.classifications[0].status.id), "font-medium")}>
-                        {publication.classifications[0].status.value || "-"}
-                      </Badge>
-                    ) : (
-                      "-"
-                    )}
                   </TableCell>
                   <TableCell className="text-center py-3">
                     {publication.classifications?.[0]?.confidence !== null ? (
@@ -474,6 +452,16 @@ export function PublicationsTable({
                       {publication.status.value}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-center py-3">
+                    {publication.classifications?.[0] ? (
+                      <Badge className={cn(getClassificationStatusColor(publication.classifications[0].status.id), "font-medium")}>
+                        {publication.classifications[0].status.value || "-"}
+                      </Badge>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
+                 
                   <TableCell className="text-gray-600 py-3 whitespace-nowrap">
                     {dayjs(publication.createdAt || null).format("DD/MM/YYYY HH:mm")}
                   </TableCell>
@@ -634,17 +622,11 @@ export function PublicationsTable({
           label: c.classification
         })) || []}
       />
-
-      <Dialog open={isTextModalOpen} onOpenChange={setIsTextModalOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Texto da Publicação</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4 text-gray-700 whitespace-pre-wrap max-h-[80vh] overflow-y-auto">
-            {selectedText}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ModalViewText
+        isOpen={isTextModalOpen}
+        onClose={() => setIsTextModalOpen(false)}
+        text={selectedText}
+      />
     </div>
   );
 } 
