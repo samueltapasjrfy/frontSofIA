@@ -12,5 +12,5 @@ export const validateEmail = (email: string) => {
   return emailRegex.test(email);
 };
 
-export const isEmpty = (value?: String | null | never[]) =>
+export const isEmpty = (value?: string | null | never[]) =>
   value === '' || value === null || value === undefined || value?.length === 0;

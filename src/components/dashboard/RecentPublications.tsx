@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { PublicationStatus } from "@/contexts/DashboardContext";
 import { Eye, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PublicationsApi } from "@/api/publicationsApi";

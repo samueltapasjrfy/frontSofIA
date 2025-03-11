@@ -48,6 +48,7 @@ export function ReclassifyPublicationModal({
       await onConfirm(selectedOption);
       handleClose();
     } catch (error) {
+      console.log(error)
       setError("Ocorreu um erro ao reclassificar a publicação");
     } finally {
       setIsSubmitting(false);

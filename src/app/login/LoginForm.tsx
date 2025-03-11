@@ -65,6 +65,7 @@ function LoginFormContent() {
         toast.error('Credenciais inválidas')
       }
     } catch (error) {
+      console.log(error)
       toast.error('Erro ao fazer login')
     } finally {
       setLoading(false)

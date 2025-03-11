@@ -32,7 +32,6 @@ import dayjs from "dayjs";
 import PopConfirm from "../ui/popconfirm";
 import { toast } from "sonner";
 import { ReclassifyPublicationModal } from "./ReclassifyPublicationModal";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useClassifications } from "@/hooks/useClassifications";
 import { usePublications } from "@/hooks/usePublications";
 import { usePublicationStats } from "@/hooks/usePublicationStats";

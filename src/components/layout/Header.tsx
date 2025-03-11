@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useFirm } from "@/contexts/FirmContext";
 import { Button } from "@/components/ui/button";
 import { 
   LogOut, 
@@ -19,7 +18,6 @@ import {
 import { useRouter } from "next/navigation";
 
 export function Header() {
-  const { firmData } = useFirm();
   const router = useRouter();
   const [userName] = useState("Usuário"); // Isso seria obtido do contexto de autenticação
   const [companyName, setCompanyName] = useState('');

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PublicationStats } from "@/components/publications/PublicationStats";
 import { PublicationsTable } from "@/components/publications/PublicationsTable";
 import { ImportPublicationModal } from "@/components/publications/ImportPublicationModal";

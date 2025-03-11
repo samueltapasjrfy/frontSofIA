@@ -1,7 +1,5 @@
 "use client";
 
-import { useContext } from "react";
-import { DashboardContext } from "@/contexts/DashboardContext";
 import { StatCard } from "./StatCard";
 import { BarChart } from "./BarChart";
 import { PieChart } from "./PieChart";

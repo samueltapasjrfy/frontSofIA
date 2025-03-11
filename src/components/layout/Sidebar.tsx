@@ -8,10 +8,6 @@ import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, 
   FileText, 
-  BookOpen, 
-  Scale, 
-  BookMarked, 
-  Settings, 
   Menu,
   ChevronLeft,
   ChevronRight
