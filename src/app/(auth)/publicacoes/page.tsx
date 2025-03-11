@@ -8,6 +8,7 @@ import { Upload } from "lucide-react";
 import { PublicationsApi } from "@/api/publicationsApi";
 import { toast } from "sonner"
 import ModalImportData from "@/components/modalImportData/modalImportData";
+import { usePublications } from "@/hooks/usePublications";
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -16,47 +17,34 @@ const litigationColumns = {
 }
 
 export default function PublicationsPage() {
-  const [publications, setPublications] = useState<PublicationsApi.FindAll.Response>({
-    publications: [],
-    total: 0
-  });
   const [isModalImportDataOpen, setIsModalImportDataOpen] = useState(false);
-  const [pagination, setPagination] = useState({ page: 1, size: 10 });
-  const [stats, setStats] = useState<PublicationsApi.Report.Response>({
-    total: 0,
-    classified: 0,
-    errors: 0,
-    processing: 0,
-    pending: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const { invalidateQuery: invalidatePublications } = usePublications();
 
   const discardPublication = async (id: string) => {
     try {
       await PublicationsApi.delete(id);
       toast.success("Publicação descartada com sucesso");
-      await fetchData();
+      invalidatePublications();
     } catch (error) {
       console.error(error);
       toast.error("Erro ao descartar publicação");
     }
   };
 
-  const confirmPublication = async (id: string) => {
+  const confirmPublication = async (publication: PublicationsApi.FindAll.Publication) => {
     try {
-      const publication = publications.publications.find(p => p.id === id);
       if (!publication?.classifications?.[0]) {
         toast.error("Publicação não possui classificação para aprovar");
         return;
       }
 
       await PublicationsApi.approveClassification({
-        idPublication: id,
+        idPublication: publication.id,
         idClassification: publication.classifications[0].id
       });
 
       toast.success("Classificação aprovada com sucesso");
-      await fetchData();
+      invalidatePublications();
     } catch (error) {
       console.error(error);
       toast.error("Erro ao aprovar classificação");
@@ -89,9 +77,7 @@ export default function PublicationsPage() {
     }
     toast.success("Publicações importadas com sucesso");
     setIsModalImportDataOpen(false);
-    setTimeout(() => {
-      resetPublications();
-    }, 1000);
+    invalidatePublications();
     return true;
   };
 
@@ -101,46 +87,15 @@ export default function PublicationsPage() {
       text: data.text,
       idInternal: data.idInternal,
     });
-    console.log(response);
     if (response.error) {
       toast.error(response.message || "Erro ao importar publicação");
       return false;
     }
     toast.success("Publicação importada com sucesso");
-    resetPublications();
     setIsImportModalOpen(false);
+    invalidatePublications();
     return true;
   };
-
-  const resetPublications = async () => {
-    if (pagination.page !== 1) return setPagination({ page: 1, size: pagination.size });
-    await fetchPublications();
-    await fetchStats();
-  };
-
-  const fetchPublications = async () => {
-    const response = await PublicationsApi.findAll({
-      page: pagination.page,
-      limit: pagination.size,
-    });
-    setPublications(response);
-  };
-
-  const fetchStats = async () => {
-    const response = await PublicationsApi.getStatusReport();
-    setStats(response);
-  };
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    await fetchPublications();
-    await fetchStats();
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [pagination.page, pagination.size]);
 
   return (
     <div className="p-6 space-y-6">
@@ -164,17 +119,11 @@ export default function PublicationsPage() {
         </div>
       </div>
 
-      <PublicationStats stats={stats} />
+      <PublicationStats />
 
       <PublicationsTable
-        publications={publications.publications}
-        total={publications.total}
         onConfirm={confirmPublication}
         onDiscard={discardPublication}
-        pagination={pagination}
-        setPagination={setPagination}
-        isLoading={isLoading}
-        onRefresh={fetchData}
       />
 
       <ImportPublicationModal

@@ -38,7 +38,7 @@ function SelectTrigger({
       )}
       {...props}
     >
-      {children}
+      <span className="truncate max-w-full">{children}</span>
       <SelectPrimitive.Icon asChild>
         <ChevronDownIcon className="size-4 opacity-50" />
       </SelectPrimitive.Icon>

@@ -27,37 +27,28 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PublicationsApi } from "@/api/publicationsApi";
-import { CLASSIFICATION_STATUS, PUBLICATION_STATUS } from "@/constants/publications";
+import { CLASSIFICATION_STATUS, PUBLICATION_CASE_TYPE, PUBLICATION_STATUS } from "@/constants/publications";
 import dayjs from "dayjs";
 import PopConfirm from "../ui/popconfirm";
 import { toast } from "sonner";
 import { ReclassifyPublicationModal } from "./ReclassifyPublicationModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useClassifications } from "@/hooks/useClassifications";
+import { usePublications } from "@/hooks/usePublications";
+import { usePublicationStats } from "@/hooks/usePublicationStats";
 
 interface PublicationsTableProps {
-  publications: PublicationsApi.FindAll.Publication[];
-  onConfirm: (id: string) => void;
+  onConfirm: (publication: PublicationsApi.FindAll.Publication) => void;
   onDiscard: (id: string) => void;
-  onRefresh: () => void;
-  isLoading?: boolean;
   className?: string;
-  total: number;
-  pagination: { page: number; size: number };
-  setPagination: (pagination: { page: number; size: number }) => void;
 }
 
 type FilterStatus = { type: 'classification' | 'processing'; value: string } | "";
 
 export function PublicationsTable({
-  publications,
   onConfirm,
   onDiscard,
-  onRefresh,
-  isLoading = false,
   className,
-  total,
-  pagination,
-  setPagination
 }: PublicationsTableProps) {
   const [filters, setFilters] = useState<{
     processNumber: string;
@@ -73,45 +64,28 @@ export function PublicationsTable({
     confidence: null,
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [totalPages, setTotalPages] = useState(Math.ceil(total / pagination.size));
+  const [totalPages, setTotalPages] = useState(0);
   const [isReclassifyModalOpen, setIsReclassifyModalOpen] = useState(false);
   const [selectedPublicationId, setSelectedPublicationId] = useState<string>("");
-  const [classifications, setClassifications] = useState<Array<{ value: string, label: string }>>([]);
   const [isExporting, setIsExporting] = useState(false);
-  const [typeOptions, setTypeOptions] = useState<Array<{ id: number, classification: string }>>([]);
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
   const [selectedText, setSelectedText] = useState("");
-
-  const fetchClassifications = async () => {
-    try {
-      const response = await PublicationsApi.findAllClassifications();
-      setTypeOptions(response.classifications);
-      setClassifications(
-        response.classifications.map(c => ({
-          value: c.id.toString(),
-          label: c.classification
-        }))
-      );
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao carregar classificações");
-    }
-  };
+  const { getPublicationsQuery, changeFilter: changeFilterPublications, publicationParams } = usePublications();
+  const { getPublicationStatsQuery } = usePublicationStats();
+  const { getClassificationsQuery, changeFilter: changeFilterClassifications } = useClassifications(PUBLICATION_CASE_TYPE.CIVIL);
+  const { getClassificationsQuery: allClassifications } = useClassifications();
 
   // Função para determinar a cor do badge de status
+  const statusColors = {
+    [PUBLICATION_STATUS.COMPLETED]: "bg-primary-green text-white",
+    [PUBLICATION_STATUS.PENDING]: "bg-yellow-400 text-black",
+    [PUBLICATION_STATUS.PROCESSING]: "bg-primary-blue text-white",
+    [PUBLICATION_STATUS.ERROR]: "bg-red-500 text-white",
+    default: "bg-gray-500 text-white"
+  };
+
   const getStatusColor = (status: number) => {
-    switch (status) {
-      case PUBLICATION_STATUS.COMPLETED:
-        return "bg-primary-green text-white";
-      case PUBLICATION_STATUS.PENDING:
-        return "bg-yellow-400 text-black";
-      case PUBLICATION_STATUS.PROCESSING:
-        return "bg-primary-blue text-white";
-      case PUBLICATION_STATUS.ERROR:
-        return "bg-red-500 text-white";
-      default:
-        return "bg-gray-500 text-white";
-    }
+    return statusColors[status] || statusColors.default;
   };
 
   // Função para truncar texto e adicionar "ver mais"
@@ -137,56 +111,55 @@ export function PublicationsTable({
   };
 
   // Função para determinar a cor do badge de status da classificação
+  const classificationStatusColors: Record<string | number, string> = {
+    1: "bg-yellow-400 text-black", // PENDING
+    2: "bg-primary-green text-white", // CONFIRMED
+    3: "bg-red-500 text-white", // REJECTED
+    4: "bg-blue-500 text-white", // RECLASSIFIED
+    default: "bg-gray-500 text-white"
+  };
+
   const getClassificationStatusColor = (status: number) => {
-    switch (status) {
-      case 1: // PENDING
-        return "bg-yellow-400 text-black";
-      case 2: // CONFIRMED
-        return "bg-primary-green text-white";
-      case 3: // REJECTED
-        return "bg-red-500 text-white";
-      case 4: // RECLASSIFIED
-        return "bg-blue-500 text-white";
-      default:
-        return "bg-gray-500 text-white";
-    }
+    return classificationStatusColors[status] || classificationStatusColors.default;
   };
 
   // Aplicar filtros
   const filteredPublications = useMemo(() => {
-    return publications.filter(pub => {
+    return (getPublicationsQuery.data?.publications || []).filter(pub => {
       const matchesProcessNumber = String(pub.litigationNumber || "").toLowerCase().includes(filters.processNumber.toLowerCase());
       const matchesText = String(pub.text || "").toLowerCase().includes(filters.text.toLowerCase());
       const matchesType = !filters.type || pub.classifications?.[0]?.classification === filters.type;
-      
+
       const matchesStatus = !filters.status || (
-        filters.status.type === 'classification' 
+        filters.status.type === 'classification'
           ? pub.classifications?.[0]?.status.value === filters.status.value
           : pub.status.value === filters.status.value
       );
 
       const matchesConfidence = !filters.confidence ||
         (pub.classifications?.[0]?.confidence && (
-          filters.confidence === 69 
+          filters.confidence === 69
             ? pub.classifications[0].confidence < 0.7
             : pub.classifications[0].confidence >= (filters.confidence / 100)
         ));
 
       return matchesProcessNumber && matchesText && matchesType && matchesStatus && matchesConfidence;
     });
-  }, [publications, filters]);
-
-  useEffect(() => {
-    setTotalPages(Math.ceil(total / pagination.size));
-  }, [total, pagination.size]);
+  }, [getPublicationsQuery.data?.publications, filters]);
 
   const handlePageChange = (page: number) => {
-    setPagination({ ...pagination, page });
+    changeFilterPublications({
+      page: page,
+      limit: publicationParams.limit
+    });
   };
 
   const handleFilterChange = (key: keyof typeof filters, value: string | number | null | FilterStatus) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setPagination({ ...pagination, page: 1 }); // Reset to first page when filter changes
+    changeFilterPublications({
+      page: 1,
+      limit: publicationParams.limit
+    });
   };
 
   const clearFilters = () => {
@@ -197,17 +170,28 @@ export function PublicationsTable({
       status: "",
       confidence: null,
     });
-    setPagination({ ...pagination, page: 1 });
+    changeFilterPublications({
+      page: 1,
+      limit: publicationParams.limit
+    });
   };
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
 
-  const handleReclassifyClick = (publicationId: string) => {
-    setSelectedPublicationId(publicationId);
+  const handleReclassifyClick = (publication: PublicationsApi.FindAll.Publication) => {
+    setSelectedPublicationId(publication.id);
+    changeFilterClassifications({
+      idCaseType: publication.caseType?.id,
+    });
     setIsReclassifyModalOpen(true);
   };
+
+  const onRefresh = () => {
+    getPublicationsQuery.refetch();
+    getPublicationStatsQuery.refetch();
+  }
 
   const handleReclassifyConfirm = async (selectedOption: string) => {
     if (!selectedPublicationId) return;
@@ -241,8 +225,8 @@ export function PublicationsTable({
   };
 
   useEffect(() => {
-    fetchClassifications();
-  }, []);
+    setTotalPages(Math.ceil(getPublicationsQuery.data?.total || 0 / publicationParams.limit));
+  }, [getPublicationsQuery.data?.total, publicationParams.limit]);
 
   return (
     <div className={cn("bg-white border rounded-lg shadow-sm overflow-hidden", className)}>
@@ -286,7 +270,7 @@ export function PublicationsTable({
                 showFilters && "bg-blue-50 border-primary-blue text-primary-blue"
               )}
             >
-              <RefreshCcw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              <RefreshCcw className={`h-4 w-4 ${getPublicationsQuery.isFetching ? "animate-spin" : ""}`} />
               Recarregar
             </Button>
           </div>
@@ -329,7 +313,7 @@ export function PublicationsTable({
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="">Todos</option>
-                {typeOptions.map((type) => (
+                {(allClassifications.data?.classifications || []).map((type) => (
                   <option key={type.id} value={type.classification}>
                     {type.classification}
                   </option>
@@ -401,8 +385,8 @@ export function PublicationsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b">
-              <TableHead className="font-semibold text-gray-700 w-[300px] py-3">Nº Processo</TableHead>
-              <TableHead className="font-semibold text-gray-700 w-[10%] py-3">Texto</TableHead>
+              <TableHead className="font-semibold text-gray-700 py-3 min-w-[230px] max-w-[230px]">Nº Processo</TableHead>
+              <TableHead className="font-semibold text-gray-700 min-w-[200px] max-w-[200px] py-3">Texto</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Modalidade</TableHead>
               <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Tipo</TableHead>
               <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status Classificação</TableHead>
@@ -414,7 +398,7 @@ export function PublicationsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {getPublicationsQuery.isFetching ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                   <div className="flex justify-center items-center">
@@ -501,7 +485,7 @@ export function PublicationsTable({
                       <PopConfirm
                         title="Confirmar"
                         description="Tem certeza que deseja confirmar esta publicação?"
-                        onConfirm={async () => onConfirm(publication.id)}
+                        onConfirm={async () => onConfirm(publication)}
                         disabled={btnDisabled(publication)}
                       >
                         <Button
@@ -517,7 +501,7 @@ export function PublicationsTable({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleReclassifyClick(publication.id)}
+                        onClick={() => handleReclassifyClick(publication)}
                         disabled={btnDisabled(publication)}
                         className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                         title="Reclassificar"
@@ -550,13 +534,16 @@ export function PublicationsTable({
       {filteredPublications.length > 0 && (
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <div className="flex items-center text-sm text-gray-500">
-            Mostrando {Math.min(filteredPublications.length, (pagination.page - 1) * pagination.size + 1)} a {Math.min(filteredPublications.length, pagination.page * pagination.size)} de {filteredPublications.length} resultados
+            Mostrando {Math.min(filteredPublications.length, (publicationParams.page - 1) * publicationParams.limit + 1)} a {Math.min(filteredPublications.length, publicationParams.page * publicationParams.limit)} de {filteredPublications.length} resultados
           </div>
           <div className="flex items-center gap-2">
             <select
-              value={pagination.size}
+              value={publicationParams.limit}
               onChange={(e) => {
-                setPagination({ ...pagination, size: Number(e.target.value), page: 1 });
+                changeFilterPublications({
+                  page: 1,
+                  limit: Number(e.target.value)
+                });
               }}
               className="rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
@@ -569,8 +556,8 @@ export function PublicationsTable({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page === 1}
+                onClick={() => handlePageChange(publicationParams.page - 1)}
+                disabled={publicationParams.page === 1}
                 className="h-10 w-10"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -583,20 +570,20 @@ export function PublicationsTable({
                 pages.push(1);
 
                 // Show ellipsis and pages around current page if not near start
-                if (pagination.page > 2) {
+                if (publicationParams.page > 2) {
                   pages.push('...');
                   // Show one page before current page
-                  pages.push(pagination.page - 1);
+                  pages.push(publicationParams.page - 1);
                 }
 
                 // Show current page if not already included
-                if (!pages.includes(pagination.page)) {
-                  pages.push(pagination.page);
+                if (!pages.includes(publicationParams.page)) {
+                  pages.push(publicationParams.page);
                 }
 
                 // Show one page after current page if not near end
-                if (pagination.page < totalPagesCount - 1) {
-                  pages.push(pagination.page + 1);
+                if (publicationParams.page < totalPagesCount - 1) {
+                  pages.push(publicationParams.page + 1);
                   pages.push('...');
                 }
 
@@ -611,12 +598,12 @@ export function PublicationsTable({
                   ) : (
                     <Button
                       key={pageNumber}
-                      variant={pagination.page === pageNumber ? "default" : "outline"}
+                      variant={publicationParams.page === pageNumber ? "default" : "outline"}
                       size="sm"
                       onClick={() => handlePageChange(pageNumber as number)}
                       className={cn(
                         "h-10 w-10 p-0",
-                        pagination.page === pageNumber && "bg-primary-blue hover:bg-blue-700"
+                        publicationParams.page === pageNumber && "bg-primary-blue hover:bg-blue-700"
                       )}
                     >
                       {pageNumber}
@@ -627,8 +614,8 @@ export function PublicationsTable({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page === totalPages}
+                onClick={() => handlePageChange(publicationParams.page + 1)}
+                disabled={publicationParams.page === totalPages}
                 className="h-10 w-10"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -642,15 +629,18 @@ export function PublicationsTable({
         isOpen={isReclassifyModalOpen}
         onClose={() => setIsReclassifyModalOpen(false)}
         onConfirm={handleReclassifyConfirm}
-        options={classifications}
+        options={getClassificationsQuery.data?.classifications.map(c => ({
+          value: c.id.toString(),
+          label: c.classification
+        })) || []}
       />
 
       <Dialog open={isTextModalOpen} onOpenChange={setIsTextModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Texto da Publicação</DialogTitle>
           </DialogHeader>
-          <div className="mt-4 text-gray-700 whitespace-pre-wrap">
+          <div className="mt-4 text-gray-700 whitespace-pre-wrap max-h-[80vh] overflow-y-auto">
             {selectedText}
           </div>
         </DialogContent>

@@ -32,24 +32,25 @@ export function ReclassifyPublicationModal({
   onConfirm,
   options 
 }: ReclassifyPublicationModalProps) {
-  const [selectedOption, setSelectedOption] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const [selectedOption, setSelectedOption] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirm = async () => {
     if (!selectedOption) {
       setError("Por favor, selecione uma opção");
       return;
     }
-    
-    setLoading(true);
+
+    setError("");
+    setIsSubmitting(true);
     try {
       await onConfirm(selectedOption);
       handleClose();
     } catch (error) {
-      setError("Erro ao processar a solicitação");
+      setError("Ocorreu um erro ao reclassificar a publicação");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -59,9 +60,14 @@ export function ReclassifyPublicationModal({
     onClose();
   };
 
+  // Find the label for the selected option
+  const selectedLabel = options.find(opt => opt.value === selectedOption)?.label || "";
+  // Truncate the label if it's too long
+  const displayLabel = selectedLabel.length > 100 ? selectedLabel.substring(0, 100) + "..." : selectedLabel;
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px] overflow-visible">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gray-800">Reclassificar Publicação</DialogTitle>
           <DialogDescription>
@@ -70,22 +76,37 @@ export function ReclassifyPublicationModal({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Select
-              value={selectedOption}
-              onValueChange={setSelectedOption}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione uma opção" />
-              </SelectTrigger>
-              <SelectContent>
-                {options.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid gap-2 w-full">
+            <div className="relative w-full">
+              <Select
+                value={selectedOption}
+                onValueChange={setSelectedOption}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue 
+                    placeholder="Selecione uma opção"
+                    className="truncate"
+                  >
+                    {selectedOption ? displayLabel : "Selecione uma opção"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent 
+                  position="popper" 
+                  className="w-[var(--radix-select-trigger-width)] z-50" 
+                  sideOffset={5}
+                >
+                  {options.map((option) => (
+                    <SelectItem 
+                      key={option.value} 
+                      value={option.value}
+                      className="truncate"
+                    >
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             {error && (
               <div className="flex items-center text-red-500 text-sm mt-1">
                 <AlertCircle className="h-4 w-4 mr-1" />
@@ -96,15 +117,11 @@ export function ReclassifyPublicationModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} className="mr-2">
+          <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={loading}
-            className="bg-primary-blue hover:bg-blue-700 text-white"
-          >
-            {loading ? "Processando..." : "Confirmar"}
+          <Button onClick={handleConfirm} disabled={isSubmitting}>
+            {isSubmitting ? "Confirmando..." : "Confirmar"}
           </Button>
         </DialogFooter>
       </DialogContent>

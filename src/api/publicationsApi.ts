@@ -57,8 +57,10 @@ export const PublicationsApi = {
     approveClassification: async (params: PublicationsApi.ApproveClassification.Params): Promise<void> => {
         await http.patch(`/Publications/${params.idPublication}/Classification/${params.idClassification}/approve`);
     },
-    findAllClassifications: async (): Promise<PublicationsApi.FindAllClassifications.Response> => {
-        const response = await http.get<PublicationsApi.FindAllClassifications.Response>('/Classifications');
+    findAllClassifications: async (params: PublicationsApi.FindAllClassifications.Params): Promise<PublicationsApi.FindAllClassifications.Response> => {
+        const query = new URLSearchParams();
+        if (params.idCaseType) query.set('idCaseType', params.idCaseType.toString());
+        const response = await http.get<PublicationsApi.FindAllClassifications.Response>(`/Classifications?${query.toString()}`);
         return response.data;
     },
     delete: async (id: string): Promise<void> => {
@@ -215,10 +217,17 @@ export namespace PublicationsApi {
     }
 
     export namespace FindAllClassifications {
+        export type Params = {
+            idCaseType?: number;
+        }
         export type Response = {
             classifications: {
                 id: number;
                 classification: string;
+                caseType?: {
+                    id: number;
+                    caseType: string;
+                }
             }[];
             total: number;
         }

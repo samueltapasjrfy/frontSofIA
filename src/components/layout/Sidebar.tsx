@@ -17,7 +17,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/useMobile";
 
 interface SidebarItemProps {
   icon: React.ReactNode;
