@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { queryClient } from "@/lib/reactQuery";
 import { PublicationStats } from "@/components/publications/PublicationStats";
 import { PublicationsTable } from "@/components/publications/PublicationsTable";
 import { ImportPublicationModal } from "@/components/publications/ImportPublicationModal";
@@ -9,6 +10,9 @@ import { PublicationsApi } from "@/api/publicationsApi";
 import { toast } from "sonner"
 import ModalImportData from "@/components/modalImportData/modalImportData";
 import { usePublications } from "@/hooks/usePublications";
+import { QUERY_KEYS } from "@/constants/cache";
+import { usePublicationStats } from "@/hooks/usePublicationStats";
+import { useReport } from "@/hooks/useReport";
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -19,12 +23,22 @@ const litigationColumns = {
 export default function PublicationsPage() {
   const [isModalImportDataOpen, setIsModalImportDataOpen] = useState(false);
   const { invalidateQuery: invalidatePublications } = usePublications();
+  const { invalidateQuery: invalidatePublicationStats } = usePublicationStats();
+  const { refreshReport } = useReport();
+
+  const onRefresh = () => {
+    invalidatePublications();
+    invalidatePublicationStats();
+    refreshReport();
+    queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATIONS] });
+    queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATION_STATS] });
+  }
 
   const discardPublication = async (id: string) => {
     try {
       await PublicationsApi.delete(id);
       toast.success("Publicação descartada com sucesso");
-      invalidatePublications();
+      onRefresh()
     } catch (error) {
       console.error(error);
       toast.error("Erro ao descartar publicação");
@@ -61,6 +75,7 @@ export default function PublicationsPage() {
     setIsImportModalOpen(false);
   };
 
+
   const handleFinishImport = async (
     rows: Array<{ [k: string]: string }>,
     expectedColumnsToRows: { [k: string]: string },
@@ -77,7 +92,7 @@ export default function PublicationsPage() {
     }
     toast.success("Publicações importadas com sucesso");
     setIsModalImportDataOpen(false);
-    invalidatePublications();
+    setTimeout(onRefresh, 1000);
     return true;
   };
 
@@ -93,7 +108,7 @@ export default function PublicationsPage() {
     }
     toast.success("Publicação importada com sucesso");
     setIsImportModalOpen(false);
-    invalidatePublications();
+    onRefresh();
     return true;
   };
 
@@ -124,6 +139,7 @@ export default function PublicationsPage() {
       <PublicationsTable
         onConfirm={confirmPublication}
         onDiscard={discardPublication}
+        onRefresh={onRefresh}
       />
 
       <ImportPublicationModal

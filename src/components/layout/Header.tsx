@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { logout } from "@/utils/logout";
 
 export function Header() {
   const router = useRouter();
@@ -30,9 +31,7 @@ export function Header() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('companyName');
-    router.push('/login');
+    logout();
   };
 
   return (

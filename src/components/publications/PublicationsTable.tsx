@@ -36,10 +36,13 @@ import { useClassifications } from "@/hooks/useClassifications";
 import { usePublications } from "@/hooks/usePublications";
 import { usePublicationStats } from "@/hooks/usePublicationStats";
 import ModalViewText from "../modalViewText";
+import { queryClient } from "@/lib/reactQuery";
+import { QUERY_KEYS } from "@/constants/cache";
 
 interface PublicationsTableProps {
   onConfirm: (publication: PublicationsApi.FindAll.Publication) => void;
   onDiscard: (id: string) => void;
+  onRefresh: () => void;
   className?: string;
 }
 
@@ -48,6 +51,7 @@ type FilterStatus = { type: 'classification' | 'processing'; value: string } | "
 export function PublicationsTable({
   onConfirm,
   onDiscard,
+  onRefresh,
   className,
 }: PublicationsTableProps) {
   const [filters, setFilters] = useState<{
@@ -71,7 +75,6 @@ export function PublicationsTable({
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const { getPublicationsQuery, changeFilter: changeFilterPublications, publicationParams } = usePublications();
-  const { getPublicationStatsQuery } = usePublicationStats();
   const { getClassificationsQuery, changeFilter: changeFilterClassifications } = useClassifications(PUBLICATION_CASE_TYPE.CIVIL);
   const { getClassificationsQuery: allClassifications } = useClassifications();
 
@@ -173,11 +176,6 @@ export function PublicationsTable({
     });
     setIsReclassifyModalOpen(true);
   };
-
-  const onRefresh = () => {
-    getPublicationsQuery.refetch();
-    getPublicationStatsQuery.refetch();
-  }
 
   const handleReclassifyConfirm = async (selectedOption: string) => {
     if (!selectedPublicationId) return;

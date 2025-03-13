@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { Header } from '@/components/layout/Header'
 import { Sidebar } from '@/components/layout/Sidebar'
-import ReactQueryProvider from '@/providers/ReactQueryProvider'
 
 export default async function AuthLayout({
   children,
@@ -22,11 +21,9 @@ export default async function AuthLayout({
       <Header />
       <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
-        <ReactQueryProvider>
-          <main className="flex-1 overflow-auto p-6">
-            {children}
-          </main>
-        </ReactQueryProvider>
+        <main className="flex-1 overflow-auto p-6">
+          {children}
+        </main>
       </div>
     </div>
   )

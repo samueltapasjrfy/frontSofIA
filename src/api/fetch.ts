@@ -1,3 +1,4 @@
+import { logout } from "@/utils/logout";
 import { APIResponse } from "./response";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -90,10 +91,3 @@ export const http = {
     patch: <T = any>(url: string, body?: any) => request<T>('PATCH', url, body),
     delete: <T = any>(url: string) => request<T>('DELETE', url),
 };
-
-function logout() {
-    // Remove o cookie de autenticação
-    document.cookie = 'auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    // Redireciona para a página de login
-    window.location.href = '/login';
-}
