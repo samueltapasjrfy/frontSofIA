@@ -209,7 +209,7 @@ export function PublicationsTable({
   };
 
   useEffect(() => {
-    setTotalPages(Math.ceil(getPublicationsQuery.data?.total || 0 / publicationParams.limit));
+    setTotalPages(Math.ceil((getPublicationsQuery.data?.total || 0) / publicationParams.limit));
   }, [getPublicationsQuery.data?.total, publicationParams.limit]);
 
   return (
