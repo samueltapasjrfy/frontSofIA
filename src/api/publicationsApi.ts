@@ -11,23 +11,7 @@ export const PublicationsApi = {
         // Sofia no modo Multi-label retorna um array de classificações para cada publicação
         // Então é necessário pegar a classificação com a maior confiança
         if (response.data.publications.length > 0) {
-            response.data.publications = response.data.publications.map(publication => {
-                if (!publication.classifications || publication.classifications.length === 0) return publication
-                const classification = publication.classifications.reduce((acc, curr) => {
-                    if (curr.confidence > acc.confidence) return curr
-                    return acc
-                }, publication.classifications[0])
-
-                return {
-                    ...publication,
-                    classifications: [{
-                        id: classification.id,
-                        classification: classification.classification,
-                        confidence: classification.confidence,
-                        status: classification.status
-                    }]
-                }
-            });
+            response.data.publications = await filterClassifications(response)
         }
         return response.data;
     },
@@ -72,7 +56,9 @@ export const PublicationsApi = {
             const response = await http.get<PublicationsApi.FindAll.Response>('/Publications', { 
                 noPagination: true 
             });
-            
+            if (response.data.publications.length > 0) {
+                response.data.publications = await filterClassifications(response)
+            }
             // Preparar dados para exportação
             const data = response.data.publications.map(pub => ({
                 'Nº Processo': pub.litigationNumber || '-',
@@ -232,4 +218,26 @@ export namespace PublicationsApi {
             total: number;
         }
     }
+}
+
+
+const filterClassifications = async (response: APIResponse<PublicationsApi.FindAll.Response>): Promise<PublicationsApi.FindAll.Publication[]> => {
+    response.data.publications = response.data.publications.map(publication => {
+        if (!publication.classifications || publication.classifications.length === 0) return publication
+        const classification = publication.classifications.reduce((acc, curr) => {
+            if (curr.confidence > acc.confidence) return curr
+            return acc
+        }, publication.classifications[0])
+
+        return {
+            ...publication,
+            classifications: [{
+                id: classification.id,
+                classification: classification.classification,
+                confidence: classification.confidence,
+                status: classification.status
+            }]
+        }
+    });
+    return response.data.publications
 }
