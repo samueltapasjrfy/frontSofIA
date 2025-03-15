@@ -105,19 +105,21 @@ export function Dashboard() {
       <div className="mb-4">
         <h2 className="text-xl font-semibold mb-4 text-gray-800">Visão Geral</h2>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mb-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mb-4 " style={{ minHeight: '300px' }}>
           {isLoading ? (
             <SkeletonChart title="Percentual de Confiança por Tipo" />
           ) : (
-            <BarChart
-              title="Percentual de Confiança por Tipo"
-              description="Média de confiança por classificação"
-              data={(classificationConfidence?.classifications || []).map(item => ({
-                label: item.name,
-                value: item.averageConfidence * 100
-              })).slice(0, 7)}
-              maxValue={100}
-            />
+            <>
+              <BarChart
+                title="Percentual de Confiança por Tipo"
+                description="Média de confiança por classificação"
+                data={(classificationConfidence?.classifications || []).map(item => ({
+                  label: item.name,
+                  value: item.averageConfidence * 100
+                })).slice(0, 7)}
+                maxValue={100}
+              />
+            </>
           )}
           {isLoading ? (
             <SkeletonChart title="Distribuição de Publicações" />

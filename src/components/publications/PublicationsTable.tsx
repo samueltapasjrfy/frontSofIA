@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, ReactNode } from "react";
 import {
   Table,
   TableBody,
@@ -34,10 +34,7 @@ import { toast } from "sonner";
 import { ReclassifyPublicationModal } from "./ReclassifyPublicationModal";
 import { useClassifications } from "@/hooks/useClassifications";
 import { usePublications } from "@/hooks/usePublications";
-import { usePublicationStats } from "@/hooks/usePublicationStats";
 import ModalViewText from "../modalViewText";
-import { queryClient } from "@/lib/reactQuery";
-import { QUERY_KEYS } from "@/constants/cache";
 
 interface PublicationsTableProps {
   onConfirm: (publication: PublicationsApi.FindAll.Publication) => void;
@@ -47,6 +44,14 @@ interface PublicationsTableProps {
 }
 
 type FilterStatus = { type: 'classification' | 'processing'; value: string } | "";
+
+// Interface para definir a estrutura de cada coluna
+interface Column {
+  key: string;
+  label: string;
+  className?: string;
+  render: (publication: PublicationsApi.FindAll.Publication) => ReactNode;
+}
 
 export function PublicationsTable({
   onConfirm,
@@ -78,15 +83,13 @@ export function PublicationsTable({
   const { getClassificationsQuery, changeFilter: changeFilterClassifications } = useClassifications(PUBLICATION_CASE_TYPE.CIVIL);
   const { getClassificationsQuery: allClassifications } = useClassifications();
 
-
-
   const getStatusColor = (status: number) => {
     return publicationStatusColors[status] || publicationStatusColors.default;
   };
 
   // Função para truncar texto e adicionar "ver mais"
   const truncateText = (text: string, maxLength: number = 100) => {
-    if (text.length <= maxLength) return text;
+    if (!text || text.length <= maxLength) return text || "";
     return (
       <div className="flex items-center gap-2">
         <span className="line-clamp-2">{text.substring(0, maxLength)}...</span>
@@ -106,11 +109,182 @@ export function PublicationsTable({
     );
   };
 
-
-
   const getClassificationStatusColor = (status: number) => {
     return classificationStatusColors[status] || classificationStatusColors.default;
   };
+
+  const handleReclassifyClick = (publication: PublicationsApi.FindAll.Publication) => {
+    setSelectedPublicationId(publication.id);
+    changeFilterClassifications({
+      idCaseType: publication.caseType?.id,
+    });
+    setIsReclassifyModalOpen(true);
+  };
+
+  const btnDisabled = (publication: PublicationsApi.FindAll.Publication) => {
+    return [PUBLICATION_STATUS.PROCESSING].includes(publication.status.id) || publication.classifications?.[0]?.status.id !== CLASSIFICATION_STATUS.PENDING;
+  }
+
+  // Definição das colunas da tabela
+  const columns: Column[] = [
+    {
+      key: 'litigationNumber',
+      label: 'Nº Processo',
+      className: 'font-semibold text-gray-700 py-3 w-[200px]',
+      render: (publication) => (
+        <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
+          {publication.litigationNumber}
+        </span>
+      )
+    },
+    {
+      key: 'text',
+      label: 'Texto',
+      className: 'font-semibold text-gray-700 py-3 w-[100px]',
+      render: (publication) => (
+        <span className="text-gray-600">
+          {truncateText(publication.text || "", 50)}
+        </span>
+      )
+    },
+    {
+      key: 'caseType',
+      label: 'Modalidade',
+      className: 'font-semibold text-gray-700 w-[100px] py-3',
+      render: (publication) => (
+        <span className="text-gray-600">
+          {publication.caseType?.value || "-"}
+        </span>
+      )
+    },
+    {
+      key: 'classificationType',
+      label: 'Tipo Publicação',
+      className: 'font-semibold text-gray-700 w-[100px] py-3',
+      render: (publication) => (
+        <span className="text-gray-600">
+          {publication.classifications?.[0]?.classification || "-"}
+        </span>
+      )
+    },
+    {
+      key: 'confidence',
+      label: 'Confiança',
+      className: 'font-semibold text-gray-700 text-center w-[100px] py-3',
+      render: (publication) => {
+        if (publication.classifications?.[0]?.confidence === null) return "-";
+        
+        const confidence = publication.classifications?.[0]?.confidence || 0;
+        const confidencePercentage = confidence * 100;
+        
+        return (
+          <span className={cn(
+            "font-medium px-2 py-1 rounded-full text-xs inline-block min-w-[50px]",
+            confidence >= 0.9 ? "bg-green-100 text-green-800" :
+              confidence >= 0.8 ? "bg-blue-100 text-blue-800" :
+                "bg-yellow-100 text-yellow-800"
+          )}>
+            {`${confidencePercentage.toFixed(0)}%`}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'processingStatus',
+      label: 'Status Processamento',
+      className: 'font-semibold text-gray-700 text-center w-[140px] py-3',
+      render: (publication) => (
+        <Badge className={cn(getStatusColor(publication.status.id), "font-medium")}>
+          {publication.status.value}
+        </Badge>
+      )
+    },
+    {
+      key: 'classificationStatus',
+      label: 'Validação',
+      className: 'font-semibold text-gray-700 text-center w-[140px] py-3',
+      render: (publication) => {
+        if (!publication.classifications?.[0]) return "-";
+        
+        return (
+          <Badge className={cn(getClassificationStatusColor(publication.classifications[0].status.id), "font-medium")}>
+            {publication.classifications[0].status.value || "-"}
+          </Badge>
+        );
+      }
+    },
+    {
+      key: 'createdAt',
+      label: 'Data Inserção',
+      className: 'font-semibold text-gray-700 w-[150px] py-3',
+      render: (publication) => (
+        <span className="text-gray-600 whitespace-nowrap">
+          {dayjs(publication.createdAt || null).format("DD/MM/YYYY HH:mm")}
+        </span>
+      )
+    },
+    {
+      key: 'processedAt',
+      label: 'Data Processamento',
+      className: 'font-semibold text-gray-700 w-[150px] py-3',
+      render: (publication) => (
+        <span className="text-gray-600 whitespace-nowrap">
+          {publication.status.id === PUBLICATION_STATUS.COMPLETED 
+            ? dayjs(publication.updatedAt || null).format("DD/MM/YYYY HH:mm") 
+            : "-"}
+        </span>
+      )
+    },
+    {
+      key: 'actions',
+      label: 'Ações',
+      className: 'font-semibold text-gray-700 text-center w-[120px] py-3',
+      render: (publication) => (
+        <div className="flex justify-center gap-1">
+          <PopConfirm
+            title="Confirmar"
+            description="Tem certeza que deseja confirmar esta publicação?"
+            onConfirm={async () => onConfirm(publication)}
+            disabled={btnDisabled(publication)}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={btnDisabled(publication)}
+              className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+              title="Confirmar"
+            >
+              <ThumbsUp className="h-4 w-4" />
+            </Button>
+          </PopConfirm>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleReclassifyClick(publication)}
+            disabled={btnDisabled(publication)}
+            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            title="Reclassificar"
+          >
+            <ThumbsDown className="h-4 w-4" />
+          </Button>
+          <PopConfirm
+            title="Descartar"
+            description="Tem certeza que deseja descartar esta publicação?"
+            onConfirm={async () => onDiscard(publication.id)}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+              title="Descartar"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </PopConfirm>
+        </div>
+      )
+    }
+  ];
 
   // Aplicar filtros
   const filteredPublications = useMemo(() => {
@@ -169,14 +343,6 @@ export function PublicationsTable({
     setShowFilters(!showFilters);
   };
 
-  const handleReclassifyClick = (publication: PublicationsApi.FindAll.Publication) => {
-    setSelectedPublicationId(publication.id);
-    changeFilterClassifications({
-      idCaseType: publication.caseType?.id,
-    });
-    setIsReclassifyModalOpen(true);
-  };
-
   const handleReclassifyConfirm = async (selectedOption: string) => {
     if (!selectedPublicationId) return;
 
@@ -191,10 +357,6 @@ export function PublicationsTable({
     toast.success("Publicação reclassificada com sucesso");
     onRefresh();
   };
-
-  const btnDisabled = (publication: PublicationsApi.FindAll.Publication) => {
-    return [PUBLICATION_STATUS.PROCESSING].includes(publication.status.id) || publication.classifications?.[0]?.status.id !== CLASSIFICATION_STATUS.PENDING;
-  }
 
   const handleExport = async () => {
     try {
@@ -369,22 +531,17 @@ export function PublicationsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b">
-              <TableHead className="font-semibold text-gray-700 py-3 w-[200px]">Nº Processo</TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3 w-[100px]">Texto</TableHead>
-              <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Modalidade</TableHead>
-              <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Tipo Publicação</TableHead>
-              <TableHead className="font-semibold text-gray-700 text-center w-[100px] py-3">Confiança</TableHead>
-              <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status Processamento</TableHead>
-              <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Validação</TableHead>
-              <TableHead className="font-semibold text-gray-700 w-[150px] py-3">Data Inserção</TableHead>
-              <TableHead className="font-semibold text-gray-700 w-[150px] py-3">Data Processamento</TableHead>
-              <TableHead className="font-semibold text-gray-700 text-center w-[120px] py-3">Ações</TableHead>
+              {columns.map((column) => (
+                <TableHead key={column.key} className={column.className}>
+                  {column.label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {getPublicationsQuery.isFetching ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={columns.length} className="text-center py-8 text-gray-500">
                   <div className="flex justify-center items-center">
                     <RefreshCw className="h-5 w-5 animate-spin mr-2" />
                     Carregando publicações...
@@ -393,7 +550,7 @@ export function PublicationsTable({
               </TableRow>
             ) : filteredPublications.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={columns.length} className="text-center py-8 text-gray-500">
                   <div className="flex flex-col items-center">
                     <Search className="h-8 w-8 mb-2 text-gray-400" />
                     <p>Nenhuma publicação encontrada</p>
@@ -418,97 +575,11 @@ export function PublicationsTable({
                     index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
                   )}
                 >
-                  <TableCell className="font-medium text-gray-700 py-3" style={{ wordBreak: 'break-all' }}>
-                    {publication.litigationNumber}
-                  </TableCell>
-                  <TableCell className="text-gray-600 py-3">
-                    {truncateText(publication.text || "", 50)}
-                  </TableCell>
-                  <TableCell className="text-gray-600 py-3">
-                    {publication.caseType?.value || "-"}
-                  </TableCell>
-                  <TableCell className="text-gray-600 py-3">
-                    {publication.classifications?.[0]?.classification || "-"}
-                  </TableCell>
-                  <TableCell className="text-center py-3">
-                    {publication.classifications?.[0]?.confidence !== null ? (
-                      <span className={cn(
-                        "font-medium px-2 py-1 rounded-full text-xs inline-block min-w-[50px]",
-                        publication.classifications?.[0]?.confidence && publication.classifications?.[0]?.confidence >= 0.9 ? "bg-green-100 text-green-800" :
-                          publication.classifications?.[0]?.confidence && publication.classifications?.[0]?.confidence >= 0.8 ? "bg-blue-100 text-blue-800" :
-                            "bg-yellow-100 text-yellow-800"
-                      )}>
-                        {publication.classifications?.[0]?.confidence ? `${(publication.classifications?.[0]?.confidence * 100).toFixed(0)}%` : "-"}
-                      </span>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center py-3">
-                    <Badge className={cn(getStatusColor(publication.status.id), "font-medium")}>
-                      {publication.status.value}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center py-3">
-                    {publication.classifications?.[0] ? (
-                      <Badge className={cn(getClassificationStatusColor(publication.classifications[0].status.id), "font-medium")}>
-                        {publication.classifications[0].status.value || "-"}
-                      </Badge>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                 
-                  <TableCell className="text-gray-600 py-3 whitespace-nowrap">
-                    {dayjs(publication.createdAt || null).format("DD/MM/YYYY HH:mm")}
-                  </TableCell>
-                  <TableCell className="text-gray-600 py-3 whitespace-nowrap">
-                    {publication.status.id === PUBLICATION_STATUS.COMPLETED ? dayjs(publication.updatedAt || null).format("DD/MM/YYYY HH:mm") : "-"}
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <div className="flex justify-center gap-1">
-                      <PopConfirm
-                        title="Confirmar"
-                        description="Tem certeza que deseja confirmar esta publicação?"
-                        onConfirm={async () => onConfirm(publication)}
-                        disabled={btnDisabled(publication)}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={btnDisabled(publication)}
-                          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                          title="Confirmar"
-                        >
-                          <ThumbsUp className="h-4 w-4" />
-                        </Button>
-                      </PopConfirm>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleReclassifyClick(publication)}
-                        disabled={btnDisabled(publication)}
-                        className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        title="Reclassificar"
-                      >
-                        <ThumbsDown className="h-4 w-4" />
-                      </Button>
-                      <PopConfirm
-                        title="Descartar"
-                        description="Tem certeza que deseja descartar esta publicação?"
-                        onConfirm={async () => onDiscard(publication.id)}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Descartar"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </PopConfirm>
-                    </div>
-                  </TableCell>
+                  {columns.map((column) => (
+                    <TableCell key={`${publication.id}-${column.key}`} className="py-3">
+                      {column.render(publication)}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             )}

@@ -11,12 +11,21 @@ import { classificationStatusColors } from "@/constants/publications";
 import ModalViewText from "../modalViewText";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ReactNode } from "react";
 
 interface RecentPublicationsProps {
   title: string;
   description?: string;
   publications: PublicationsApi.FindAll.Publication[];
   className?: string;
+}
+
+// Interface para definir a estrutura de cada coluna
+interface Column {
+  key: string;
+  label: string;
+  className?: string;
+  render: (publication: PublicationsApi.FindAll.Publication) => ReactNode;
 }
 
 export function RecentPublications({
@@ -30,7 +39,6 @@ export function RecentPublications({
   const router = useRouter();
 
   const truncateText = (text: string, maxLength: number = 100) => {
-    if (text.length <= maxLength) return text;
     return (
       <div className="flex items-center gap-2">
         <span className="line-clamp-2">{text.substring(0, maxLength)}...</span>
@@ -49,6 +57,66 @@ export function RecentPublications({
       </div>
     );
   };
+
+  // Definição das colunas da tabela
+  const columns: Column[] = [
+    {
+      key: 'litigationNumber',
+      label: 'Nº Processo',
+      className: 'font-semibold text-gray-700 w-[220px] py-3 whitespace-nowrap',
+      render: (publication) => (
+        <span className="font-medium text-gray-700">{publication.litigationNumber}</span>
+      )
+    },
+    {
+      key: 'text',
+      label: 'Texto',
+      className: 'font-semibold text-gray-700 w-[40%] py-3',
+      render: (publication) => (
+        <span className="text-gray-600">{truncateText(publication.text || "", 120)}</span>
+      )
+    },
+    {
+      key: 'caseType',
+      label: 'Tipo',
+      className: 'font-semibold text-gray-700 w-[100px] py-3',
+      render: (publication) => (
+        <span className="text-gray-600">{publication.caseType?.value}</span>
+      )
+    },
+    {
+      key: 'confidence',
+      label: 'Confiança',
+      className: 'font-semibold text-gray-700 text-center w-[100px] py-3',
+      render: (publication) => {
+        const confidence = publication.classifications?.[0]?.confidence || 0;
+        const confidencePercentage = confidence * 100;
+        return (
+          <span className={cn(
+            "font-medium px-2 py-1 rounded-full text-xs inline-block min-w-[50px]",
+            confidencePercentage >= 90 ? "bg-green-100 text-green-800" :
+              confidencePercentage >= 80 ? "bg-blue-100 text-blue-800" :
+                "bg-yellow-100 text-yellow-800"
+          )}>
+            {confidencePercentage}%
+          </span>
+        );
+      }
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      className: 'font-semibold text-gray-700 text-center w-[140px] py-3',
+      render: (publication) => {
+        const status = publication.classifications?.[0]?.status;
+        return (
+          <Badge className={cn(classificationStatusColors[status?.id || 0], "font-medium")}>
+            {status?.value}
+          </Badge>
+        );
+      }
+    }
+  ];
 
   return (
     <>
@@ -75,48 +143,37 @@ export function RecentPublications({
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50 border-b">
-                  <TableHead className="font-semibold text-gray-700 w-[220px] py-3 whitespace-nowrap">Nº Processo</TableHead>
-                  <TableHead className="font-semibold text-gray-700 w-[40%] py-3">Texto</TableHead>
-                  <TableHead className="font-semibold text-gray-700 w-[100px] py-3">Tipo</TableHead>
-                  <TableHead className="font-semibold text-gray-700 text-center w-[100px] py-3">Confiança</TableHead>
-                  <TableHead className="font-semibold text-gray-700 text-center w-[140px] py-3">Status</TableHead>
+                  {columns.map((column) => (
+                    <TableHead key={column.key} className={column.className}>
+                      {column.label}
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {publications.map((publication, index) => (
-                  <TableRow
-                    key={publication.id}
-                    className={cn(
-                      "hover:bg-gray-50 transition-colors cursor-pointer",
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
-                    )}
-                  >
-                    <TableCell className="font-medium text-gray-700 py-3 whitespace-nowrap">
-                      {publication.litigationNumber}
-                    </TableCell>
-                    <TableCell className="text-gray-600 py-3">
-                      {truncateText(publication.text || "", 120)}
-                    </TableCell>
-                    <TableCell className="text-gray-600 py-3">
-                      {publication.caseType?.value}
-                    </TableCell>
-                    <TableCell className="text-center py-3">
-                      <span className={cn(
-                        "font-medium px-2 py-1 rounded-full text-xs inline-block min-w-[50px]",
-                        publication.classifications?.[0]?.confidence || 0 >= 90 ? "bg-green-100 text-green-800" :
-                          publication.classifications?.[0]?.confidence || 0 >= 80 ? "bg-blue-100 text-blue-800" :
-                            "bg-yellow-100 text-yellow-800"
-                      )}>
-                        {(publication.classifications?.[0]?.confidence || 0) * 100}%
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center py-3">
-                      <Badge className={cn(classificationStatusColors[publication.classifications?.[0]?.status.id || 0], "font-medium")}>
-                        {publication.classifications?.[0]?.status.value}
-                      </Badge>
+                {publications.length > 0 ? (
+                  publications.map((publication, index) => (
+                    <TableRow
+                      key={publication.id}
+                      className={cn(
+                        "hover:bg-gray-50 transition-colors cursor-pointer",
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                      )}
+                    >
+                      {columns.map((column) => (
+                        <TableCell key={`${publication.id}-${column.key}`} className="py-3">
+                          {column.render(publication)}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="text-center">
+                      Nenhuma publicação recente encontrada
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>

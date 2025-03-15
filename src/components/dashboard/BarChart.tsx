@@ -27,12 +27,13 @@ export function BarChart({
         <CardTitle>{title}</CardTitle>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {data.map((item) => (
-            <div key={item.label} className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
-                <span>{item.label}</span>
+      <CardContent className="h-full">
+        <div className="space-y-4 h-full">
+          {data.length > 0 ? (
+            data.map((item) => (
+              <div key={item.label} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span>{item.label}</span>
                 <span className="font-medium">{item.value}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-light-blue">
@@ -42,7 +43,12 @@ export function BarChart({
                 />
               </div>
             </div>
-          ))}
+            ))
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-sm text-muted-foreground">Nenhum dado disponível</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -40,35 +40,32 @@ function LoginFormContent() {
 
       const data: LoginResponse = await response.json()
 
-      if (response.ok) {
-        // Salvar o token
-        localStorage.setItem('token', data.data.token)
-        
-        // Salvar o token como cookie
-        Cookies.set('auth-token', data.data.token, { 
-          expires: 7, // expira em 7 dias
-          path: '/' 
-        })
-        
-        // Salvar os dados da empresa se existirem
-        if (data.data.companies && data.data.companies.length > 0) {
-          const company = data.data.companies[0]
-          localStorage.setItem('companyName', company.name)
-        }
-
-        // Redireciona para a página anterior ou dashboard
-        const from = searchParams.get('from') || '/publicacoes'
-       
-        router.push(from)
-        router.refresh() // Força a atualização do layout
-      } else {
+      if (!response.ok) {
         toast.error('Credenciais inválidas')
+        setLoading(false)
+        return
       }
+
+      // Salvar o token como cookie
+      Cookies.set('auth-token', data.data.token, {
+        path: '/'
+      })
+
+      // Salvar os dados da empresa se existirem
+      if (data.data.companies && data.data.companies.length > 0) {
+        const company = data.data.companies[0]
+        localStorage.setItem('companyName', company.name)
+      }
+
+      // Redireciona para a página anterior ou dashboard
+      const from = searchParams.get('from') || '/dashboard'
+
+      router.push(from)
+      router.refresh() // Força a atualização do layout
     } catch (error) {
       console.log(error)
-      toast.error('Erro ao fazer login')
-    } finally {
       setLoading(false)
+      toast.error('Erro ao fazer login')
     }
   }
 

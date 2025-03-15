@@ -74,7 +74,7 @@ export function PieChart({
         <CardTitle>{title}</CardTitle>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </CardHeader>
-      <CardContent className="flex justify-center items-center">
+      <CardContent className="flex justify-center items-center h-full">
         {isLoading ? (
           <div className="flex flex-col items-center">
             <div className="relative h-64 w-64 bg-gray-200 rounded-full"></div>
@@ -88,78 +88,86 @@ export function PieChart({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center">
-            <div className="relative h-64 w-64">
-              <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-                {/* Fundo branco para o gráfico */}
-                <circle cx="50" cy="50" r="50" fill="white" />
+          <div className="flex flex-col items-center h-full">
+            {segments.length > 0 ? (
+              <>
+                <div className="relative h-64 w-64">
+                  <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+                    {/* Fundo branco para o gráfico */}
+                    <circle cx="50" cy="50" r="50" fill="white" />
 
-                {segments.map((segment, index) => {
-                  // Reduzir ligeiramente o raio para criar espaço entre as fatias
-                  const radius = 45;
-                  // Adicionar um pequeno espaço entre as fatias reduzindo o ângulo
-                  const startAngle = segment.startAngle + 0.5;
-                  const endAngle = segment.endAngle - 0.5;
+                    {segments.map((segment, index) => {
+                      // Reduzir ligeiramente o raio para criar espaço entre as fatias
+                      const radius = 45;
+                      // Adicionar um pequeno espaço entre as fatias reduzindo o ângulo
+                      const startAngle = segment.startAngle + 0.5;
+                      const endAngle = segment.endAngle - 0.5;
 
-                  const x1 = 50 + radius * Math.cos((startAngle * Math.PI) / 180);
-                  const y1 = 50 + radius * Math.sin((startAngle * Math.PI) / 180);
-                  const x2 = 50 + radius * Math.cos((endAngle * Math.PI) / 180);
-                  const y2 = 50 + radius * Math.sin((endAngle * Math.PI) / 180);
-                  const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+                      const x1 = 50 + radius * Math.cos((startAngle * Math.PI) / 180);
+                      const y1 = 50 + radius * Math.sin((startAngle * Math.PI) / 180);
+                      const x2 = 50 + radius * Math.cos((endAngle * Math.PI) / 180);
+                      const y2 = 50 + radius * Math.sin((endAngle * Math.PI) / 180);
+                      const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
 
-                  return (
-                    <path
-                      key={index}
-                      d={`M 50 50 L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
-                      fill={segment.color}
-                      stroke="white"
-                      strokeWidth="0.8"
-                    />
-                  );
-                })}
+                      return (
+                        <path
+                          key={index}
+                          d={`M 50 50 L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                          fill={segment.color}
+                          stroke="white"
+                          strokeWidth="0.8"
+                        />
+                      );
+                    })}
 
-                {segments.map((segment) => {
-                  const midAngle = (segment.startAngle + segment.endAngle) / 2;
-                  const x = 50 + 32 * Math.cos((midAngle * Math.PI) / 180);
-                  const y = 50 + 32 * Math.sin((midAngle * Math.PI) / 180);
+                    {segments.map((segment) => {
+                      const midAngle = (segment.startAngle + segment.endAngle) / 2;
+                      const x = 50 + 32 * Math.cos((midAngle * Math.PI) / 180);
+                      const y = 50 + 32 * Math.sin((midAngle * Math.PI) / 180);
 
-                  const textRotation = midAngle + 90;
+                      const textRotation = midAngle + 90;
 
-                  return (
-                    <text
-                      key={`text-${segment.label}`}
-                      x={x}
-                      y={y}
-                      fill="white"
-                      fontSize="5"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      transform={`rotate(${textRotation}, ${x}, ${y})`}
-                    >
-                      {Math.round(segment.percentage)}%
-                    </text>
-                  );
-                })}
+                      return (
+                        <text
+                          key={`text-${segment.label}`}
+                          x={x}
+                          y={y}
+                          fill="white"
+                          fontSize="5"
+                          fontWeight="bold"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          transform={`rotate(${textRotation}, ${x}, ${y})`}
+                        >
+                          {Math.round(segment.percentage)}%
+                        </text>
+                      );
+                    })}
 
-                {/* Círculo branco no centro para criar efeito de donut */}
-                <circle cx="50" cy="50" r="25" fill="white" />
-              </svg>
-            </div>
-
-            <div className="mt-6 flex justify-center gap-6 flex-wrap">
-              {segments.map((segment, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div
-                    className="h-4 w-4 rounded-full"
-                    style={{ backgroundColor: segment.color }}
-                  />
-                  <div className="text-sm font-medium">
-                    <span>{segment.label}</span>
-                  </div>
+                    {/* Círculo branco no centro para criar efeito de donut */}
+                    <circle cx="50" cy="50" r="25" fill="white" />
+                  </svg>
                 </div>
-              ))}
-            </div>
+
+                <div className="mt-6 flex justify-center gap-6 flex-wrap">
+                  {segments.map((segment, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div
+                        className="h-4 w-4 rounded-full"
+                        style={{ backgroundColor: segment.color }}
+                      />
+                      <div className="text-sm font-medium">
+                        <span>{segment.label}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-sm text-muted-foreground">Nenhum dado disponível</p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
