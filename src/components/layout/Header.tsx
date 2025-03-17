@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  LogOut, 
+import {
+  LogOut,
   User,
   ChevronDown,
 } from "lucide-react";
@@ -15,13 +15,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/navigation";
 import { logout } from "@/utils/logout";
+import { useIsMobile } from "@/hooks/useMobile";
+import { SidebarMobile } from "./SidebarMobile";
 
-export function Header() {
-  const router = useRouter();
+interface HeaderProps {
+  isCollapsed: boolean;
+  toggleSidebar: () => void;
+}
+
+export function Header({ isCollapsed, toggleSidebar }: HeaderProps) {
   const [userName] = useState("Usuário"); // Isso seria obtido do contexto de autenticação
   const [companyName, setCompanyName] = useState('');
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const savedCompanyName = localStorage.getItem('companyName');
@@ -35,13 +41,12 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 border-b border-blue-700 bg-sidebar flex items-center justify-between px-6">
-      <div className="w-48"></div>
-      
-      <div className="font-semibold text-lg absolute left-1/2 transform -translate-x-1/2 text-white">
+    <header className="h-16 bg-primary-blue border-b border-blue-700 flex items-center justify-between px-6 w-full flex-shrink-0">
+      {isMobile ? <SidebarMobile isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} /> : <div/>}
+      <div className="font-semibold text-lg text-white">
         {companyName}
       </div>
-      
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-blue-700">

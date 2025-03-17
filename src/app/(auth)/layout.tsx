@@ -1,30 +1,79 @@
-import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
-import { Header } from '@/components/layout/Header'
-import { Sidebar } from '@/components/layout/Sidebar'
+"use client";
 
-export default async function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('auth-token')
+import { ReactNode, useEffect, useState } from "react";
+import { DashboardProvider } from "@/contexts/DashboardContext";
+import { FirmProvider } from "@/contexts/FirmContext";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Header } from "@/components/layout/Header";
 
-  // Redireciona para login se não houver token
-  if (!token) {
-    redirect('/login')
+interface LayoutProps {
+  children: ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
+  const [isMounted, setIsMounted] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+
+    // Verificar o estado da sidebar no localStorage
+    const savedState = localStorage.getItem('sidebarCollapsed');
+    if (savedState) {
+      setIsCollapsed(savedState === 'true');
+    }
+
+    // Adicionar um listener para detectar mudanças no localStorage
+    const handleStorageChange = () => {
+      const currentState = localStorage.getItem('sidebarCollapsed');
+      setIsCollapsed(currentState === 'true');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Também podemos usar um MutationObserver para detectar mudanças no DOM
+    const observer = new MutationObserver(() => {
+      const currentState = localStorage.getItem('sidebarCollapsed');
+      if (currentState === 'true' && !isCollapsed) {
+        setIsCollapsed(true);
+      } else if (currentState === 'false' && isCollapsed) {
+        setIsCollapsed(false);
+      }
+    });
+
+    observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      observer.disconnect();
+    };
+  }, [isCollapsed]);
+
+  const toggleSidebar = () => {
+    const newValue = !isCollapsed;
+    setIsCollapsed(newValue);
+    localStorage.setItem('sidebarCollapsed', newValue.toString());
+  };
+
+  if (!isMounted) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Header />
-      <div className="flex h-[calc(100vh-4rem)]">
-        <Sidebar />
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
-      </div>
-    </div>
-  )
-} 
+    <FirmProvider>
+      <DashboardProvider>
+        <div className="flex h-screen">
+          <div className="h-full z-10 flex-shrink-0">
+            <Sidebar isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
+          </div>
+          <div className="flex-1 flex flex-col transition-all duration-300">
+            <Header isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
+            <main className="flex-1 overflow-auto p-6">
+              {children}
+            </main>
+          </div>
+        </div>
+      </DashboardProvider>
+    </FirmProvider>
+  );
+}
