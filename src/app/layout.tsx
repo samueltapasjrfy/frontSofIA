@@ -1,15 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next'
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "@/providers/AppProviders";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
+import { preloadLottieAnimations } from '@/utils/lottieCache'
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
+// Pré-carrega animações comuns
+preloadLottieAnimations(['loading', 'business']).catch(console.error);
+
 export const metadata: Metadata = {
-  title: "Sofia - Dashboard Jurídico",
-  description: "Dashboard para análise de publicações jurídicas",
+  title: 'Sofia - Dashboard Jurídico',
+  description: 'Dashboard para análise de publicações jurídicas',
 };
 
 export default function RootLayout({
@@ -19,13 +23,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>
+      <body className={inter.variable}>
         <ReactQueryProvider>
-          <Toaster />
-          <AppProviders>
-            {children}
-          </AppProviders>
+          <AppProviders>{children}</AppProviders>
         </ReactQueryProvider>
+        <Toaster />
       </body>
     </html>
   );

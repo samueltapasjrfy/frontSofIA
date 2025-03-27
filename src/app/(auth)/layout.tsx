@@ -5,6 +5,9 @@ import { DashboardProvider } from "@/contexts/DashboardContext";
 import { FirmProvider } from "@/contexts/FirmContext";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { verifyCompany } from "@/utils/verifyCompany";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,6 +15,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -49,13 +53,25 @@ export default function Layout({ children }: LayoutProps) {
     };
   }, [isCollapsed]);
 
+  useEffect(() => {
+    const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
+    if (!user?.token) {
+      window.location.href = '/login'
+      return
+    }
+    const isCompanyVerified = verifyCompany({ registerOrgPage: false })
+    if (isCompanyVerified) {
+      setIsReady(true)
+    }
+  }, [])
+
   const toggleSidebar = () => {
     const newValue = !isCollapsed;
     setIsCollapsed(newValue);
     localStorage.setItem('sidebarCollapsed', newValue.toString());
   };
 
-  if (!isMounted) {
+  if (!isMounted || !isReady) {
     return null;
   }
 

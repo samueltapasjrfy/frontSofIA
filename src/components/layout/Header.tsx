@@ -18,6 +18,8 @@ import {
 import { logout } from "@/utils/logout";
 import { useIsMobile } from "@/hooks/useMobile";
 import { SidebarMobile } from "./SidebarMobile";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 interface HeaderProps {
   isCollapsed: boolean;
@@ -25,15 +27,14 @@ interface HeaderProps {
 }
 
 export function Header({ isCollapsed, toggleSidebar }: HeaderProps) {
-  const [userName] = useState("Usuário"); // Isso seria obtido do contexto de autenticação
+  const [userName, setUserName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const savedCompanyName = localStorage.getItem('companyName');
-    if (savedCompanyName) {
-      setCompanyName(savedCompanyName);
-    }
+    const userData = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
+    setCompanyName(userData.companies?.[0]?.name);
+    setUserName(userData.user.name.split(' ')[0]);
   }, []);
 
   const handleLogout = () => {
