@@ -91,7 +91,7 @@ export default function RegisterCompanyForm({ handleSubmit, formData, handleChan
           </div>
         </div>
 
-        <div className="hidden lg:block lg:w-2/5 bg-gray-100/50">
+        <div className="hidden lg:block lg:w-2/5">
           <div className="h-full flex items-center justify-center p-8">
             <div className="relative max-w-md">
               <LottieAnimation
