@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { LoginFormSkeleton } from './LoginFormSkeleton'
 import { toast } from 'sonner'
@@ -14,6 +14,7 @@ import { PasswordStrength } from '@/components/passwordStrength'
 import { z } from 'zod'
 import { requestVerification, confirmVerification, LoginResponse, loginUser, registerUser } from '@/api/authApi'
 import { VerificationModal } from './VerificationModal'
+import { RecoverPasswordModal } from './RecoverPasswordModal'
 import { PERSON_STATUS } from '@/constants/auth'
 import { LocalStorageKeys, setLocalStorage } from '@/utils/localStorage'
 
@@ -57,6 +58,9 @@ function LoginFormContent() {
   const [verificationCode, setVerificationCode] = useState('')
   const [verificationLoading, setVerificationLoading] = useState(false)
   const [unverifiedUserData, setUnverifiedUserData] = useState<LoginResponse | null>(null)
+  
+  // State para o modal de recuperação de senha
+  const [showRecoverPasswordModal, setShowRecoverPasswordModal] = useState(false)
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,7 +69,6 @@ function LoginFormContent() {
 
     try {
       const data = await loginUser(loginData.email, loginData.password)
-      console.log(data)
       // Verificar se o usuário precisa confirmar o cadastro
       if (data.status.id === PERSON_STATUS.PENDING) {
         // Salvar os dados em um state em vez de no cookie
@@ -107,7 +110,6 @@ function LoginFormContent() {
 
     try {
       // Chamar a função para confirmar o código de verificação
-      console.log(unverifiedUserData)
       await confirmVerification(
         unverifiedUserData.token,
         verificationCode
@@ -136,7 +138,6 @@ function LoginFormContent() {
       router.push(from)
       router.refresh() // Força a atualização do layout
     } catch (error) {
-      console.error('Erro na verificação:', error)
       toast.error('Código de verificação inválido')
     } finally {
       setVerificationLoading(false)
@@ -157,7 +158,6 @@ function LoginFormContent() {
       toast[isValid ? 'success' : 'error'](message)
       return { isValid, milliseconds, message };
     } catch (error: any) {
-      console.error('Erro ao solicitar novo código:', error)
       toast.error(error?.message || 'Erro ao solicitar novo código')
     } finally {
       setVerificationLoading(false)
@@ -200,9 +200,6 @@ function LoginFormContent() {
         password: '',
         confirmPassword: '',
       })
-      console.log(data)
-      console.log(data.token)
-      console.log(data.name )
       setUnverifiedUserData({
         token: data.token,
         user: {
@@ -218,7 +215,6 @@ function LoginFormContent() {
       setShowVerificationModal(true)
 
     } catch (error: any) {
-      console.log(error)
       setLoading(false)
       toast.error(error?.message || 'Erro ao criar conta')
     }
@@ -231,10 +227,10 @@ function LoginFormContent() {
   const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword)
   }
-
-  useEffect(() => {
-    console.log(unverifiedUserData)
-  }, [unverifiedUserData])
+  
+  const handleOpenRecoverPassword = () => {
+    setShowRecoverPasswordModal(true)
+  }
 
   return (
     <div>
@@ -278,7 +274,7 @@ function LoginFormContent() {
           <div className="space-y-4">
             <div>
               <label htmlFor="user" className="block text-sm font-medium text-gray-600 mb-1">
-                Email/Usuário
+                Email
               </label>
               <InputIcon
                 id="user"
@@ -287,7 +283,7 @@ function LoginFormContent() {
                 required
                 leftIcon={<User size={16} className="text-gray-400" />}
                 inputSize="medium"
-                placeholder="Digite seu email ou usuário"
+                placeholder="Digite seu email"
                 value={loginData.email}
                 onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                 className="bg-gray-50"
@@ -313,9 +309,13 @@ function LoginFormContent() {
                 onRightIconClick={togglePasswordVisibility}
               />
               <div className="flex justify-end mt-1">
-                <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
+                <button 
+                  type="button"
+                  onClick={handleOpenRecoverPassword}
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
                   Esqueceu a senha?
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -457,6 +457,13 @@ function LoginFormContent() {
         verificationLoading={verificationLoading}
         handleRequestNewCode={handleRequestNewCode}
         handleVerificationSubmit={handleVerificationSubmit}
+      />
+      
+      {/* Modal de Recuperação de Senha */}
+      <RecoverPasswordModal
+        open={showRecoverPasswordModal}
+        onOpenChange={setShowRecoverPasswordModal}
+        initialEmail={loginData.email}
       />
     </div>
   )

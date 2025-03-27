@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter, Di
 import { Button } from '@/components/ui/button'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { useEffect, useState } from 'react';
+import { CodeVerification } from '@/components/codeVerification';
 
 interface VerificationModalProps {
     showVerificationModal: boolean;
@@ -52,43 +53,15 @@ export function VerificationModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex justify-center my-6">
-                    <InputOTP
-                        maxLength={6}
-                        value={verificationCode}
-                        onChange={setVerificationCode}
-                        pattern="^[0-9]+$"
-                    >
-                        <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                        </InputOTPGroup>
-                    </InputOTP>
-                </div>
-
-                {timer ? <>
-                    <p className="text-center text-sm text-gray-500">
-                        Aguarde <b>{timer}</b> segundos para solicitar um novo código
-                    </p>
-                </> : (
-                    <p className="text-center text-sm text-gray-500">
-                        Não recebeu um código?{" "}
-                        <button
-                            onClick={async () => {
-                                const { isValid, milliseconds } = await handleRequestNewCode()
-                                setTimer(isValid ? 61 : Math.ceil((milliseconds || 61) / 1000));
-                            }}
-                            disabled={verificationLoading}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                            Solicitar novo código
-                        </button>
-                    </p>
-                )}
+                <CodeVerification
+                    verificationCode={verificationCode}
+                    setVerificationCode={setVerificationCode}
+                    timer={timer}
+                    setTimer={setTimer}
+                    maxTime={61}
+                    handleRequestNewCode={handleRequestNewCode}
+                    verificationLoading={verificationLoading}
+                />
 
                 <DialogFooter className="gap-2 sm:gap-0">
                     <Button

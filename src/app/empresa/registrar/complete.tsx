@@ -9,7 +9,7 @@ export default function RegistrationComplete() {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+    <div className="flex flex-col items-center justify-center bg-white p-4">
       {/* Logo no topo */}
       <div className="mb-4">
         <div className="flex items-center">

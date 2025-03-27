@@ -115,4 +115,85 @@ export async function confirmVerification(token: string, code: string) {
     console.error('Erro ao confirmar verificação:', error)
     throw error
   }
+}
+
+// Função para solicitar redefinição de senha
+export async function requestPasswordReset(email: string): Promise<{ message: string, isValid: boolean, milliseconds?: number }> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/ResetPassword`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao solicitar redefinição de senha')
+    }
+
+    return {
+      message: data.message || 'Código de redefinição enviado com sucesso',
+      isValid: true
+    }
+  } catch (error) {
+    console.error('Erro ao solicitar redefinição de senha:', error)
+    throw error
+  }
+}
+
+// Função para verificar o código de redefinição de senha
+export async function verifyPasswordResetCode(email: string, code: string): Promise<{ message: string, isValid: boolean }> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/ResetPassword/Verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, code })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Código de verificação inválido')
+    }
+
+    return {
+      message: 'Código verificado com sucesso',
+      isValid: true
+    }
+  } catch (error) {
+    console.error('Erro ao verificar código de redefinição:', error)
+    throw error
+  }
+}
+
+// Função para redefinir a senha
+export async function resetPassword(email: string, code: string, password: string): Promise<{ message: string, isValid: boolean }> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/ResetPassword/Confirm`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, code, password })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao redefinir senha')
+    }
+
+    return {
+      message: data.message || 'Senha redefinida com sucesso',
+      isValid: true
+    }
+  } catch (error) {
+    console.error('Erro ao redefinir senha:', error)
+    throw error
+  }
 } 
