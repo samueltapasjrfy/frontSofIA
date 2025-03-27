@@ -82,7 +82,11 @@ export async function requestVerification(token: string): Promise<{ message: str
     const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data.message || 'Erro ao solicitar verificação')
+      return {
+        message: data.message || 'Erro ao solicitar verificação',
+        milliseconds: data.milliseconds,
+        isValid: false
+      }
     }
 
     return data
@@ -129,14 +133,18 @@ export async function requestPasswordReset(email: string): Promise<{ message: st
     })
 
     const data = await response.json()
-
     if (!response.ok) {
-      throw new Error(data.message || 'Erro ao solicitar redefinição de senha')
+      return {
+        message: data.message || 'Erro ao solicitar redefinição de senha',
+        milliseconds: data.milliseconds,
+        isValid: false
+      }
     }
 
     return {
       message: data.message || 'Código de redefinição enviado com sucesso',
-      isValid: true
+      isValid: true,
+      milliseconds: data.milliseconds
     }
   } catch (error) {
     console.error('Erro ao solicitar redefinição de senha:', error)
