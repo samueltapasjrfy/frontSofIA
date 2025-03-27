@@ -11,7 +11,7 @@ interface SidebarMobileProps {
   toggleSidebar: () => void;
 }
 
-export function SidebarMobile({ isCollapsed, toggleSidebar }: SidebarMobileProps) {
+export function SidebarMobile({ toggleSidebar }: SidebarMobileProps) {
   const [open, setOpen] = useState(false);
 
   return (

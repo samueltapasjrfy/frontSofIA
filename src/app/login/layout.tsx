@@ -5,17 +5,13 @@ import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage"
 import { verifyCompany } from "@/utils/verifyCompany"
 import { AppContext } from "next/app"
 import { useRouter } from "next/navigation"
-import { createContext, useContext, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 
-const NonceContext = createContext<string | undefined>(undefined)
-export const useNonce = () => useContext(NonceContext)
 
 function LoginLayout({
   children,
-  nonce
 }: {
   children: React.ReactNode
-  nonce: string
 }) {
   const router = useRouter()
   const [isReady, setIsReady] = useState(false)
@@ -40,14 +36,12 @@ function LoginLayout({
           {children}
         </div>
       ) : (
-        <NonceContext.Provider value={nonce}>
-          <LoadingPage />
-        </NonceContext.Provider>
+        <LoadingPage />
       )
       }
     </>
   )
-} 
+}
 
 LoginLayout.getInitialProps = async (appContext: AppContext) => {
   const appProps = await (await import('next/app')).default.getInitialProps!(appContext)

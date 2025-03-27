@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter, DialogHeader } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { useEffect, useState } from 'react';
 import { CodeVerification } from '@/components/codeVerification';
 
@@ -13,6 +12,7 @@ interface VerificationModalProps {
     handleRequestNewCode: () => Promise<{ message?: string, milliseconds?: number, isValid: boolean }>;
     handleVerificationSubmit: () => void;
 }
+
 export function VerificationModal({
     showVerificationModal,
     setShowVerificationModal,

@@ -363,7 +363,7 @@ export function PublicationsTable({
       setIsExporting(true);
       await PublicationsApi.exportToXLSX();
       toast.success('Arquivo exportado com sucesso!');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao exportar arquivo');
     } finally {
       setIsExporting(false);

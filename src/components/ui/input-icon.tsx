@@ -33,12 +33,6 @@ const InputIcon = React.forwardRef<HTMLInputElement, InputIconProps>(
       large: "h-11"
     }
     
-    const iconSizes = {
-      small: "size-3",
-      medium: "size-3.5",
-      large: "size-4"
-    }
-    
     const iconPaddings = {
       small: leftIcon ? "pl-6" : "",
       medium: leftIcon ? "pl-8" : "",

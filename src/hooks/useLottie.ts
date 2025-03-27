@@ -39,7 +39,7 @@ export function useLottie(path: string) {
   }, [path]);
 
   // Gera as opções para o componente Lottie com base nos dados carregados
-  const options = animationData ? useLottieOptions(animationData) : null;
+  const options = useLottieOptions(animationData);
 
   return {
     animationData,

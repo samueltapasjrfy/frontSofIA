@@ -1,11 +1,8 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { LoginFormSkeleton } from './LoginFormSkeleton'
 import { toast } from 'sonner'
-import Cookies from 'js-cookie'
-import Link from 'next/link'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import { InputIcon } from '@/components/ui/input-icon'
 import { User, Lock, Mail } from 'lucide-react'
@@ -16,7 +13,6 @@ import { requestVerification, confirmVerification, LoginResponse, loginUser, reg
 import { VerificationModal } from './VerificationModal'
 import { RecoverPasswordModal } from './RecoverPasswordModal'
 import { PERSON_STATUS } from '@/constants/auth'
-import { LocalStorageKeys, setLocalStorage } from '@/utils/localStorage'
 
 type Tab = 'login' | 'register'
 
@@ -33,9 +29,24 @@ const registerSchema = z.object({
 
 type RegisterSchema = z.infer<typeof registerSchema>
 
-function LoginFormContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+type LoginFormProps = {
+  handleLogin: (data: LoginResponse) => Promise<void>
+  loading: boolean
+  setLoading: (loading: boolean) => void
+  unverifiedUserData: LoginResponse | null
+  setUnverifiedUserData: (unverifiedUserData: LoginResponse | null) => void
+  showVerificationModal: boolean
+  setShowVerificationModal: (showVerificationModal: boolean) => void
+}
+function LoginFormContent({
+  handleLogin,
+  loading,
+  setLoading,
+  unverifiedUserData,
+  setUnverifiedUserData,
+  showVerificationModal,
+  setShowVerificationModal
+}: LoginFormProps) {
   const [activeTab, setActiveTab] = useState<Tab>('login')
   const [loginData, setLoginData] = useState({
     email: '',
@@ -51,14 +62,11 @@ function LoginFormContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [validationErrors, setValidationErrors] = useState<Partial<Record<keyof RegisterSchema, string>>>({})
-  const [loading, setLoading] = useState(false)
-  
+
   // Novos states para o modal de verificação
-  const [showVerificationModal, setShowVerificationModal] = useState(false)
   const [verificationCode, setVerificationCode] = useState('')
   const [verificationLoading, setVerificationLoading] = useState(false)
-  const [unverifiedUserData, setUnverifiedUserData] = useState<LoginResponse | null>(null)
-  
+
   // State para o modal de recuperação de senha
   const [showRecoverPasswordModal, setShowRecoverPasswordModal] = useState(false)
 
@@ -66,34 +74,10 @@ function LoginFormContent() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       const data = await loginUser(loginData.email, loginData.password)
-      // Verificar se o usuário precisa confirmar o cadastro
-      if (data.status.id === PERSON_STATUS.PENDING) {
-        // Salvar os dados em um state em vez de no cookie
-        setUnverifiedUserData(data)
-        // Abrir o modal para verificação
-        setShowVerificationModal(true)
-        toast.info('Por favor, verifique seu cadastro inserindo o código enviado para seu email')
-        setLoading(false)
-        return
-      }
-
-      // Fluxo normal - usuário já verificado
-      // Salvar o token como cookie
-      Cookies.set('auth-token', data.token, {
-        path: '/'
-      })
-
-      // Salvar os dados da empresa se existirem
-      setLocalStorage(LocalStorageKeys.USER, data)
-
-      // Redireciona para a página anterior ou dashboard
-      const from = searchParams.get('from') || '/dashboard'
-
-      router.push(from)
-      router.refresh() // Força a atualização do layout
+      if (!data || !data?.token) throw new Error('Usuário ou senha inválidos')
+      await handleLogin(data)
     } catch (error: any) {
       setLoading(false)
       toast.error(error?.message || 'Erro ao fazer login')
@@ -117,27 +101,19 @@ function LoginFormContent() {
 
       // Fechar o modal
       setShowVerificationModal(false)
-      
-      // Salvar o token como cookie
-      Cookies.set('auth-token', unverifiedUserData.token, {
-        path: '/'
-      })
+      toast.success('Verificação concluída com sucesso!')
 
       const userData: LoginResponse = {
         token: unverifiedUserData.token,
         user: unverifiedUserData.user,
-        status: unverifiedUserData.status,
+        status: {
+          id: PERSON_STATUS.ACTIVE,
+          status: 'Ativo'
+        },
         companies: unverifiedUserData.companies
-      } 
-      setLocalStorage(LocalStorageKeys.USER, userData)
-
-      toast.success('Verificação concluída com sucesso!')
-      setLoading(true)
-      // Redireciona para a página anterior ou dashboard
-      const from = searchParams.get('from') || '/dashboard'
-      router.push(from)
-      router.refresh() // Força a atualização do layout
-    } catch (error) {
+      }
+      await handleLogin(userData)
+    } catch {
       toast.error('Código de verificação inválido')
     } finally {
       setVerificationLoading(false)
@@ -204,12 +180,12 @@ function LoginFormContent() {
         token: data.token,
         user: {
           id: data.id,
-            name: data.name,
-          },
-          status: {
-            id: PERSON_STATUS.PENDING,
-            status: 'Pendente',
-          },
+          name: data.name,
+        },
+        status: {
+          id: PERSON_STATUS.PENDING,
+          status: 'Pendente',
+        },
         companies: [],
       })
       setShowVerificationModal(true)
@@ -227,7 +203,7 @@ function LoginFormContent() {
   const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword)
   }
-  
+
   const handleOpenRecoverPassword = () => {
     setShowRecoverPasswordModal(true)
   }
@@ -309,7 +285,7 @@ function LoginFormContent() {
                 onRightIconClick={togglePasswordVisibility}
               />
               <div className="flex justify-end mt-1">
-                <button 
+                <button
                   type="button"
                   onClick={handleOpenRecoverPassword}
                   className="text-sm text-blue-600 hover:text-blue-700"
@@ -458,7 +434,7 @@ function LoginFormContent() {
         handleRequestNewCode={handleRequestNewCode}
         handleVerificationSubmit={handleVerificationSubmit}
       />
-      
+
       {/* Modal de Recuperação de Senha */}
       <RecoverPasswordModal
         open={showRecoverPasswordModal}
@@ -469,10 +445,10 @@ function LoginFormContent() {
   )
 }
 
-export function LoginForm() {
+export function LoginForm(props: LoginFormProps) {
   return (
     <Suspense fallback={<LoginFormSkeleton />}>
-      <LoginFormContent />
+      <LoginFormContent {...props} />
     </Suspense>
   )
 } 

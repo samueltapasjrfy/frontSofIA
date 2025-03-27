@@ -67,6 +67,29 @@ export async function loginUser(email: string, password: string): Promise<LoginR
   }
 }
 
+export async function loginGoogle(token: string): Promise<LoginResponse> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/Google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao fazer login com Google')
+    }
+
+    return data.data
+  } catch (error) {
+    console.error('Erro ao fazer login com Google:', error)
+    throw error
+  }
+}
+
 // Função para solicitar verificação de usuário
 export async function requestVerification(token: string): Promise<{ message: string, milliseconds?: number, isValid: boolean }> {
   try {

@@ -1,10 +1,51 @@
+"use client"
 import { LoginForm } from './LoginForm'
 import Image from 'next/image'
+import Cookies from 'js-cookie'
 import './btngoogle.css'
 import GoogleBtnScripts from './googleBtnScripts'
-import { Loader2 } from 'lucide-react'
+import { loginGoogle, LoginResponse } from '@/api/authApi'
+import { PERSON_STATUS } from '@/constants/auth'
+import { toast } from 'sonner'
+import { LocalStorageKeys, setLocalStorage } from '@/utils/localStorage'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 export default function LoginPage() {
 
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [unverifiedUserData, setUnverifiedUserData] = useState<LoginResponse | null>(null)
+  const [showVerificationModal, setShowVerificationModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const handleLoginGoogle = async (token: string) => {
+    const response = await loginGoogle(token)
+    handleLogin(response) 
+  }
+
+  const handleLogin = async (data: LoginResponse) => {
+    // Verificar se o usuário precisa confirmar o cadastro
+    if (data.status.id === PERSON_STATUS.PENDING) {
+      // Salvar os dados em um state em vez de no cookie
+      setUnverifiedUserData(data)
+      // Abrir o modal para verificação
+      setShowVerificationModal(true)
+      toast.info('Por favor, verifique seu cadastro inserindo o código enviado para seu email')
+      setLoading(false)
+      return
+    }
+    // Fluxo normal - usuário já verificado
+    // Salvar o token como cookie
+    Cookies.set('auth-token', data.token, {
+      path: '/'
+    })
+    // Salvar os dados da empresa se existirem
+    setLocalStorage(LocalStorageKeys.USER, data)
+    // Redireciona para a página anterior ou dashboard
+    const from = searchParams.get('from') || '/dashboard'
+    router.push(from)
+    router.refresh() // Força a atualização do layout
+  }
   return (
     <>
       {/* Lado esquerdo - Imagem e descrição */}
@@ -58,22 +99,26 @@ export default function LoginPage() {
             <h2 className="text-2xl font-bold text-gray-800">Acesso ao Sistema</h2>
           </div>
 
-          <LoginForm />
+          <LoginForm 
+            handleLogin={handleLogin}
+            loading={loading}
+            setLoading={setLoading}
+            unverifiedUserData={unverifiedUserData}
+            setUnverifiedUserData={setUnverifiedUserData}
+            showVerificationModal={showVerificationModal}
+            setShowVerificationModal={setShowVerificationModal}
+          />
 
           <div className="mt-8 text-center">
 
-            <p className="text-gray-500 mb-4">ou acesse com</p>
+            <p className="text-gray-500 mb-4">ou</p>
+            <div className="flex justify-center space-x-4 box-btn-google">
+            <GoogleBtnScripts onLogin={handleLoginGoogle} />
+            </div>
 
-            <div className="flex justify-center space-x-4 box-btn-google" style={{ display: 'none' }}>
-              <div id="google-signin2" />
-            </div>
-            <div className="flex justify-center space-x-4 box-btn-google-loader">
-              <Loader2 className="animate-spin text-blue-600" />
-            </div>
           </div>
         </div>
       </div>
-      <GoogleBtnScripts />
     </>
   )
 } 

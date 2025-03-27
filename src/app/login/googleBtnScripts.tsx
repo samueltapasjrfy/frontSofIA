@@ -1,72 +1,67 @@
 "use client"
-import Script from 'next/script';
-import { useNonce } from './layout';
+import { useEffect } from 'react';
 
-export default function GoogleBtnScripts() {
-  const nonce = useNonce()
+// Adicionar declaração de tipos para o Google Identity API
+declare global {
+  interface Window {
+    google: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { 
+              credential: string
+              select_by: string
+              clientId: string
+              client_id: string
+            }) => void;
+          }) => void;
+          renderButton: (
+            element: HTMLElement | null,
+            options: { theme: string; size: string }
+          ) => void;
+        };
+      };
+    };
+  }
+}
+
+type GoogleBtnScriptsProps = {
+  onLogin: (token: string) => void
+}
+
+export default function GoogleBtnScripts({ onLogin }: GoogleBtnScriptsProps) {
+  useEffect(() => {
+    const initializeGoogle = () => {
+      window.google.accounts.id.initialize({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+        callback: (response) => {
+          onLogin(response.credential)
+        },
+      })
+
+      window.google.accounts.id.renderButton(
+        document.getElementById('google-login-button'),
+        { theme: 'outline', size: 'large' }
+      )
+    }
+
+    if (window.google) {
+      initializeGoogle()
+    } else {
+      const script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      script.onload = initializeGoogle
+      document.body.appendChild(script)
+    }
+  }, [])
 
   return (
     <>
+      <div id="google-login-button" />
       {/* Script da função onSignIn */}
-      <Script nonce={nonce} id="google-signin-script" strategy="lazyOnload">
-        {`
-            function onSignIn(googleUser) {
-              var profile = googleUser.getBasicProfile();
-              console.log('ID: ' + profile.getId());
-              console.log('Name: ' + profile.getName());
-              console.log('Image URL: ' + profile.getImageUrl());
-              console.log('Email: ' + profile.getEmail());
-              }
-              `}
-      </Script>
-      <Script nonce={nonce}>
-        {`
-          function onSuccess(googleUser) {
-            console.log('Logged in as: ' + googleUser.getBasicProfile().getName());
-            }
-            function onFailure(error) {
-              console.log(error);
-              }
-              function renderButton() {
-            gapi.signin2.render('google-signin2', {
-              'scope': 'profile email',
-              'width': 180,
-              'height': 40,
-              'longtitle': true,
-              'theme': 'dark',
-              'onsuccess': onSuccess,
-              'onfailure': onFailure
-              });
-              }
-              `}
-      </Script>
-      {/* Script do Google Sign-In */}
-      <Script nonce={nonce} src="https://apis.google.com/js/platform.js?onload=renderButton" strategy="lazyOnload" />
-      <Script nonce={nonce}>
-        {`
-          console.log('Btn google script 0.0.1')
-          let tryCount = 0;
-          const showBtnGoogle = () => {
-          }
-          const changeBtnGoogleStyle = () => {
-            tryCount++;
-            if (tryCount >= 10) clearInterval(interval);
-            if (!document.querySelector('.abcRioButton')) return;
-            document.querySelector('.abcRioButton').className='btn-google'
-            document.querySelector('.abcRioButtonContents').innerHTML = ''
-            document.querySelector('.box-btn-google').style.display = 'flex'
-            document.querySelector('.box-btn-google-loader').style.display = 'none'
-            clearInterval(interval);
-            clearTimeout(timeoutRemoveLoader);
-          }
-          const interval = setInterval(() => {
-            changeBtnGoogleStyle();
-          }, 1000);
-          const timeoutRemoveLoader = setTimeout(() => {
-            document.querySelector('.box-btn-google-loader').style.display = 'none'
-          }, 10000)
-        `}
-      </Script>
     </>
   );
 }

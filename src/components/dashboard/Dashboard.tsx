@@ -9,7 +9,6 @@ import {
   Clock,
   TrendingUp,
   Copy,
-  Loader2
 } from "lucide-react";
 import { useReport } from "@/hooks/useReport";
 import { Skeleton } from "@/components/ui/skeleton";

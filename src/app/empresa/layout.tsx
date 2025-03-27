@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button";
 import { ChevronDown, LogOut, User } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { logout } from "@/utils/logout";
 import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { verifyCompany } from "@/utils/verifyCompany";
