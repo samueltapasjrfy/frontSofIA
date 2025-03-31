@@ -1,10 +1,13 @@
 import { logout } from "@/utils/logout";
 import { APIResponse } from "./response";
+import { getCookie } from "@/utils/cookie";
+import { COOKIE_NAME } from "@/constants/cookies";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function getToken(): string | undefined {
-    return document.cookie.split('; ').find(row => row.startsWith('auth-token='))?.split('=')[1];
+    const token = getCookie(COOKIE_NAME.AUTH_TOKEN)
+    return token
 }
 
 function checkAuth() {

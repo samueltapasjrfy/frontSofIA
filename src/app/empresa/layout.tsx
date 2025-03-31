@@ -10,6 +10,8 @@ import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { verifyCompany } from "@/utils/verifyCompany";
 import { LoadingPage } from "@/components/loadingPage";
 import { LoginResponse } from "@/api/authApi";
+import { getCookie } from "@/utils/cookie";
+import { COOKIE_NAME } from "@/constants/cookies";
 
 export default function LoginLayout({
   children,
@@ -21,8 +23,9 @@ export default function LoginLayout({
   const [userName, setUserName] = useState('')
 
   useEffect(() => {
+    const token = getCookie(COOKIE_NAME.AUTH_TOKEN)
     const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
-    if (!user?.token) return router.push('/login')
+    if (!token || !user?.user?.id) return router.push('/login')
     setUserName(user.user.name.split(' ')[0])
 
     const isCompanyVerified = verifyCompany({ registerOrgPage: true })

@@ -8,6 +8,8 @@ import { Header } from "@/components/layout/Header";
 import { verifyCompany } from "@/utils/verifyCompany";
 import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { LoginResponse } from "@/api/authApi";
+import { getCookie } from "@/utils/cookie";
+import { COOKIE_NAME } from "@/constants/cookies";
 
 interface LayoutProps {
   children: ReactNode;
@@ -55,7 +57,8 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
-    if (!user?.token) {
+    const token = getCookie(COOKIE_NAME.AUTH_TOKEN)
+    if (!token || !user?.user?.id) {
       window.location.href = '/login'
       return
     }

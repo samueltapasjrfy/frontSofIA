@@ -7,7 +7,9 @@ import RegistrationComplete from './complete'
 import { RegisterCompanyFormData } from './type'
 import { CompanyApi } from '@/api/companyApi'
 import { getLocalStorage, LocalStorageKeys, setLocalStorage } from '@/utils/localStorage'
-import { LoginResponse } from '@/api/authApi'
+import { LoginResponse, renewToken } from '@/api/authApi'
+import { getCookie, setCookie } from '@/utils/cookie'
+import { COOKIE_NAME } from '@/constants/cookies'
 
 type Step = 'form' | 'complete'
 
@@ -39,7 +41,18 @@ export default function RegisterCompany() {
       }
       const userData = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
       userData.companies.push(response.data)
+      const token = getCookie('auth-token')
+      if (!token) {
+        toast.error('Token não encontrado. Faça login novamente.')
+        return
+      }
+      const { token: newToken } = await renewToken(token)
       setLocalStorage(LocalStorageKeys.USER, userData)
+      setCookie({
+        name: COOKIE_NAME.AUTH_TOKEN,
+        value: newToken,
+        expires: 1000 * 60 * 60 * 24 * 30 // 30 dias
+      })
       setStep('complete')
     } catch (error) {
       console.error('Erro ao criar empresa:', error)
@@ -48,7 +61,6 @@ export default function RegisterCompany() {
       setLoading(false)
     }
   }
-
   return (
     <>
       {step === 'form' && (

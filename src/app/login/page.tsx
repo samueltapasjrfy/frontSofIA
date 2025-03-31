@@ -1,7 +1,6 @@
 "use client"
 import { LoginForm } from './LoginForm'
 import Image from 'next/image'
-import Cookies from 'js-cookie'
 import './btngoogle.css'
 import GoogleBtnScripts from './googleBtnScripts'
 import { loginGoogle, LoginResponse } from '@/api/authApi'
@@ -10,6 +9,8 @@ import { toast } from 'sonner'
 import { LocalStorageKeys, setLocalStorage } from '@/utils/localStorage'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
+import { setCookie } from '@/utils/cookie'
+import { COOKIE_NAME } from '@/constants/cookies'
 export default function LoginPage() {
 
   const router = useRouter()
@@ -36,11 +37,14 @@ export default function LoginPage() {
     }
     // Fluxo normal - usuário já verificado
     // Salvar o token como cookie
-    Cookies.set('auth-token', data.token, {
-      path: '/'
+    setCookie({
+      name: COOKIE_NAME.AUTH_TOKEN,
+      value: data.token,
+      expires: 1000 * 60 * 60 * 24 * 30 // 30 dias
     })
     // Salvar os dados da empresa se existirem
-    setLocalStorage(LocalStorageKeys.USER, data)
+    const {token, ...localStorageData} = data
+    setLocalStorage(LocalStorageKeys.USER, localStorageData)
     // Redireciona para a página anterior ou dashboard
     const from = searchParams.get('from') || '/dashboard'
     router.push(from)

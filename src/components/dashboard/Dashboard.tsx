@@ -13,11 +13,25 @@ import {
 import { useReport } from "@/hooks/useReport";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePublications } from "@/hooks/usePublications";
+import { useEffect } from "react";
+import { getLocalStorage, LocalStorageKeys, setLocalStorage } from "@/utils/localStorage";
+import { LoginResponse, renewToken } from "@/api/authApi";
 
 export function Dashboard() {
   const { report, classificationConfidence, classificationPercentage, isLoading } = useReport(""); // Replace with actual organization ID when needed
   const { getPublicationsQuery } = usePublications();
 
+  useEffect(() => {
+    const handleRenewToken = async () => {
+      const userData = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
+      console.log({1: userData})
+      const response = await renewToken(userData.token)
+      userData.token = response.token
+      console.log({2: response})
+      setLocalStorage(LocalStorageKeys.USER, userData)
+    }
+    handleRenewToken()
+  }, [])
   // Custom skeleton card component
   const SkeletonCard = ({ title }: { title: string }) => (
     <div className="border rounded-lg p-4 space-y-2">

@@ -228,3 +228,27 @@ export async function resetPassword(email: string, code: string, password: strin
     throw error
   }
 } 
+
+export async function renewToken(token: string): Promise<{ token: string, validUntil: number }> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/Token/Renew`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ token })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao renovar token')
+    }
+
+    return data.data
+  } catch (error) {
+    console.error('Erro ao renovar token:', error)
+    throw error
+  }
+}
