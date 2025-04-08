@@ -29,6 +29,7 @@ export default function TableWebhook({ history, isLoading, pagination, setPagina
                         <TableHead className="font-semibold text-gray-700 py-3">URL</TableHead>
                         <TableHead className="font-semibold text-gray-700 py-3">Status</TableHead>
                         <TableHead className="font-semibold text-gray-700 py-3">Resposta</TableHead>
+                        <TableHead></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -50,18 +51,18 @@ export default function TableWebhook({ history, isLoading, pagination, setPagina
                                         index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
                                     )}
                                 >
-                                    <TableCell className="py-3">
+                                    <TableCell className="py-3" style={{ width: '200px' }}>
                                         {new Date(item.createdAt).toLocaleString('pt-BR')}
                                     </TableCell>
                                     <TableCell className="py-3">
                                         {item.url}
                                     </TableCell>
-                                    <TableCell className="py-3">
+                                    <TableCell className="py-3" style={{ width: '100px' }}>
                                         <Badge variant={item.error ? 'error' : 'success'}>
                                             {item.responseCode}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="py-3">
+                                    <TableCell className="py-3" style={{ width: '100px' }}>
                                         <Badge variant={item.error ? 'error' : 'success'}>
                                             {item.error ? 'Erro' : 'Sucesso'}
                                         </Badge>
