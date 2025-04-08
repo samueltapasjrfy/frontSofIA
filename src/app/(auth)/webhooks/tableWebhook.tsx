@@ -1,11 +1,15 @@
 import { WebhooksApi } from "@/api/webhooksApi";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/index";
 import { cn } from "@/utils/cn";
-import { Loader2 } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
+import { useState } from "react";
+import ModalWebhookInfo from "./modalWebhookInfo";
 type TableWebhookProps = {
     history: WebhooksApi.History.Find.Log[];
+    total: number;
     isLoading: boolean;
     pagination: {
         page: number;
@@ -13,9 +17,11 @@ type TableWebhookProps = {
     };
     setPagination: (pagination: { page: number, limit: number }) => void;
 }
-export default function TableWebhook({ history, isLoading, pagination, setPagination }: TableWebhookProps) {
+export default function TableWebhook({ history, isLoading, pagination, setPagination, total }: TableWebhookProps) {
+    const [selectedItem, setSelectedItem] = useState<WebhooksApi.History.Find.Log | null>(null);
+
     return (
-        <>
+        <div className="overflow-x-auto p-4 ">
             <Table>
                 <TableHeader>
                     <TableRow className="bg-gray-50 border-b">
@@ -51,22 +57,21 @@ export default function TableWebhook({ history, isLoading, pagination, setPagina
                                         {item.url}
                                     </TableCell>
                                     <TableCell className="py-3">
-                                        <Badge className={cn(
-                                            item.error
-                                                ? 'bg-red-100 text-red-800'
-                                                : 'bg-green-100 text-green-800'
-                                        )}>
+                                        <Badge variant={item.error ? 'error' : 'success'}>
                                             {item.responseCode}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="py-3">
-                                        <Badge className={cn(
-                                            item.error
-                                                ? 'bg-red-100 text-red-800'
-                                                : 'bg-green-100 text-green-800'
-                                        )}>
+                                        <Badge variant={item.error ? 'error' : 'success'}>
                                             {item.error ? 'Erro' : 'Sucesso'}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell className="py-3" style={{ width: '36px' }}>
+                                        <Button variant="outline" size="icon" onClick={() => {
+                                            setSelectedItem(item)
+                                        }}>
+                                            <Info size="16" />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -79,7 +84,7 @@ export default function TableWebhook({ history, isLoading, pagination, setPagina
                 </TableBody>
             </Table>
             <Pagination
-                total={history.length}
+                total={total}
                 pagination={{
                     page: pagination.page,
                     limit: pagination.limit
@@ -91,6 +96,15 @@ export default function TableWebhook({ history, isLoading, pagination, setPagina
                     });
                 }}
             />
-        </>
+            <ModalWebhookInfo
+                isModalOpen={!!selectedItem}
+                setIsModalOpen={(isModalOpen) => {
+                    if (!isModalOpen) {
+                        setSelectedItem(null);
+                    }
+                }}
+                webhook={selectedItem}
+            />
+        </div>
     )
 }

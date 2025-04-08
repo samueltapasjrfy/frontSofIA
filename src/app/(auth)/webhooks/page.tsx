@@ -148,11 +148,8 @@ export default function WebhooksPage() {
       />
 
       <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-        <div className="p-4 border-b">
+        <div className="p-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-800">Histórico de Webhooks Disparados</h2>
-        </div>
-
-        <div className="flex justify-end items-center my-4">
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -179,6 +176,7 @@ export default function WebhooksPage() {
             </Button>
           </div>
         </div>
+
         <div className="overflow-x-auto">
           <TableWebhook
             history={getWebhookHistoryQuery.data?.logs || []}
@@ -188,6 +186,7 @@ export default function WebhooksPage() {
               limit: webhookHistoryParams.limit
             }}
             setPagination={setWebhookHistoryParams}
+            total={getWebhookHistoryQuery.data?.total || 0}
           />
         </div>
       </div>

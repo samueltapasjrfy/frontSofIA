@@ -43,7 +43,8 @@ const eslintConfig = [
       '@typescript-eslint/no-namespace': 'off',
       'react-hooks/exhaustive-deps': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
-      '@typescript-eslint/no-duplicate-enum-values': 'off'
+      '@typescript-eslint/no-duplicate-enum-values': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off'
     },
   },
 ];

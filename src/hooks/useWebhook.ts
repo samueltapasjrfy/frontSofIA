@@ -28,18 +28,26 @@ export function useWebhook() {
         retry: (failureCount, error: Error & { status?: number }) => {
             if (error.message.toLowerCase().includes('webhook não encontrado')) return false;
             return failureCount < 3;
-        }
+        },
+        staleTime: 1000 * 60 * 10, // 10 minutes
+        retryDelay: 1000,
+        refetchOnWindowFocus: false,
+
     });
 
     const getWebhookHistoryQuery = useQuery({
-        queryKey: [QUERY_KEYS.WEBHOOK_HISTORY],
+        queryKey: [QUERY_KEYS.WEBHOOK_HISTORY, webhookHistoryParams],
         queryFn: async () => {
             const response = await WebhooksApi.history.find(webhookHistoryParams);
             if (response.error) {
                 throw new Error(response.message);
             }
             return response.data;
-        }
+        },
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 10, // 10 minutes
+        retry: 3,
+        retryDelay: 1000,
     });
 
     const invalidateWebhookQuery = () => {

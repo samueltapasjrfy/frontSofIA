@@ -21,7 +21,15 @@ type FormWebhookProps = {
     handleRemoveWebhook: () => void;
     isActive: boolean;
 }
-export default function FormWebhook({ formData, setFormData, isLoading, isPerformingAction, handleSaveWebhook, handleRemoveWebhook, isActive }: FormWebhookProps) {
+export default function FormWebhook({
+    formData,
+    setFormData,
+    isLoading,
+    isPerformingAction,
+    handleSaveWebhook,
+    handleRemoveWebhook,
+    isActive
+}: FormWebhookProps) {
     return (
         <div className="bg-white border rounded-lg shadow-sm px-4">
             {isLoading ? (
@@ -36,11 +44,7 @@ export default function FormWebhook({ formData, setFormData, isLoading, isPerfor
                                 <h2 className="text-lg font-semibold">
                                     Configuração do Webhook
                                 </h2>
-                                <Badge className={cn(
-                                    isActive
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
-                                )}>
+                                <Badge variant={isActive ? 'success' : 'error'}>
                                     {isActive ? "Cadastrado" : "Não cadastrado"}
                                 </Badge>
                             </div>
