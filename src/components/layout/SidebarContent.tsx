@@ -63,6 +63,11 @@ export function SidebarContent({
       label: "Publicações",
       href: "/publicacoes",
     },
+    {
+      icon: <FileText size={20} />,
+      label: "Webhooks",
+      href: "/webhooks",
+    },
     // {
     //   icon: <BookOpen size={20} />,
     //   label: "Artigos",

@@ -53,30 +53,8 @@ async function request<T>(method: string, url: string, bodyOrParams?: any): Prom
         }
 
         const response = await fetch(fullUrl, options);
-        const json = await response.json();
 
-        if (response.status === 401) {
-            logout();
-            return {
-                data: null as T,
-                message: 'Sessão expirada',
-                error: true
-            };
-        }
-
-        if (!response.ok) {
-            return {
-                data: null as T,
-                message: json?.message,
-                error: true
-            };
-        }
-
-        return {
-            data: json?.data as T,
-            message: json?.message,
-            error: false
-        };
+        return handleResponse(response);
     } catch (error) {
         console.error('Erro na requisição:', error);
         return {
@@ -85,8 +63,37 @@ async function request<T>(method: string, url: string, bodyOrParams?: any): Prom
             error: true
         };
     }
-}
 
+}
+const handleResponse = async <T>(response: Response): Promise<APIResponse<T>> => {
+    if (response.status === 401) {
+        logout();
+        return {
+            data: null as T,
+            message: 'Sessão expirada',
+            error: true
+        };
+    }
+    let json = {} as any;
+    try {
+        json = await response.json();
+    } catch (error) {
+        console.error('Erro ao processar a resposta:', error);
+    }
+    if (!response.ok) {
+        return {
+            data: null as T,
+            message: json?.message,
+            error: true
+        };
+    }
+
+    return {
+        data: json?.data as T,
+        message: json?.message,
+        error: false
+    };
+}
 export const http = {
     get: <T = any>(url: string, params?: any) => request<T>('GET', url, params),
     post: <T = any>(url: string, body?: any) => request<T>('POST', url, body),

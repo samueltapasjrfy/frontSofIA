@@ -35,6 +35,7 @@ import { ReclassifyPublicationModal } from "./ReclassifyPublicationModal";
 import { useClassifications } from "@/hooks/useClassifications";
 import { usePublications } from "@/hooks/usePublications";
 import ModalViewText from "../modalViewText";
+import { Pagination } from "../pagination";
 
 interface PublicationsTableProps {
   onConfirm: (publication: PublicationsApi.FindAll.Publication) => void;
@@ -173,10 +174,10 @@ export function PublicationsTable({
       className: 'font-semibold text-gray-700 text-center w-[100px] py-3',
       render: (publication) => {
         if (publication.classifications?.[0]?.confidence === null) return "-";
-        
+
         const confidence = publication.classifications?.[0]?.confidence || 0;
         const confidencePercentage = confidence * 100;
-        
+
         return (
           <span className={cn(
             "font-medium px-2 py-1 rounded-full text-xs inline-block min-w-[50px]",
@@ -205,7 +206,7 @@ export function PublicationsTable({
       className: 'font-semibold text-gray-700 text-center w-[140px] py-3',
       render: (publication) => {
         if (!publication.classifications?.[0]) return "-";
-        
+
         return (
           <Badge className={cn(getClassificationStatusColor(publication.classifications[0].status.id), "font-medium")}>
             {publication.classifications[0].status.value || "-"}
@@ -229,8 +230,8 @@ export function PublicationsTable({
       className: 'font-semibold text-gray-700 w-[150px] py-3',
       render: (publication) => (
         <span className="text-gray-600 whitespace-nowrap">
-          {publication.status.id === PUBLICATION_STATUS.COMPLETED 
-            ? dayjs(publication.updatedAt || null).format("DD/MM/YYYY HH:mm") 
+          {publication.status.id === PUBLICATION_STATUS.COMPLETED
+            ? dayjs(publication.updatedAt || null).format("DD/MM/YYYY HH:mm")
             : "-"}
         </span>
       )
@@ -587,100 +588,19 @@ export function PublicationsTable({
         </Table>
       </div>
 
-      {filteredPublications.length > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t">
-          <div className="flex items-center text-sm text-gray-500">
-            Mostrando {Math.min(filteredPublications.length, (publicationParams.page - 1) * publicationParams.limit + 1)} a {Math.min(filteredPublications.length, publicationParams.page * publicationParams.limit)} de {filteredPublications.length} resultados
-          </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={publicationParams.limit}
-              onChange={(e) => {
-                changeFilterPublications({
-                  page: 1,
-                  limit: Number(e.target.value)
-                });
-              }}
-              className="rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <option value={10}>10 por página</option>
-              <option value={25}>25 por página</option>
-              <option value={50}>50 por página</option>
-              <option value={100}>100 por página</option>
-            </select>
-            <div className="flex gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(publicationParams.page - 1)}
-                disabled={publicationParams.page === 1}
-                className="h-10 w-10"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              {(() => {
-                const pages = [];
-                const totalPagesCount = totalPages;
-
-                // Always show first page
-                pages.push(1);
-
-                // Show ellipsis and pages around current page if not near start
-                if (publicationParams.page > 2) {
-                  pages.push('...');
-                  // Show one page before current page
-                  pages.push(publicationParams.page - 1);
-                }
-
-                // Show current page if not already included
-                if (!pages.includes(publicationParams.page)) {
-                  pages.push(publicationParams.page);
-                }
-
-                // Show one page after current page if not near end
-                if (publicationParams.page < totalPagesCount - 1) {
-                  pages.push(publicationParams.page + 1);
-                  pages.push('...');
-                }
-
-                // Always show last page if there is more than one page
-                if (totalPagesCount > 1 && !pages.includes(totalPagesCount)) {
-                  pages.push(totalPagesCount);
-                }
-
-                return pages.map((pageNumber, index) => (
-                  pageNumber === '...' ? (
-                    <span key={`ellipsis-${index}`} className="px-3 py-1">...</span>
-                  ) : (
-                    <Button
-                      key={pageNumber}
-                      variant={publicationParams.page === pageNumber ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handlePageChange(pageNumber as number)}
-                      className={cn(
-                        "h-10 w-10 p-0",
-                        publicationParams.page === pageNumber && "bg-primary-blue hover:bg-blue-700"
-                      )}
-                    >
-                      {pageNumber}
-                    </Button>
-                  )
-                ));
-              })()}
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(publicationParams.page + 1)}
-                disabled={publicationParams.page === totalPages}
-                className="h-10 w-10"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <Pagination
+        total={getPublicationsQuery.data?.total || 0}
+        pagination={{
+          page: publicationParams.page,
+          limit: publicationParams.limit
+        }}
+        setPagination={({ page, limit }) => {
+          changeFilterPublications({
+            page,
+            limit
+          });
+        }}
+      />
       <ReclassifyPublicationModal
         isOpen={isReclassifyModalOpen}
         onClose={() => setIsReclassifyModalOpen(false)}
