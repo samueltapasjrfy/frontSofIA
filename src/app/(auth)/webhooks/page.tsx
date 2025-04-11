@@ -120,7 +120,11 @@ export default function WebhooksPage() {
       setFormData({
         url: '',
         authenticationType: 'bearer',
-        bearerToken: '',
+        bearerToken: undefined,
+        username: undefined,
+        password: undefined,
+        apiKeyToken: undefined,
+        apiKeyHeader: undefined,
       });
     } catch (error) {
       console.error(error);
@@ -179,7 +183,7 @@ export default function WebhooksPage() {
 
         <div className="overflow-x-auto">
           <TableWebhook
-            history={getWebhookHistoryQuery.data?.logs || []}
+            history={getWebhookHistoryQuery.data?.data || []}
             isLoading={getWebhookHistoryQuery.isLoading}
             pagination={{
               page: webhookHistoryParams.page,

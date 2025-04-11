@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, ReactNode } from "react";
+import { useState, useMemo, ReactNode } from "react";
 import {
   Table,
   TableBody,
@@ -16,7 +16,6 @@ import {
   Trash2,
   RefreshCw,
   ChevronRight,
-  ChevronLeft,
   Search,
   Filter,
   X,
@@ -74,7 +73,6 @@ export function PublicationsTable({
     confidence: null,
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [totalPages, setTotalPages] = useState(0);
   const [isReclassifyModalOpen, setIsReclassifyModalOpen] = useState(false);
   const [selectedPublicationId, setSelectedPublicationId] = useState<string>("");
   const [isExporting, setIsExporting] = useState(false);
@@ -370,10 +368,6 @@ export function PublicationsTable({
       setIsExporting(false);
     }
   };
-
-  useEffect(() => {
-    setTotalPages(Math.ceil((getPublicationsQuery.data?.total || 0) / publicationParams.limit));
-  }, [getPublicationsQuery.data?.total, publicationParams.limit]);
 
   return (
     <div className={cn("bg-white border rounded-lg shadow-sm overflow-hidden", className)}>

@@ -7,6 +7,7 @@ import { cn } from "@/utils/cn";
 import { Info, Loader2 } from "lucide-react";
 import { useState } from "react";
 import ModalWebhookInfo from "./modalWebhookInfo";
+import BadgeWebhookStatus from "./badgeWebhookStatus";
 type TableWebhookProps = {
     history: WebhooksApi.History.Find.Log[];
     total: number;
@@ -26,7 +27,7 @@ export default function TableWebhook({ history, isLoading, pagination, setPagina
                 <TableHeader>
                     <TableRow className="bg-gray-50 border-b">
                         <TableHead className="font-semibold text-gray-700 py-3">Data</TableHead>
-                        <TableHead className="font-semibold text-gray-700 py-3">URL</TableHead>
+                        <TableHead className="font-semibold text-gray-700 py-3">Tipo</TableHead>
                         <TableHead className="font-semibold text-gray-700 py-3">Status</TableHead>
                         <TableHead className="font-semibold text-gray-700 py-3">Resposta</TableHead>
                         <TableHead></TableHead>
@@ -51,21 +52,19 @@ export default function TableWebhook({ history, isLoading, pagination, setPagina
                                         index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
                                     )}
                                 >
-                                    <TableCell className="py-3" style={{ width: '200px' }}>
+                                    <TableCell className="py-3">
                                         {new Date(item.createdAt).toLocaleString('pt-BR')}
                                     </TableCell>
                                     <TableCell className="py-3">
-                                        {item.url}
+                                        {item.type.type}
                                     </TableCell>
-                                    <TableCell className="py-3" style={{ width: '100px' }}>
-                                        <Badge variant={item.error ? 'error' : 'success'}>
-                                            {item.responseCode}
+                                    <TableCell className="py-3">
+                                        <Badge variant={item.logs?.[0]?.error ? 'error' : 'success'}>
+                                            {item.logs?.[0]?.responseCode}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="py-3" style={{ width: '100px' }}>
-                                        <Badge variant={item.error ? 'error' : 'success'}>
-                                            {item.error ? 'Erro' : 'Sucesso'}
-                                        </Badge>
+                                    <TableCell className="py-3">
+                                        <BadgeWebhookStatus idStatus={item.status.id} status={item.status.status} />
                                     </TableCell>
                                     <TableCell className="py-3" style={{ width: '36px' }}>
                                         <Button variant="outline" size="icon" onClick={() => {
@@ -104,7 +103,7 @@ export default function TableWebhook({ history, isLoading, pagination, setPagina
                         setSelectedItem(null);
                     }
                 }}
-                webhook={selectedItem}
+                trigger={selectedItem}
             />
         </div>
     )

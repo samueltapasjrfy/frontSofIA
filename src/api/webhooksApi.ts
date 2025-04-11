@@ -32,6 +32,15 @@ export const WebhooksApi = {
         };
     },
 
+    resend: async (idTrigger: string): Promise<APIResponse<WebhooksApi.Resend.Response>> => {
+        const response = await http.post<WebhooksApi.Resend.Response>(`/Webhook/Resend?idTrigger=${idTrigger}`);
+        return {
+            data: response.data,
+            message: response.message,
+            error: response.error
+        };
+    },
+
     history: {
         find: async (params: WebhooksApi.History.Find.Params): Promise<APIResponse<WebhooksApi.History.Find.Response>> => {
             const queryParams = new URLSearchParams();
@@ -39,7 +48,6 @@ export const WebhooksApi = {
             params.limit && queryParams.set('limit', params.limit.toString());
             params.startDate && queryParams.set('startDate', params.startDate);
             params.endDate && queryParams.set('endDate', params.endDate);
-            params.status && queryParams.set('status', params.status.toString());
 
             const response = await http.get<WebhooksApi.History.Find.Response>(`/Webhook/History?${queryParams.toString()}`);
             return {
@@ -83,6 +91,12 @@ export namespace WebhooksApi {
         }
     }
 
+    export namespace Resend {
+        export type Response = {
+            url: string;
+        }
+    }
+
     export namespace History {
         export namespace Find {
             export type Params = {
@@ -90,24 +104,50 @@ export namespace WebhooksApi {
                 limit: number;
                 startDate?: string;
                 endDate?: string;
-                status?: number;
             }
 
-            export type Log = {
+            export type Response = {
+                data: Log[];
+                total: number;
+            }
+
+            type WebhookData = {
                 id: string;
                 url: string;
                 authenticationType: string;
-                createdAt: string;
+                createdAt: Date;
+            };
+
+            type WebhookLogResponse = {
+                id: number;
+                webhook: WebhookData;
                 responseCode: string;
-                responseBody: any;
-                requestBody: any;
+                responseBody: string;
+                createdAt: Date;
                 error: boolean;
+            };
+
+            type WebhookStatus = {
+                id: number;
+                status: string;
+            };
+
+            type WebhookType = {
+                id: number;
+                type: string;
+            };
+
+            export type Log = {
+                id: string;
+                type: WebhookType;
+                status: WebhookStatus;
+                createdAt: Date;
+                requestBody: string;
+                logs: WebhookLogResponse[];
             }
-            export type Response = {
-                logs: Log[];
-                total: number;
-            }
+
         }
     }
+
 }
 
