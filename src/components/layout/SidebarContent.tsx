@@ -4,11 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  FileText, 
+import {
+  LayoutDashboard,
+  FileText,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Scale,
+  Webhook
 } from "lucide-react";
 
 interface SidebarItemProps {
@@ -26,8 +28,8 @@ function SidebarItem({ icon, label, href, isActive, isCollapsed }: SidebarItemPr
         variant="ghost"
         className={cn(
           "w-full justify-start gap-2 px-2 text-white bg-primary-blue",
-          isActive 
-            ? "bg-white/20" 
+          isActive
+            ? "bg-white/20"
             : "hover:bg-white/10",
           isCollapsed && "justify-center p-2"
         )}
@@ -45,13 +47,13 @@ interface SidebarContentProps {
   showToggleButton?: boolean;
 }
 
-export function SidebarContent({ 
-  isCollapsed, 
+export function SidebarContent({
+  isCollapsed,
   toggleSidebar,
   showToggleButton = true
 }: SidebarContentProps) {
   const pathname = usePathname();
-  
+
   const sidebarItems = [
     {
       icon: <LayoutDashboard size={20} />,
@@ -64,7 +66,12 @@ export function SidebarContent({
       href: "/publicacoes",
     },
     {
-      icon: <FileText size={20} />,
+      icon: <Scale size={20} />,
+      label: "Processos",
+      href: "/processos",
+    },
+    {
+      icon: <Webhook size={20} />,
       label: "Webhooks",
       href: "/webhooks",
     },
@@ -95,10 +102,10 @@ export function SidebarContent({
       <div className={cn("px-4 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
         {!isCollapsed && <h2 className="text-xl font-bold text-white">Sofia</h2>}
         {showToggleButton && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleSidebar} 
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
             className="h-8 w-8 text-white hover:bg-white/10"
           >
             {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}

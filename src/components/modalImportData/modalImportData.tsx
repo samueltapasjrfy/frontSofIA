@@ -224,40 +224,40 @@ const ModalImportData = ({
     title: string;
     status: "wait" | "process" | "finish" | "error";
   }[] = [
-    {
-      title: 'Enviar Arquivo',
-      status:
-        errorStep === STEPS.UPLOAD_FILE
-          ? 'error'
-          : currentStep === STEPS.UPLOAD_FILE
-            ? 'process'
-            : currentStep > STEPS.UPLOAD_FILE
-              ? 'finish'
-              : 'wait',
-    },
-    {
-      title: 'Validar Colunas',
-      status:
-        errorStep === STEPS.VALIDATE_COLUMNS
-          ? 'error'
-          : currentStep === STEPS.VALIDATE_COLUMNS
-            ? 'process'
-            : currentStep > STEPS.VALIDATE_COLUMNS
-              ? 'finish'
-              : 'wait',
-    },
-    {
-      title: 'Validar Dados',
-      status:
-        errorStep === STEPS.VALIDATE_DATE
-          ? 'error'
-          : currentStep === STEPS.VALIDATE_DATE
-            ? 'process'
-            : currentStep > STEPS.VALIDATE_DATE
-              ? 'finish'
-              : 'wait',
-    },
-  ];
+      {
+        title: 'Enviar Arquivo',
+        status:
+          errorStep === STEPS.UPLOAD_FILE
+            ? 'error'
+            : currentStep === STEPS.UPLOAD_FILE
+              ? 'process'
+              : currentStep > STEPS.UPLOAD_FILE
+                ? 'finish'
+                : 'wait',
+      },
+      {
+        title: 'Validar Colunas',
+        status:
+          errorStep === STEPS.VALIDATE_COLUMNS
+            ? 'error'
+            : currentStep === STEPS.VALIDATE_COLUMNS
+              ? 'process'
+              : currentStep > STEPS.VALIDATE_COLUMNS
+                ? 'finish'
+                : 'wait',
+      },
+      {
+        title: 'Validar Dados',
+        status:
+          errorStep === STEPS.VALIDATE_DATE
+            ? 'error'
+            : currentStep === STEPS.VALIDATE_DATE
+              ? 'process'
+              : currentStep > STEPS.VALIDATE_DATE
+                ? 'finish'
+                : 'wait',
+      },
+    ];
 
   return (
     <Dialog
@@ -338,11 +338,11 @@ const ModalImportData = ({
                     {(Array.isArray(rows) && rows.length > 0) &&
                       Object.keys(rows[0]).map((rowKey) => (
                         <div key={rowKey} className="validate-column-box select-column-box" >
-                           <Select<{ value: string; label: string }>
+                          <Select<{ value: string; label: string }>
                             key={JSON.stringify(expectedColumnsToRows)}
                             className="w-full text-sm"
                             placeholder="Selecione uma coluna"
-                            value= {
+                            value={
                               Object.keys(expectedColumnsToRows).find((key) => expectedColumnsToRows[key] === rowKey) ? {
                                 value: expectedColumnsToRows[rowKey],
                                 label: Object.keys(expectedColumnsToRows).find((key) => expectedColumnsToRows[key] === rowKey) || '',
@@ -353,49 +353,11 @@ const ModalImportData = ({
                               value: column.key,
                               label: `${column.key} ${(expectedColumnsToRows &&
                                 column.key &&
-                                expectedColumnsToRows[column.key]) && 
-                                  '✓'
+                                expectedColumnsToRows[column.key]) &&
+                                '✓'
                                 }`,
                             }))}
-                          /> 
-                          {/* <option value="">Selecione uma coluna</option>
-                            {expectedColumns.map((column) => (
-                              <option key={column.key} value={column.key}>
-                                {column.key}{' '}
-                                {(expectedColumnsToRows &&
-                                  column.key &&
-                                  expectedColumnsToRows[column.key]) && (
-                                    <Check style={{ color: 'green' }} />
-                                  )}
-                              </option>
-                            ))}
-                          </Select> 
-                          */}
-                          {/* <Select
-                            key={JSON.stringify(expectedColumnsToRows)}
-                            value={Object.keys(expectedColumnsToRows).find(
-                              (key) => expectedColumnsToRows[key] === rowKey,
-                            )}
-                            onValueChange={(value) => handleChangeColumnSelect(rowKey, value)}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione uma coluna" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {expectedColumns.map((column) => (
-                                <SelectItem key={column.key} value={column.key} renderCheck={false}>
-                                  <div className="flex flex-row gap-2">
-                                    {column.key}{' '}
-                                    {(expectedColumnsToRows &&
-                                      column.key &&
-                                      expectedColumnsToRows[column.key]) && (
-                                        <Check style={{ color: 'green' }} />
-                                      )}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>  */}
+                          />
                         </div>
                       ))}
                   </div>

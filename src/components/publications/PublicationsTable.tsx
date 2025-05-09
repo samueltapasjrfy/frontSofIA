@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, ReactNode } from "react";
+import { useState, useMemo, ReactNode, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -76,6 +76,7 @@ export function PublicationsTable({
   const [isReclassifyModalOpen, setIsReclassifyModalOpen] = useState(false);
   const [selectedPublicationId, setSelectedPublicationId] = useState<string>("");
   const [isExporting, setIsExporting] = useState(false);
+  const [exportBlock, setExportBlock] = useState(false);
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const { getPublicationsQuery, changeFilter: changeFilterPublications, publicationParams } = usePublications();
@@ -309,20 +310,20 @@ export function PublicationsTable({
     });
   }, [getPublicationsQuery.data?.publications, filters]);
 
-  const handlePageChange = (page: number) => {
-    changeFilterPublications({
-      page: page,
-      limit: publicationParams.limit
-    });
-  };
 
+  let changeFilterTimeout = useRef<NodeJS.Timeout | null>(null);
   const handleFilterChange = (key: keyof typeof filters, value: string | number | null | FilterStatus) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    changeFilterPublications({
-      page: 1,
-      limit: publicationParams.limit
-    });
-  };
+    if (changeFilterTimeout.current) {
+      clearTimeout(changeFilterTimeout.current);
+    }
+    changeFilterTimeout.current = setTimeout(() => {
+      changeFilterPublications({
+        page: 1,
+        limit: publicationParams.limit
+      });
+    }, 500);
+  }
 
   const clearFilters = () => {
     setFilters({
@@ -360,12 +361,16 @@ export function PublicationsTable({
   const handleExport = async () => {
     try {
       setIsExporting(true);
+      setExportBlock(true);
       await PublicationsApi.exportToXLSX();
       toast.success('Arquivo exportado com sucesso!');
     } catch {
       toast.error('Erro ao exportar arquivo');
     } finally {
       setIsExporting(false);
+      setTimeout(() => {
+        setExportBlock(false);
+      }, 10000);
     }
   };
 
@@ -396,6 +401,7 @@ export function PublicationsTable({
               variant="outline"
               size="sm"
               loading={isExporting}
+              disabled={exportBlock}
               onClick={handleExport}
               className="flex items-center gap-1"
             >

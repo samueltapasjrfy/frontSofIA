@@ -7,4 +7,8 @@ export const QUERY_KEYS = {
     CLASSIFICATION_PERCENTAGE: 'classification_percentage',
     WEBHOOK: 'webhook',
     WEBHOOK_HISTORY: 'webhook_history',
+    PROCESSES: 'processes',
+    PROCESS: 'process',
+    PROCESS_BATCHES: 'process_batches',
+    PROCESS_BATCH: 'process_batch',
 } as const;

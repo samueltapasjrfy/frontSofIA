@@ -1,0 +1,357 @@
+import dayjs from "dayjs";
+import { http } from "./fetch";
+import { APIResponse } from "./response";
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
+
+export const ProcessApi = {
+    findAll: async (params: ProcessApi.FindAll.Params): Promise<ProcessApi.FindAll.Response> => {
+        const queryParams = new URLSearchParams();
+        if (params.page) queryParams.set('page', params.page.toString());
+        if (params.limit) queryParams.set('limit', params.limit.toString());
+        if (params.filter) {
+            if (params.filter.cnj) queryParams.set('cnj', params.filter.cnj);
+            if (params.filter.status) queryParams.set('status', params.filter.status.toString());
+        }
+
+        const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
+        return response.data;
+    },
+
+    findOne: async (id: string): Promise<ProcessApi.FindOne.Response> => {
+        const response = await http.get<ProcessApi.FindOne.Response>(`/Process/${id}`);
+        return response.data;
+    },
+
+    findBatches: async (params: ProcessApi.FindBatches.Params): Promise<ProcessApi.FindBatches.Response> => {
+        const response = await http.get<ProcessApi.FindBatches.Response>('/Process/batch', params);
+        return response.data;
+    },
+
+    findBatch: async (id: string): Promise<ProcessApi.FindBatch.Response> => {
+        const response = await http.get<ProcessApi.FindBatch.Response>(`/Process/batch/${id}`);
+        return response.data;
+    },
+
+    handleCitation: async (params: ProcessApi.HandleCitation.Params): Promise<ProcessApi.HandleCitation.Response> => {
+        const response = await http.post<ProcessApi.HandleCitation.Response>(
+            `/Process/${params.id}/Citation/${params.action}`
+        );
+        return response.data;
+    },
+
+    activateMonitoring: async (id: string): Promise<void> => {
+        await http.post(`/Process/${id}/Monitoring`);
+    },
+
+    deactivateMonitoring: async (id: string): Promise<void> => {
+        await http.delete(`/Process/${id}/Monitoring`);
+    },
+
+    deleteProcess: async (id: string): Promise<void> => {
+        await http.delete(`/Process/${id}`);
+    },
+
+    save: async (data: ProcessApi.Save.Params): Promise<APIResponse<ProcessApi.Save.Response>> => {
+        const response = await http.post<ProcessApi.Save.Response>('/Process', data);
+        return {
+            data: response.data,
+            message: response.message,
+            error: response.error
+        };
+    },
+    exportToXLSX: async (): Promise<void> => {
+        try {
+            // Buscar todas as publicações sem paginação
+            const response = await http.get<ProcessApi.FindAll.Response>('/Process', {
+                noPagination: true
+            });
+            // Preparar dados para exportação
+            const data = response.data.processes.map(pub => ({
+                'Nº Processo': pub.cnj || '-',
+                'Instância': pub.instance || '-',
+                'Status': pub.status?.value || '-',
+                'Data Inserção': pub.createdAt
+                    ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm')
+                    : '-',
+                'Citado': pub.cited ? 'Sim' : 'Não',
+                'Data da Citação': pub.citedAt
+                    ? dayjs(pub.citedAt).format('DD/MM/YYYY')
+                    : '-',
+                'Segredo de Justiça': pub.secret ? 'Sim' : 'Não',
+                'Tribunal': pub.jurisdiction || '-',
+                'Juiz': pub.judge || '-',
+                'Valor': pub.value ? Number(pub.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-',
+                'Comarca': pub.judicialDistrict || '-',
+                'Liminar': pub.preliminaryInjunction ? 'Sim' : 'Não',
+                'Foro': pub.court || '-',
+                'Vara': pub.vara || '-',
+                'UF': pub.uf || '-',
+                'Classes': pub.classes ? pub.classes.join(', ') : '-',
+                'Assunto Extra': pub.extraSubject || '-',
+                'Área': pub.area || '-',
+                'Arquivado': pub.archived ? 'Sim' : 'Não',
+                'Extinto': pub.extinct ? 'Sim' : 'Não',
+                'Justiça Gratuita': pub.legalAid ? 'Sim' : 'Não',
+                'Fonte do Sistema': pub.system || '-',
+                'Tribunal Original': pub.originalCourt || '-',
+                'Natureza': pub.nature || '-',
+                // 'Audiências': pub.audiences ? pub.audiences.map(aud => `${dayjs(aud.date).format('DD/MM/YYYY')}: ${aud.text} (${aud.type}, ${aud.status})`).join('; ') : '-'
+            }));
+
+            // Preparar dados para a aba de audiências
+            const audiencesData: any[] = [];
+            response.data.processes.forEach(proc => {
+                if (proc.audiences && proc.audiences.length > 0) {
+                    proc.audiences.forEach(aud => {
+                        audiencesData.push({
+                            'Nº Processo': proc.cnj || '-',
+                            'Data': aud.date ? dayjs(aud.date).format('DD/MM/YYYY HH:mm') : '-',
+                            'Descrição': aud.text || '-',
+                            'Tipo': aud.type || '-',
+                            'Status': aud.status || '-'
+                        });
+                    });
+                }
+            });
+
+            // Preparar dados para a aba de partes contrárias
+            const partiesData: any[] = [];
+            response.data.processes.forEach(proc => {
+                if (proc.opposingParties && proc.opposingParties.length > 0) {
+                    proc.opposingParties.forEach(party => {
+                        partiesData.push({
+                            'Nº Processo': proc.cnj || '-',
+                            'Nome': party.name || '-',
+                            'Documento': party.document || '-',
+                            'Tipo': party.type || '-'
+                        });
+                    });
+                }
+            });
+
+            // Criar workbook e worksheets
+            const wb = XLSX.utils.book_new();
+
+            // Planilha principal de processos
+            const mainWs = XLSX.utils.json_to_sheet(data);
+            const mainColWidths = [
+                { wch: 25 }, // Nº Processo
+                { wch: 50 }, // Instância
+                { wch: 15 }, // Status
+                { wch: 15 }, // Data Inserção
+                { wch: 15 }, // Citado
+                { wch: 15 }, // Data da Citação
+                { wch: 15 }, // Segredo de Justiça
+                { wch: 15 }, // Tribunal
+                { wch: 15 }, // Juiz
+                { wch: 15 }, // Valor
+                { wch: 15 }, // Comarca
+                { wch: 15 }, // Liminar
+                { wch: 15 }, // Foro
+                { wch: 15 }, // Vara
+                { wch: 15 }, // UF
+                { wch: 15 }, // Classes
+                { wch: 15 }, // Assunto Extra
+                { wch: 15 }, // Área
+                { wch: 15 }, // Arquivado
+                { wch: 15 }, // Extinto
+                { wch: 15 }, // Justiça Gratuita
+                { wch: 15 }, // Fonte do Sistema
+                { wch: 15 }, // Tribunal Original
+                { wch: 15 }, // Natureza
+            ];
+            mainWs['!cols'] = mainColWidths;
+            XLSX.utils.book_append_sheet(wb, mainWs, 'Processos');
+
+            // Planilha de audiências
+            if (audiencesData.length > 0) {
+                const audiencesWs = XLSX.utils.json_to_sheet(audiencesData);
+                const audiencesColWidths = [
+                    { wch: 25 }, // Nº Processo
+                    { wch: 20 }, // Data
+                    { wch: 40 }, // Descrição
+                    { wch: 15 }, // Tipo
+                    { wch: 15 }, // Status
+                ];
+                audiencesWs['!cols'] = audiencesColWidths;
+                XLSX.utils.book_append_sheet(wb, audiencesWs, 'Audiências');
+            }
+
+            // Planilha de partes contrárias
+            if (partiesData.length > 0) {
+                const partiesWs = XLSX.utils.json_to_sheet(partiesData);
+                const partiesColWidths = [
+                    { wch: 25 }, // Nº Processo
+                    { wch: 40 }, // Nome
+                    { wch: 20 }, // Documento
+                    { wch: 15 }, // Tipo
+                ];
+                partiesWs['!cols'] = partiesColWidths;
+                XLSX.utils.book_append_sheet(wb, partiesWs, 'Partes Contrárias');
+            }
+
+            // Gerar arquivo e fazer download
+            const excelBuffer = XLSX.write(wb, {
+                bookType: 'xlsx',
+                type: 'array'
+            });
+
+            const dataBlob = new Blob([excelBuffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            // Nome do arquivo com timestamp
+            const fileName = `processos_${dayjs().format('YYYY-MM-DD_HH-mm')}.xlsx`;
+
+            saveAs(dataBlob, fileName);
+        } catch (error) {
+            console.error('Erro ao exportar processos:', error);
+            throw error; // Propagar erro para ser tratado no componente
+        }
+    }
+};
+
+export namespace ProcessApi {
+    export namespace FindAll {
+        export type Params = {
+            page?: number;
+            limit?: number;
+            filter?: {
+                cnj?: string;
+                status?: number;
+            }
+        };
+
+        export type Process = {
+            id: string;
+            cnj: string;
+            createdAt: string;
+            status: {
+                id: number;
+                value: string;
+            };
+            instance: number;
+            processCreatedAt: string;
+            cited: boolean;
+            citedAt: string;
+            secret: boolean;
+            court: string;
+            vara: string | null;
+            uf: string;
+            judicialDistrict: string;
+            jurisdiction: string;
+            extraSubject: string;
+            area: string;
+            archived: boolean;
+            extinct: boolean;
+            value: string;
+            preliminaryInjunction: boolean;
+            legalAid: boolean;
+            system: string;
+            originalCourt: string | null;
+            nature: string;
+            judge: string;
+            classes: string[];
+            audiences: {
+                date: string;
+                text: string;
+                type: string;
+                status: string;
+            }[];
+            opposingParties: {
+                id: string;
+                name: string;
+                document: string | null;
+                type: string;
+            }[];
+            metadata: Record<string, any>;
+            monitoring: boolean;
+        };
+
+        export type Response = {
+            processes: Process[];
+            total: number;
+        };
+    }
+
+    export namespace FindOne {
+        export type Response = {
+            data: FindAll.Process;
+        };
+    }
+
+    export namespace FindBatches {
+        export type Params = {
+            page?: number;
+            limit?: number;
+        };
+
+        export type Batch = {
+            id: string;
+            status: {
+                id: number;
+                value: string;
+            };
+            processCount: number;
+            createdAt: string;
+        };
+
+        export type Response = {
+            data: {
+                batches: Batch[];
+                pagination: {
+                    total: number;
+                    page: number;
+                    limit: number;
+                    pages: number;
+                };
+            };
+        };
+    }
+
+    export namespace FindBatch {
+        export type Response = {
+            data: {
+                id: string;
+                status: {
+                    id: number;
+                    value: string;
+                };
+                createdAt: string;
+                processes: FindAll.Process[];
+            };
+        };
+    }
+
+    export namespace HandleCitation {
+        export type Params = {
+            id: string;
+            action: string;
+        };
+
+        export type Response = {
+            data: {
+                id: string;
+                cited: boolean;
+                citedAt: string | null;
+            };
+        };
+    }
+
+    export namespace Save {
+        export type Params = {
+            processes: {
+                cnj: string;
+                instance?: number;
+                metadata?: Record<string, any>;
+            }[];
+            monitoring: boolean;
+            registration: boolean;
+        };
+
+        export type Response = {
+            message: string;
+        };
+    }
+}
