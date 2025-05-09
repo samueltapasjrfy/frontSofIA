@@ -118,8 +118,8 @@ export const ProcessApi = {
             // Preparar dados para a aba de partes contrárias
             const partiesData: any[] = [];
             response.data.processes.forEach(proc => {
-                if (proc.opposingParties && proc.opposingParties.length > 0) {
-                    proc.opposingParties.forEach(party => {
+                if (proc.parties && proc.parties.length > 0) {
+                    proc.parties.forEach(party => {
                         partiesData.push({
                             'Nº Processo': proc.cnj || '-',
                             'Nome': party.name || '-',
@@ -259,7 +259,7 @@ export namespace ProcessApi {
                 type: string;
                 status: string;
             }[];
-            opposingParties: {
+            parties: {
                 id: string;
                 name: string;
                 document: string | null;
