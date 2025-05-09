@@ -32,7 +32,7 @@ import { ProcessApi } from "@/api/processApi";
 import { useProcesses } from "@/hooks/useProcess";
 import { PROCESS_STATUS, processStatusColors } from "@/constants/process";
 import PopConfirm from "../ui/popconfirm";
-import { ProcessInfoModal } from "./ProcessInfoModal";
+import { ProcessInfoModal } from "./processInfoModal";
 
 interface ProcessTableProps {
   onRefresh: () => void;

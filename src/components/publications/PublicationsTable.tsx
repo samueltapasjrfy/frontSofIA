@@ -35,6 +35,7 @@ import { useClassifications } from "@/hooks/useClassifications";
 import { usePublications } from "@/hooks/usePublications";
 import ModalViewText from "../modalViewText";
 import { Pagination } from "../pagination";
+import { TruncateText } from "../truncateText";
 
 interface PublicationsTableProps {
   onConfirm: (publication: PublicationsApi.FindAll.Publication) => void;
@@ -87,28 +88,6 @@ export function PublicationsTable({
     return publicationStatusColors[status] || publicationStatusColors.default;
   };
 
-  // Função para truncar texto e adicionar "ver mais"
-  const truncateText = (text: string, maxLength: number = 100) => {
-    if (!text || text.length <= maxLength) return text || "";
-    return (
-      <div className="flex items-center gap-2">
-        <span className="line-clamp-2">{text.substring(0, maxLength)}...</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-primary-blue font-medium hover:bg-blue-50 p-1 h-auto"
-          onClick={() => {
-            setSelectedText(text);
-            setIsTextModalOpen(true);
-          }}
-        >
-          <span className="sr-only">Ver mais</span>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  };
-
   const getClassificationStatusColor = (status: number) => {
     return classificationStatusColors[status] || classificationStatusColors.default;
   };
@@ -143,7 +122,14 @@ export function PublicationsTable({
       className: 'font-semibold text-gray-700 py-3 w-[100px]',
       render: (publication) => (
         <span className="text-gray-600">
-          {truncateText(publication.text || "", 50)}
+          <TruncateText
+            text={publication.text || ""}
+            maxLength={100}
+            onClick={() => {
+              setSelectedText(publication.text || "");
+              setIsTextModalOpen(true);
+            }}
+          />
         </span>
       )
     },
