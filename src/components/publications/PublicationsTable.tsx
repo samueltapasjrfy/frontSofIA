@@ -311,7 +311,7 @@ export function PublicationsTable({
   }, [getPublicationsQuery.data?.publications, filters]);
 
 
-  let changeFilterTimeout = useRef<NodeJS.Timeout | null>(null);
+  const changeFilterTimeout = useRef<NodeJS.Timeout | null>(null);
   const handleFilterChange = (key: keyof typeof filters, value: string | number | null | FilterStatus) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     if (changeFilterTimeout.current) {

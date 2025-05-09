@@ -1,7 +1,7 @@
 "use client"
 import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/cache";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { PublicationsApi } from "@/api/publicationsApi";
 import { queryClient } from "@/lib/reactQuery";
 

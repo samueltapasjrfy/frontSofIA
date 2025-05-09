@@ -21,7 +21,7 @@ export default function LoginPage() {
 
   const handleLoginGoogle = async (token: string) => {
     const response = await loginGoogle(token)
-    handleLogin(response) 
+    handleLogin(response)
   }
 
   const handleLogin = async (data: LoginResponse) => {
@@ -43,7 +43,8 @@ export default function LoginPage() {
       expires: 1000 * 60 * 60 * 24 * 30 // 30 dias
     })
     // Salvar os dados da empresa se existirem
-    const {token, ...localStorageData} = data
+    const { token, ...localStorageData } = data
+    console.log(token)
     setLocalStorage(LocalStorageKeys.USER, localStorageData)
     // Redireciona para a página anterior ou dashboard
     const from = searchParams.get('from') || '/dashboard'
@@ -103,7 +104,7 @@ export default function LoginPage() {
             <h2 className="text-2xl font-bold text-gray-800">Acesso ao Sistema</h2>
           </div>
 
-          <LoginForm 
+          <LoginForm
             handleLogin={handleLogin}
             loading={loading}
             setLoading={setLoading}
@@ -117,7 +118,7 @@ export default function LoginPage() {
 
             <p className="text-gray-500 mb-4">ou</p>
             <div className="flex justify-center space-x-4 box-btn-google">
-            <GoogleBtnScripts onLogin={handleLoginGoogle} />
+              <GoogleBtnScripts onLogin={handleLoginGoogle} />
             </div>
 
           </div>

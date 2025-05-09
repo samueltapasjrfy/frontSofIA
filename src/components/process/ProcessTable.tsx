@@ -197,7 +197,7 @@ export function ProcessTable({
     },
   ];
 
-  let changeProcessTimeout = useRef<NodeJS.Timeout | null>(null);
+  const changeProcessTimeout = useRef<NodeJS.Timeout | null>(null);
   const handleFilterChange = (key: keyof ProcessApi.FindAll.Params['filter'], value: string | number | null) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     if (changeProcessTimeout.current) {
