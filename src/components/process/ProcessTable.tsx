@@ -218,7 +218,8 @@ export function ProcessTable({
   const clearFilters = () => {
     setFilters({
       cnj: "",
-      status: undefined
+      status: undefined,
+      monitoring: undefined
     });
     changeProcessFilter({
       page: 1,
@@ -331,6 +332,28 @@ export function ProcessTable({
                   <option value={PROCESS_STATUS.PROCESSING}>Em Processamento</option>
                   <option value={PROCESS_STATUS.COMPLETED}>Concluído</option>
                   <option value={PROCESS_STATUS.ERROR}>Erro</option>
+                </optgroup>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="monitoring" className="block text-sm font-medium text-gray-700 mb-1">
+                Monitorando
+              </label>
+              <select
+                id="monitoring"
+                value={filters?.monitoring === undefined ? '' : filters?.monitoring as unknown as string}
+                onChange={(e) => {
+                  handleFilterChange(
+                    "monitoring" as never,
+                    e.target.value
+                  );
+                }}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value={''}>Todos</option>
+                <optgroup label="Status de Processamento">
+                  <option value={'true'}>Sim</option>
+                  <option value={'false'}>Não</option>
                 </optgroup>
               </select>
             </div>

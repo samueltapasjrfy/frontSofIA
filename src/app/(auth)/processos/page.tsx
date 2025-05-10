@@ -11,6 +11,7 @@ import { ProcessTable } from "@/components/process/ProcessTable";
 import { ImportProcessModal } from "@/components/process/ImportProcessModal";
 import { useProcesses } from "@/hooks/useProcess";
 import { ProcessApi } from "@/api/processApi";
+import { ProcessStats } from "@/components/process/ProcessStats";
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -20,14 +21,14 @@ const litigationColumns = {
 
 export default function ProcessesPage() {
   const [isModalImportDataOpen, setIsModalImportDataOpen] = useState(false);
-  const { invalidateProcessesQuery, saveProcesses } = useProcesses();
-  const { refreshReport } = useReport();
+  const { invalidateProcessesQuery, invalidateReport, saveProcesses } = useProcesses();
 
   const onRefresh = () => {
     invalidateProcessesQuery();
-    refreshReport();
+    invalidateReport();
     queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROCESS] });
     queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROCESSES] });
+    queryClient.refetchQueries({ queryKey: [QUERY_KEYS.REPORT] });
   }
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -109,7 +110,7 @@ export default function ProcessesPage() {
         </div>
       </div>
 
-      {/* <ProcessStats /> */}
+      <ProcessStats />
 
       <ProcessTable
         onRefresh={onRefresh}

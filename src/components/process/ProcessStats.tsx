@@ -1,15 +1,12 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { usePublicationStats } from "@/hooks/usePublicationStats";
 import {
   FileText,
   CheckCircle,
-  AlertTriangle,
-  Clock,
-  HelpCircle,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useProcesses } from "@/hooks/useProcess";
 
 interface ProcessStatsProps {
   className?: string;
@@ -64,64 +61,33 @@ function StatCard({ title, value, icon, bgColor }: StatCardProps) {
 }
 
 export function ProcessStats({ className }: ProcessStatsProps) {
-  const { getPublicationStatsQuery } = usePublicationStats();
-  if (getPublicationStatsQuery.isLoading) {
-    return (
-      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ${className}`}>
-        <StatCardSkeleton bgColor="bg-blue-100" />
-        <StatCardSkeleton bgColor="bg-green-100" />
-        <StatCardSkeleton bgColor="bg-red-100" />
-        <StatCardSkeleton bgColor="bg-blue-100" />
-        <StatCardSkeleton bgColor="bg-yellow-100" />
-        <StatCardSkeleton bgColor="bg-gray-100" />
-      </div>
-    );
-  }
+  const { getReport } = useProcesses();
 
   return (
-    <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ${className}`}>
-      <StatCard
-        title="Total"
-        value={getPublicationStatsQuery.data?.total || 0}
-        icon={<FileText className="h-5 w-5 text-blue-600" />}
-        color="text-blue-600"
-        bgColor="bg-blue-100"
-      />
-      <StatCard
-        title="Classificadas"
-        value={getPublicationStatsQuery.data?.classified || 0}
-        icon={<CheckCircle className="h-5 w-5 text-green-600" />}
-        color="text-green-600"
-        bgColor="bg-green-100"
-      />
-      <StatCard
-        title="Erros"
-        value={getPublicationStatsQuery.data?.errors || 0}
-        icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
-        color="text-red-600"
-        bgColor="bg-red-100"
-      />
-      <StatCard
-        title="Em Processamento"
-        value={getPublicationStatsQuery.data?.processing || 0}
-        icon={<Clock className="h-5 w-5 text-blue-600" />}
-        color="text-blue-600"
-        bgColor="bg-blue-100"
-      />
-      <StatCard
-        title="Pendentes"
-        value={getPublicationStatsQuery.data?.pending || 0}
-        icon={<Clock className="h-5 w-5 text-yellow-600" />}
-        color="text-yellow-600"
-        bgColor="bg-yellow-100"
-      />
-      <StatCard
-        title="Não Classificadas"
-        value={0}
-        icon={<HelpCircle className="h-5 w-5 text-gray-600" />}
-        color="text-gray-600"
-        bgColor="bg-gray-100"
-      />
-    </div>
+    <>
+      {getReport.isLoading ? (
+        <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ${className}`}>
+          <StatCardSkeleton bgColor="bg-blue-100" />
+          <StatCardSkeleton bgColor="bg-green-100" />
+        </div>
+      ) : (
+        <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ${className}`}>
+          <StatCard
+            title="Total"
+            value={getReport.data?.total || 0}
+            icon={<FileText className="h-5 w-5 text-blue-600" />}
+            color="text-blue-600"
+            bgColor="bg-blue-100"
+          />
+          <StatCard
+            title="Monitorando"
+            value={getReport.data?.monitored || 0}
+            icon={<CheckCircle className="h-5 w-5 text-green-600" />}
+            color="text-green-600"
+            bgColor="bg-green-100"
+          />
+        </div>
+      )}
+    </>
   );
 } 

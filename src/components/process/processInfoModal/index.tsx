@@ -8,9 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import dayjs from "dayjs";
-import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "../../ui/table";
-import { TruncateText } from "../../truncateText";
 import { useState } from "react";
 import { ProcessInfoModalInfos } from "./ProcessInfoModalInfos";
 import { ProcessInfoModalAudiences } from "./ProcessInfoModalAudiences";

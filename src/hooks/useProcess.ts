@@ -83,6 +83,21 @@ export function useProcesses(initialPage: number = 1, initialLimit: number = 10)
         return response;
     }, []);
 
+    const getReport = useQuery({
+        queryKey: [QUERY_KEYS.REPORT],
+        queryFn: async () => {
+            const data = await ProcessApi.report();
+            return data;
+        },
+        staleTime: 1000 * 60 * 10, // 10 minutes
+        retry: 3,
+        retryDelay: 1000,
+    });
+
+    const invalidateReport = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.REPORT] });
+    }, []);
+
     // Utility functions
     const changeProcessFilter = (params: Partial<ProcessApi.FindAll.Params>): void => {
         setProcessParams(prev => ({ ...prev, ...params }));
@@ -133,6 +148,10 @@ export function useProcesses(initialPage: number = 1, initialLimit: number = 10)
         handleCitation,
         saveProcesses,
         setMonitoring,
-        deleteProcess
+        deleteProcess,
+
+        // Report queries and state
+        getReport,
+        invalidateReport,
     };
 }

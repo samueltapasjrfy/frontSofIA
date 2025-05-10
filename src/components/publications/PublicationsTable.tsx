@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import {
   Trash2,
   RefreshCw,
-  ChevronRight,
   Search,
   Filter,
   X,

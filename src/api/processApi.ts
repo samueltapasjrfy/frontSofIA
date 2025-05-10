@@ -10,8 +10,10 @@ export const ProcessApi = {
         if (params.page) queryParams.set('page', params.page.toString());
         if (params.limit) queryParams.set('limit', params.limit.toString());
         if (params.filter) {
-            if (params.filter.cnj) queryParams.set('cnj', params.filter.cnj);
-            if (params.filter.status) queryParams.set('status', params.filter.status.toString());
+            Object.entries(params.filter).forEach(([key, value]) => {
+                console.log(key, value);
+                if (value) queryParams.set(key, value.toString());
+            });
         }
 
         const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
@@ -60,6 +62,12 @@ export const ProcessApi = {
             error: response.error
         };
     },
+
+    report: async (): Promise<ProcessApi.Report.Response> => {
+        const response = await http.get<ProcessApi.Report.Response>('/Process/report');
+        return response.data;
+    },
+
     exportToXLSX: async (): Promise<void> => {
         try {
             // Buscar todas as publicações sem paginação
@@ -220,6 +228,7 @@ export namespace ProcessApi {
             filter?: {
                 cnj?: string;
                 status?: number;
+                monitoring?: boolean;
             }
         };
 
@@ -352,6 +361,13 @@ export namespace ProcessApi {
 
         export type Response = {
             message: string;
+        };
+    }
+
+    export namespace Report {
+        export type Response = {
+            total: number;
+            monitored: number;
         };
     }
 }
