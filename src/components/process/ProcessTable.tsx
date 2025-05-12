@@ -241,8 +241,9 @@ export function ProcessTable({
     setFilters({
       cnj: "",
       status: undefined,
-      monitoring: undefined
+      monitoring: undefined,
     });
+    setSelectedBatch(null);
     changeProcessFilter({
       page: 1,
       limit: processParams.limit,
@@ -419,7 +420,6 @@ export function ProcessTable({
                 }}
                 onChange={(value) => {
                   if (value) {
-                    console.log(value.value);
                     handleFilterChange("batch" as never, (value || {}).value);
                     setSelectedBatch(value);
                     return

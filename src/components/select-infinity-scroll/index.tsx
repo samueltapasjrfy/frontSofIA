@@ -9,6 +9,7 @@ type SelectInfinityScrollProps = {
     isLoading?: boolean;
     isSearchable?: boolean;
     multiple?: boolean;
+    isClearable?: boolean;
 }
 
 export const SelectInfinityScroll = ({
@@ -19,7 +20,8 @@ export const SelectInfinityScroll = ({
     value,
     isLoading,
     isSearchable,
-    multiple
+    multiple,
+    isClearable = true
 }: SelectInfinityScrollProps) => {
 
     return (
@@ -27,6 +29,7 @@ export const SelectInfinityScroll = ({
             instanceId={instanceId}
             placeholder={placeholder}
             debounceTimeout={1000}
+            isClearable={isClearable}
             styles={{
                 placeholder: (base) => ({
                     ...base,
