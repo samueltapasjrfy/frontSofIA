@@ -37,6 +37,7 @@ import PopConfirm from "../ui/popconfirm";
 import { ProcessInfoModal } from "./processInfoModal";
 import { SelectInfinityScroll } from "../select-infinity-scroll";
 import { BatchApi } from "@/api/batchApi";
+import { BATCH_TYPES } from "@/constants/batch";
 
 interface ProcessTableProps {
   onRefresh: () => void;
@@ -392,7 +393,8 @@ export function ProcessTable({
                     setIsLoadingBatches(true);
                     const batches = await BatchApi.findAll({
                       page,
-                      limit: 10
+                      limit: 10,
+                      type: BATCH_TYPES.PROCESSES
                     });
                     const hasMore = batches.batches.length === 10;
                     setIsLoadingBatches(false);
