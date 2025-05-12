@@ -11,5 +11,7 @@ export const QUERY_KEYS = {
     PROCESS: 'process',
     PROCESS_BATCHES: 'process_batches',
     PROCESS_BATCH: 'process_batch',
+    BATCHES: 'batches',
+    BATCH: 'batch',
     REPORT: 'report',
 } as const;

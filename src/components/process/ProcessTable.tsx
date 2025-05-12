@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, ReactNode, useRef } from "react";
+import { AsyncPaginate } from 'react-select-async-paginate';
 import {
   Table,
   TableBody,
@@ -22,7 +23,8 @@ import {
   Info,
   Trash2,
   MonitorOff,
-  Monitor
+  Monitor,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
@@ -33,6 +35,8 @@ import { useProcesses } from "@/hooks/useProcess";
 import { PROCESS_STATUS, processStatusColors } from "@/constants/process";
 import PopConfirm from "../ui/popconfirm";
 import { ProcessInfoModal } from "./processInfoModal";
+import { SelectInfinityScroll } from "../select-infinity-scroll";
+import { BatchApi } from "@/api/batchApi";
 
 interface ProcessTableProps {
   onRefresh: () => void;
@@ -57,6 +61,8 @@ export function ProcessTable({
   const [exportBlock, setExportBlock] = useState(false);
   const { getProcessesQuery, changeProcessFilter, processParams, setMonitoring, deleteProcess } = useProcesses();
   const [processInfoSelected, setProcessInfoSelected] = useState<ProcessApi.FindAll.Process | null>(null);
+  const [isLoadingBatches, setIsLoadingBatches] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState<{ label: string, value: string } | null>(null);
 
   const getProcessStatusColor = (status: number) => {
     return processStatusColors[status] || processStatusColors.default;
@@ -196,6 +202,21 @@ export function ProcessTable({
       )
     },
   ];
+
+  const renderBatch = (batch: BatchApi.Batch) => {
+    return <span className="text-gray-600 whitespace-nowrap">
+      <div className="flex items-center text-gray-500 text-sm">
+        <Clock className="h-3 w-3 mr-2" />
+        {dayjs(batch.createdAt).format("DD/MM/YYYY HH:mm")}
+      </div>
+      <div className="flex items-center gap-3">
+        {`${batch.total} ${+batch.total === 1 ? "processo" : "processos"}`}
+        <Badge className={cn(getProcessStatusColor(batch.status.id), "font-medium text-xs")}>
+          {batch.status.value}
+        </Badge>
+      </div>
+    </span>
+  }
 
   const changeProcessTimeout = useRef<NodeJS.Timeout | null>(null);
   const handleFilterChange = (key: keyof ProcessApi.FindAll.Params['filter'], value: string | number | null) => {
@@ -356,6 +377,60 @@ export function ProcessTable({
                   <option value={'false'}>Não</option>
                 </optgroup>
               </select>
+            </div>
+            <div>
+              <label htmlFor="batch" className="block text-sm font-medium text-gray-700 mb-1">
+                Solicitação
+              </label>
+              <SelectInfinityScroll
+                instanceId="batch"
+                placeholder="Selecione uma solicitação"
+                isSearchable={false}
+                loadOptions={async ({ additional }) => {
+                  try {
+                    const page = (additional || {}).page || 1;
+                    setIsLoadingBatches(true);
+                    const batches = await BatchApi.findAll({
+                      page,
+                      limit: 10
+                    });
+                    const hasMore = batches.batches.length === 10;
+                    setIsLoadingBatches(false);
+                    return Promise.resolve({
+                      options: batches.batches.map((batch) => ({
+                        label: renderBatch(batch),
+                        value: batch.id
+                      })),
+                      hasMore: hasMore,
+                      additional: {
+                        page: page + 1,
+                        hasMore: hasMore
+                      }
+                    });
+                  } catch (error) {
+                    console.error(error);
+                    return {
+                      options: [],
+                      hasMore: false
+                    };
+                  }
+                }}
+                onChange={(value) => {
+                  if (value) {
+                    console.log(value.value);
+                    handleFilterChange("batch" as never, (value || {}).value);
+                    setSelectedBatch(value);
+                    return
+                  }
+                  handleFilterChange("batch" as never, null);
+                  setSelectedBatch(null);
+                }}
+                value={selectedBatch ? [{
+                  label: selectedBatch.label,
+                  value: selectedBatch.value
+                }] : []}
+                isLoading={isLoadingBatches}
+              />
             </div>
             <div className="col-span-full">
               <Button

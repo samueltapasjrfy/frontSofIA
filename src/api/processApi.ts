@@ -229,6 +229,7 @@ export namespace ProcessApi {
                 cnj?: string;
                 status?: number;
                 monitoring?: boolean;
+                batch?: string;
             }
         };
 
