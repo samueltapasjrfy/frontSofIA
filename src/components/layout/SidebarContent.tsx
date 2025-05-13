@@ -12,6 +12,8 @@ import {
   Scale,
   Webhook
 } from "lucide-react";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 interface SidebarItemProps {
   icon: React.ReactNode;
@@ -53,6 +55,9 @@ export function SidebarContent({
   showToggleButton = true
 }: SidebarContentProps) {
   const pathname = usePathname();
+  const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
+  //temp
+  const isFC = user?.companies?.[0]?.id === '01JDSEG2G5PQ1GCX86K3BV8EKR'
 
   const sidebarItems = [
     {
@@ -64,11 +69,6 @@ export function SidebarContent({
       icon: <FileText size={20} />,
       label: "Publicações",
       href: "/publicacoes",
-    },
-    {
-      icon: <Scale size={20} />,
-      label: "Processos",
-      href: "/processos",
     },
     {
       icon: <Webhook size={20} />,
@@ -96,7 +96,13 @@ export function SidebarContent({
     //   href: "/configuracoes",
     // },
   ];
-
+  if (isFC) {
+    sidebarItems.splice(2, 0, {
+      icon: <Scale size={20} />,
+      label: "Processos",
+      href: "/processos",
+    })
+  }
   return (
     <div className="flex h-full flex-col gap-4 py-4 relative">
       <div className={cn("px-4 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>

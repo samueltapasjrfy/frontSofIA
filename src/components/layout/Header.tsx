@@ -43,7 +43,7 @@ export function Header({ isCollapsed, toggleSidebar }: HeaderProps) {
 
   return (
     <header className="h-16 bg-primary-blue border-b border-blue-700 flex items-center justify-between px-6 w-full flex-shrink-0">
-      {isMobile ? <SidebarMobile isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} /> : <div/>}
+      {isMobile ? <SidebarMobile isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} /> : <div />}
       <div className="font-semibold text-lg text-white">
         {companyName}
       </div>
@@ -57,11 +57,11 @@ export function Header({ isCollapsed, toggleSidebar }: HeaderProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+          {/* <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem>Perfil</DropdownMenuItem>
           <DropdownMenuItem>Configurações</DropdownMenuItem>
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator /> */}
           <DropdownMenuItem onClick={handleLogout} className="text-alert-red">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sair</span>
