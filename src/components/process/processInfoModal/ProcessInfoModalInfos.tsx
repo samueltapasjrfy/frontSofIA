@@ -22,7 +22,7 @@ const labelMap = {
     "Justiça Gratuita": { key: "legalAid", type: "boolean" },
     "Sistema": { key: "system", type: "text" },
     "Origem": { key: "originalCourt", type: "text" },
-    "Preliminar": { key: "preliminaryInjunction", type: "boolean" },
+    "Liminar": { key: "preliminaryInjunction", type: "boolean" },
     "Juiz": { key: "judge", type: "text" },
     "Observações": { key: "observations", type: "text" },
     "Arquivado": { key: "archived", type: "boolean" },

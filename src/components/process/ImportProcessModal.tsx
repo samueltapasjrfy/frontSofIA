@@ -119,13 +119,13 @@ export function ImportProcessModal({ isOpen, onClose, onImport }: ImportProcessM
 
           <div className="grid gap-2">
             <label htmlFor="idInternal" className="text-sm font-medium text-gray-700">
-              ID da Publicação <span className="text-gray-400 text-xs">(opcional)</span>
+              ID do Processo <span className="text-gray-400 text-xs">(opcional)</span>
             </label>
             <Input
               id="idInternal"
               value={idInternal}
               onChange={(e) => setIdInternal(e.target.value)}
-              placeholder="Identificador único da publicação (se disponível)"
+              placeholder="Identificador único do processo (se disponível)"
             />
           </div>
         </div>
