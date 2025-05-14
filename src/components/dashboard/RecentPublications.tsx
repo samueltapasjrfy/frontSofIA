@@ -12,6 +12,7 @@ import ModalViewText from "../modalViewText";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ReactNode } from "react";
+import { toPercent } from "@/utils/toPercent";
 
 interface RecentPublicationsProps {
   title: string;
@@ -90,7 +91,7 @@ export function RecentPublications({
       className: 'font-semibold text-gray-700 text-center w-[100px] py-3',
       render: (publication) => {
         const confidence = publication.classifications?.[0]?.confidence || 0;
-        const confidencePercentage = confidence * 100;
+        const confidencePercentage = toPercent(confidence);
         return (
           <span className={cn(
             "font-medium px-2 py-1 rounded-full text-xs inline-block min-w-[50px]",
@@ -127,9 +128,9 @@ export function RecentPublications({
               <CardTitle className="text-xl font-bold text-gray-800">{title}</CardTitle>
               {description && <p className="text-sm text-gray-500">{description}</p>}
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="text-primary-blue border-primary-blue hover:bg-blue-50"
               onClick={() => router.push("/publicacoes")}
             >

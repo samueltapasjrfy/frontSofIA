@@ -33,6 +33,7 @@ import ModalViewText from "../modalViewText";
 import { Pagination } from "../pagination";
 import { TruncateText } from "../truncateText";
 import { TableButtons } from "../tableButtons";
+import { toPercent } from "@/utils/toPercent";
 
 interface PublicationsTableProps {
   onConfirm: (publication: PublicationsApi.FindAll.Publication) => void;
@@ -156,7 +157,7 @@ export function PublicationsTable({
         if (publication.classifications?.[0]?.confidence === null) return "-";
 
         const confidence = publication.classifications?.[0]?.confidence || 0;
-        const confidencePercentage = confidence * 100;
+        const confidencePercentage = toPercent(confidence);
 
         return (
           <span className={cn(

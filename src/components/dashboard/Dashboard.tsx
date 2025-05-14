@@ -16,6 +16,7 @@ import { usePublications } from "@/hooks/usePublications";
 import { useEffect } from "react";
 import { getLocalStorage, LocalStorageKeys, setLocalStorage } from "@/utils/localStorage";
 import { LoginResponse, renewToken } from "@/api/authApi";
+import { toPercent } from "@/utils/toPercent";
 
 export function Dashboard() {
   const { report, classificationConfidence, classificationPercentage, isLoading } = useReport("");
@@ -126,7 +127,7 @@ export function Dashboard() {
                 description="Média de confiança por classificação"
                 data={(classificationConfidence?.classifications || []).map(item => ({
                   label: item.name,
-                  value: item.averageConfidence * 100
+                  value: toPercent(item.averageConfidence)
                 })).slice(0, 7)}
                 maxValue={100}
               />

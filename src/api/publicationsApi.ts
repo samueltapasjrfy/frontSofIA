@@ -4,6 +4,7 @@ import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import dayjs from 'dayjs';
 import { PUBLICATION_STATUS } from '@/constants/publications';
+import { toPercent } from "@/utils/toPercent";
 
 export const PublicationsApi = {
     findAll: async (params: PublicationsApi.FindAll.Params): Promise<PublicationsApi.FindAll.Response> => {
@@ -67,7 +68,7 @@ export const PublicationsApi = {
                 'Tipo': pub.classifications?.[0]?.classification || '-',
                 'Status Classificação': pub.classifications?.[0]?.status.value || '-',
                 'Confiança': pub.classifications?.[0]?.confidence
-                    ? `${(pub.classifications[0].confidence * 100).toFixed(0)}%`
+                    ? `${toPercent(pub.classifications[0].confidence)}%`
                     : '-',
                 'Status': pub.status.value || '-',
                 'Data Inserção': pub.createdAt

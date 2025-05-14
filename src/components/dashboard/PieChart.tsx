@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { toPercent } from "@/utils/toPercent";
 
 interface PieChartProps {
   title: string;
@@ -53,7 +54,7 @@ export function PieChart({
   useEffect(() => {
     setTotal(data.reduce((acc, item) => acc + item.value, 0));
     const segments = data.map((item, index) => {
-      const percentage = (item.value / (total || 1)) * 100;
+      const percentage = toPercent(item.value / (total || 1));
       const angle = (percentage / 100) * 360;
       const segment = {
         ...item,
