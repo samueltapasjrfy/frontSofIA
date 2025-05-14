@@ -35,6 +35,9 @@ import { SelectInfinityScroll } from "../selectInfinityScroll";
 import { BatchApi } from "@/api/batchApi";
 import { BATCH_TYPES } from "@/constants/batch";
 import { TableButtons } from "../tableButtons";
+import { CompanyApi } from "@/api/companyApi";
+import { DatePickerWithRange } from "../dateRangePicker";
+import { DateRange } from "react-day-picker";
 
 interface ProcessTableProps {
   onRefresh: () => Promise<void>;
@@ -59,6 +62,9 @@ export function ProcessTable({
   const [processInfoSelected, setProcessInfoSelected] = useState<ProcessApi.FindAll.Process | null>(null);
   const [isLoadingBatches, setIsLoadingBatches] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<{ label: string, value: string } | null>(null);
+  const [isLoadingRequesters, setIsLoadingRequesters] = useState(false);
+  const [selectedRequester, setSelectedRequester] = useState<{ label: string, value: string } | null>(null);
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
 
   const getProcessStatusColor = (status: number) => {
     return processStatusColors[status] || processStatusColors.default;
@@ -69,7 +75,7 @@ export function ProcessTable({
     {
       key: 'cnj',
       label: 'Nº Processo',
-      className: 'font-semibold text-gray-700 py-3 w-[60%]',
+      className: 'font-semibold text-gray-700 py-3 w-[30%]',
       render: (process) => (
         <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
           {process.cnj}
@@ -85,6 +91,49 @@ export function ProcessTable({
           {process.instance}
         </span>
       )
+    },
+    {
+      key: 'requester',
+      label: 'Solicitante',
+      className: 'font-semibold text-gray-700 py-3 w-[20%]',
+      render: (process) => (
+        <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
+          {process.requester?.name || "-"}
+        </span>
+      )
+    },
+    {
+      key: 'idBatch',
+      label: 'ID Solicitação',
+      className: 'font-semibold text-gray-700 py-3 w-[25%]',
+      render: (process) => (
+        <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
+          {process.idBatch || "-"}
+        </span>
+      )
+    },
+    {
+      key: 'cited',
+      label: 'Citado',
+      className: 'font-semibold text-gray-700 py-3 w-[10%]',
+      render: (process) => (
+        <span className="font-medium text-gray-700">
+          {process.cited ? "Sim" : "Não"}
+        </span>
+      )
+    },
+    {
+      key: 'audience',
+      label: 'Audiência Futura',
+      className: 'font-semibold text-gray-700 py-3 w-[10%]',
+      render: (process) => {
+        const audiences = Array.isArray(process.audiences) ? process.audiences.filter(audience => new Date(audience.date) >= new Date()) : [];
+        return (
+          <span className="font-medium text-gray-700">
+            {audiences.length > 0 ? 'Sim' : 'Não'}
+          </span>
+        )
+      }
     },
     {
       key: 'monitoring',
@@ -238,6 +287,7 @@ export function ProcessTable({
       status: undefined,
       monitoring: undefined,
     });
+    setDate(undefined);
     setSelectedBatch(null);
     changeProcessFilter({
       page: 1,
@@ -268,12 +318,12 @@ export function ProcessTable({
             onRefresh={onRefresh}
             onExport={handleExport}
             toggleFilters={toggleFilters}
-            totalFilters={Object.values(filters || {}).filter(v => !!v).length}
+            totalFilters={Object.entries(filters || {}).filter(([key, value]) => !!value && key !== "initialDate").length}
           />
         </div>
 
         {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
             <div>
               <label htmlFor="processNumber" className="block text-sm font-medium text-gray-700 mb-1">
                 Nº Processo
@@ -338,7 +388,7 @@ export function ProcessTable({
               </label>
               <SelectInfinityScroll
                 instanceId="batch"
-                placeholder="Selecione uma solicitação"
+                placeholder="Selecione"
                 isSearchable={false}
                 loadOptions={async ({ additional }) => {
                   try {
@@ -384,6 +434,92 @@ export function ProcessTable({
                   value: selectedBatch.value
                 }] : []}
                 isLoading={isLoadingBatches}
+              />
+            </div>
+            <div>
+              <label htmlFor="requester" className="block text-sm font-medium text-gray-700 mb-1">
+                Solicitante
+              </label>
+              <SelectInfinityScroll
+                instanceId="requester"
+                placeholder="Selecione"
+                isSearchable={false}
+                loadOptions={async ({ additional }) => {
+                  try {
+                    const page = (additional || {}).page || 1;
+                    setIsLoadingRequesters(true);
+                    const requesters = await CompanyApi.findUsers({
+                      page,
+                      limit: 10,
+                    });
+                    const hasMore = requesters.data.users.length === 10;
+                    setIsLoadingRequesters(false);
+                    return Promise.resolve({
+                      options: requesters.data.users.map((user) => ({
+                        label: user.name,
+                        value: user.id
+                      })),
+                      hasMore: hasMore,
+                      additional: {
+                        page: page + 1,
+                        hasMore: hasMore
+                      }
+                    });
+                  } catch (error) {
+                    console.error(error);
+                    return {
+                      options: [],
+                      hasMore: false
+                    };
+                  }
+                }}
+                onChange={(value) => {
+                  if (value) {
+                    handleFilterChange("requester" as never, (value || {}).value);
+                    setSelectedRequester(value);
+                    return
+                  }
+                  handleFilterChange("requester" as never, null);
+                  setSelectedRequester(null);
+                }}
+                value={selectedRequester ? [{
+                  label: selectedRequester.label,
+                  value: selectedRequester.value
+                }] : []}
+                isLoading={isLoadingRequesters}
+              />
+            </div>
+            <div>
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1"> Período de Cadastro </label>
+              <DatePickerWithRange
+                date={date}
+                onChange={(newDate) => {
+                  const d = newDate as DateRange;
+                  if (d && d.from && d.to) {
+                    const initialDate = dayjs(d.from).format("YYYY-MM-DD");
+                    const finalDate = dayjs(d.to).format("YYYY-MM-DD");
+                    changeProcessFilter({
+                      page: 1,
+                      limit: processParams.limit,
+                      filter: {
+                        ...filters,
+                        initialDate,
+                        finalDate
+                      }
+                    });
+                  } else if (date?.from || date?.to) {
+                    changeProcessFilter({
+                      page: 1,
+                      limit: processParams.limit,
+                      filter: {
+                        ...filters,
+                        initialDate: undefined,
+                        finalDate: undefined
+                      }
+                    });
+                  }
+                  setDate(newDate as DateRange);
+                }}
               />
             </div>
             <div className="col-span-full">

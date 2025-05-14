@@ -11,7 +11,6 @@ export const ProcessApi = {
         if (params.limit) queryParams.set('limit', params.limit.toString());
         if (params.filter) {
             Object.entries(params.filter).forEach(([key, value]) => {
-                console.log(key, value);
                 if (value) queryParams.set(key, value.toString());
             });
         }
@@ -230,6 +229,9 @@ export namespace ProcessApi {
                 status?: number;
                 monitoring?: boolean;
                 batch?: string;
+                requester?: string;
+                initialDate?: string;
+                finalDate?: string;
             }
         };
 
@@ -241,6 +243,11 @@ export namespace ProcessApi {
                 id: number;
                 value: string;
             };
+            requester: {
+                id: string;
+                name: string;
+            } | null;
+            idBatch: string
             instance: number;
             processCreatedAt: string;
             cited: boolean;
