@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, ReactNode, useRef } from "react";
-import { AsyncPaginate } from 'react-select-async-paginate';
 import {
   Table,
   TableBody,
@@ -17,7 +16,6 @@ import {
   RefreshCw,
   Search,
   X,
-  RefreshCcw,
   Info,
   Trash2,
   MonitorOff,

@@ -26,12 +26,12 @@ export default function PublicationsPage() {
   const { invalidateQuery: invalidatePublicationStats } = usePublicationStats();
   const { refreshReport } = useReport();
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     invalidatePublications();
     invalidatePublicationStats();
     refreshReport();
-    queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATIONS] });
-    queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATION_STATS] });
+    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATIONS] });
+    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATION_STATS] });
   }
 
   const discardPublication = async (id: string) => {

@@ -8,7 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
 import { ProcessInfoModalInfos } from "./ProcessInfoModalInfos";
 import { ProcessInfoModalAudiences } from "./ProcessInfoModalAudiences";
 import { ProcessInfoModalParties } from "./ProcessInfoModalParties";
@@ -20,8 +19,6 @@ interface ProcessInfoModalProps {
 }
 
 export function ProcessInfoModal({ isOpen, onClose, processInfoSelected }: ProcessInfoModalProps) {
-  const [selectedText, setSelectedText] = useState("");
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px]">

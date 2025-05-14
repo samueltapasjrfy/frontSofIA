@@ -6,7 +6,6 @@ import { Upload } from "lucide-react";
 import { toast } from "sonner"
 import ModalImportData from "@/components/modalImportData/modalImportData";
 import { QUERY_KEYS } from "@/constants/cache";
-import { useReport } from "@/hooks/useReport";
 import { ProcessTable } from "@/components/process/ProcessTable";
 import { ImportProcessModal } from "@/components/process/ImportProcessModal";
 import { useProcesses } from "@/hooks/useProcess";
@@ -23,12 +22,12 @@ export default function ProcessesPage() {
   const [isModalImportDataOpen, setIsModalImportDataOpen] = useState(false);
   const { invalidateProcessesQuery, invalidateReport, saveProcesses } = useProcesses();
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     invalidateProcessesQuery();
     invalidateReport();
-    queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROCESS] });
-    queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROCESSES] });
-    queryClient.refetchQueries({ queryKey: [QUERY_KEYS.REPORT] });
+    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROCESS] });
+    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROCESSES] });
+    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.REPORT] });
   }
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);

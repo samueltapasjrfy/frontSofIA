@@ -8,9 +8,6 @@ import FormWebhook from "./formWebhook";
 import TableWebhook from "./tableWebhook";
 import { webhookFormSchema, WebhookFormData } from "./schemas";
 import { ZodError } from "zod";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/utils/cn";
-import { RefreshCcw } from "lucide-react";
 import { TableButtons } from "@/components/tableButtons";
 
 type AuthType = 'bearer' | 'basic' | 'apiKey';
@@ -32,8 +29,6 @@ export default function WebhooksPage() {
     invalidateWebhookQuery,
     invalidateWebhookHistoryQuery,
   } = useWebhook();
-
-  const [disabledRefresh, setDisabledRefresh] = useState(false);
 
   const handleSaveWebhook = async () => {
     try {
@@ -116,16 +111,12 @@ export default function WebhooksPage() {
   };
 
   const handleRefresh = async () => {
-    setDisabledRefresh(true)
     invalidateWebhookHistoryQuery()
     invalidateWebhookQuery()
     setWebhookHistoryParams({
       page: 1,
       limit: webhookHistoryParams.limit
     })
-    setTimeout(() => {
-      setDisabledRefresh(false)
-    }, 10000)
   }
 
   useEffect(() => {

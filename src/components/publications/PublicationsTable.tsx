@@ -16,12 +16,9 @@ import {
   Trash2,
   RefreshCw,
   Search,
-  Filter,
   X,
-  RefreshCcw,
   ThumbsUp,
   ThumbsDown,
-  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PublicationsApi } from "@/api/publicationsApi";
@@ -76,8 +73,6 @@ export function PublicationsTable({
   const [showFilters, setShowFilters] = useState(false);
   const [isReclassifyModalOpen, setIsReclassifyModalOpen] = useState(false);
   const [selectedPublicationId, setSelectedPublicationId] = useState<string>("");
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportBlock, setExportBlock] = useState(false);
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const { getPublicationsQuery, changeFilter: changeFilterPublications, publicationParams } = usePublications();
@@ -346,17 +341,10 @@ export function PublicationsTable({
 
   const handleExport = async () => {
     try {
-      setIsExporting(true);
-      setExportBlock(true);
       await PublicationsApi.exportToXLSX();
       toast.success('Arquivo exportado com sucesso!');
     } catch {
       toast.error('Erro ao exportar arquivo');
-    } finally {
-      setIsExporting(false);
-      setTimeout(() => {
-        setExportBlock(false);
-      }, 10000);
     }
   };
 
