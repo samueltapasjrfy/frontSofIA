@@ -11,6 +11,7 @@ import { ZodError } from "zod";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/cn";
 import { RefreshCcw } from "lucide-react";
+import { TableButtons } from "@/components/tableButtons";
 
 type AuthType = 'bearer' | 'basic' | 'apiKey';
 
@@ -33,26 +34,6 @@ export default function WebhooksPage() {
   } = useWebhook();
 
   const [disabledRefresh, setDisabledRefresh] = useState(false);
-
-  useEffect(() => {
-    if (!getWebhookQuery.data) return
-    setIsWebhookActive(!!getWebhookQuery.data.id);
-    setFormData({
-      url: getWebhookQuery.data.url,
-      authenticationType: getWebhookQuery.data.authenticationType as AuthType,
-      ...(getWebhookQuery.data.authentication?.bearer && {
-        bearerToken: getWebhookQuery.data.authentication.bearer.token
-      }),
-      ...(getWebhookQuery.data.authentication?.basic && {
-        username: getWebhookQuery.data.authentication.basic.username,
-        password: getWebhookQuery.data.authentication.basic.password
-      }),
-      ...(getWebhookQuery.data.authentication?.apiKey && {
-        apiKeyToken: getWebhookQuery.data.authentication.apiKey.token,
-        apiKeyHeader: getWebhookQuery.data.authentication.apiKey.header
-      })
-    });
-  }, [getWebhookQuery.data]);
 
   const handleSaveWebhook = async () => {
     try {
@@ -134,6 +115,39 @@ export default function WebhooksPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setDisabledRefresh(true)
+    invalidateWebhookHistoryQuery()
+    invalidateWebhookQuery()
+    setWebhookHistoryParams({
+      page: 1,
+      limit: webhookHistoryParams.limit
+    })
+    setTimeout(() => {
+      setDisabledRefresh(false)
+    }, 10000)
+  }
+
+  useEffect(() => {
+    if (!getWebhookQuery.data) return
+    setIsWebhookActive(!!getWebhookQuery.data.id);
+    setFormData({
+      url: getWebhookQuery.data.url,
+      authenticationType: getWebhookQuery.data.authenticationType as AuthType,
+      ...(getWebhookQuery.data.authentication?.bearer && {
+        bearerToken: getWebhookQuery.data.authentication.bearer.token
+      }),
+      ...(getWebhookQuery.data.authentication?.basic && {
+        username: getWebhookQuery.data.authentication.basic.username,
+        password: getWebhookQuery.data.authentication.basic.password
+      }),
+      ...(getWebhookQuery.data.authentication?.apiKey && {
+        apiKeyToken: getWebhookQuery.data.authentication.apiKey.token,
+        apiKeyHeader: getWebhookQuery.data.authentication.apiKey.header
+      })
+    });
+  }, [getWebhookQuery.data]);
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -154,31 +168,7 @@ export default function WebhooksPage() {
       <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
         <div className="p-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-800">Histórico de Webhooks Disparados</h2>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={disabledRefresh}
-              onClick={() => {
-                setDisabledRefresh(true)
-                invalidateWebhookHistoryQuery()
-                invalidateWebhookQuery()
-                setWebhookHistoryParams({
-                  page: 1,
-                  limit: webhookHistoryParams.limit
-                })
-                setTimeout(() => {
-                  setDisabledRefresh(false)
-                }, 2000)
-              }}
-              className={cn(
-                "flex items-center gap-1",
-              )}
-            >
-              <RefreshCcw className={`h-4 w-4 ${getWebhookHistoryQuery.isFetching ? "animate-spin" : ""}`} />
-              Recarregar
-            </Button>
-          </div>
+          <TableButtons onRefresh={handleRefresh} />
         </div>
 
         <div className="overflow-x-auto">

@@ -16,10 +16,8 @@ import { Input } from "@/components/ui/input";
 import {
   RefreshCw,
   Search,
-  Filter,
   X,
   RefreshCcw,
-  Download,
   Info,
   Trash2,
   MonitorOff,
@@ -35,12 +33,13 @@ import { useProcesses } from "@/hooks/useProcess";
 import { PROCESS_STATUS, processStatusColors } from "@/constants/process";
 import PopConfirm from "../ui/popconfirm";
 import { ProcessInfoModal } from "./processInfoModal";
-import { SelectInfinityScroll } from "../select-infinity-scroll";
+import { SelectInfinityScroll } from "../selectInfinityScroll";
 import { BatchApi } from "@/api/batchApi";
 import { BATCH_TYPES } from "@/constants/batch";
+import { TableButtons } from "../tableButtons";
 
 interface ProcessTableProps {
-  onRefresh: () => void;
+  onRefresh: () => Promise<void>;
   className?: string;
 }
 
@@ -58,8 +57,6 @@ export function ProcessTable({
 }: ProcessTableProps) {
   const [filters, setFilters] = useState<ProcessApi.FindAll.Params['filter']>({});
   const [showFilters, setShowFilters] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportBlock, setExportBlock] = useState(false);
   const { getProcessesQuery, changeProcessFilter, processParams, setMonitoring, deleteProcess } = useProcesses();
   const [processInfoSelected, setProcessInfoSelected] = useState<ProcessApi.FindAll.Process | null>(null);
   const [isLoadingBatches, setIsLoadingBatches] = useState(false);
@@ -257,17 +254,10 @@ export function ProcessTable({
 
   const handleExport = async () => {
     try {
-      setExportBlock(true);
-      setIsExporting(true);
       await ProcessApi.exportToXLSX();
       toast.success('Arquivo exportado com sucesso!');
     } catch {
       toast.error('Erro ao exportar arquivo');
-    } finally {
-      setIsExporting(false);
-      setTimeout(() => {
-        setExportBlock(false);
-      }, 10000);
     }
   };
 
@@ -276,48 +266,12 @@ export function ProcessTable({
       <div className="p-4 border-b">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">Processos</h2>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleFilters}
-              className={cn(
-                "flex items-center gap-1",
-                showFilters && "bg-blue-50 border-primary-blue text-primary-blue"
-              )}
-            >
-              <Filter className="h-4 w-4" />
-              Filtros
-              {Object.values(filters || {}).some(v => v !== "" && v !== null) && (
-                <Badge className="ml-1 bg-primary-blue text-white">
-                  {Object.values(filters || {}).filter(v => v !== "" && v !== null).length}
-                </Badge>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              loading={isExporting}
-              disabled={exportBlock}
-              onClick={handleExport}
-              className="flex items-center gap-1"
-            >
-              <Download className="h-4 w-4" />
-              Exportar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRefresh}
-              className={cn(
-                "flex items-center gap-1",
-                showFilters && "bg-blue-50 border-primary-blue text-primary-blue"
-              )}
-            >
-              <RefreshCcw className={`h-4 w-4 ${getProcessesQuery.isFetching ? "animate-spin" : ""}`} />
-              Recarregar
-            </Button>
-          </div>
+          <TableButtons
+            onRefresh={onRefresh}
+            onExport={handleExport}
+            toggleFilters={toggleFilters}
+            totalFilters={Object.values(filters || {}).filter(v => !!v).length}
+          />
         </div>
 
         {showFilters && (

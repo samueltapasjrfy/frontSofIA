@@ -18,16 +18,14 @@ import { getLocalStorage, LocalStorageKeys, setLocalStorage } from "@/utils/loca
 import { LoginResponse, renewToken } from "@/api/authApi";
 
 export function Dashboard() {
-  const { report, classificationConfidence, classificationPercentage, isLoading } = useReport(""); // Replace with actual organization ID when needed
+  const { report, classificationConfidence, classificationPercentage, isLoading } = useReport("");
   const { getPublicationsQuery } = usePublications();
 
   useEffect(() => {
     const handleRenewToken = async () => {
       const userData = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
-      console.log({1: userData})
       const response = await renewToken(userData.token)
       userData.token = response.token
-      console.log({2: response})
       setLocalStorage(LocalStorageKeys.USER, userData)
     }
     handleRenewToken()

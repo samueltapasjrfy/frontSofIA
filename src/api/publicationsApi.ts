@@ -53,8 +53,8 @@ export const PublicationsApi = {
     exportToXLSX: async (): Promise<void> => {
         try {
             // Buscar todas as publicações sem paginação
-            const response = await http.get<PublicationsApi.FindAll.Response>('/Publications', { 
-                noPagination: true 
+            const response = await http.get<PublicationsApi.FindAll.Response>('/Publications', {
+                noPagination: true
             });
             if (response.data.publications.length > 0) {
                 response.data.publications = await filterClassifications(response)
@@ -62,16 +62,16 @@ export const PublicationsApi = {
             // Preparar dados para exportação
             const data = response.data.publications.map(pub => ({
                 'Nº Processo': pub.litigationNumber || '-',
-                'Texto': pub.text || '-',
+                'Texto': (pub.text || '-').slice(0, 32000),
                 'Modalidade': pub.caseType?.value || '-',
                 'Tipo': pub.classifications?.[0]?.classification || '-',
                 'Status Classificação': pub.classifications?.[0]?.status.value || '-',
-                'Confiança': pub.classifications?.[0]?.confidence 
-                    ? `${(pub.classifications[0].confidence * 100).toFixed(0)}%` 
+                'Confiança': pub.classifications?.[0]?.confidence
+                    ? `${(pub.classifications[0].confidence * 100).toFixed(0)}%`
                     : '-',
                 'Status': pub.status.value || '-',
-                'Data Inserção': pub.createdAt 
-                    ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm') 
+                'Data Inserção': pub.createdAt
+                    ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm')
                     : '-',
                 'Data Processamento': pub.status.id === PUBLICATION_STATUS.COMPLETED && pub.updatedAt
                     ? dayjs(pub.updatedAt).format('DD/MM/YYYY HH:mm')
@@ -99,18 +99,18 @@ export const PublicationsApi = {
             XLSX.utils.book_append_sheet(wb, ws, 'Publicações');
 
             // Gerar arquivo e fazer download
-            const excelBuffer = XLSX.write(wb, { 
-                bookType: 'xlsx', 
-                type: 'array' 
+            const excelBuffer = XLSX.write(wb, {
+                bookType: 'xlsx',
+                type: 'array'
             });
-            
-            const dataBlob = new Blob([excelBuffer], { 
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+
+            const dataBlob = new Blob([excelBuffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             });
-            
+
             // Nome do arquivo com timestamp
             const fileName = `publicacoes_${dayjs().format('YYYY-MM-DD_HH-mm')}.xlsx`;
-            
+
             saveAs(dataBlob, fileName);
         } catch (error) {
             console.error('Erro ao exportar publicações:', error);
@@ -130,7 +130,7 @@ export namespace PublicationsApi {
             idInternal: string;
             status: { id: number; value: string };
             caseType?: { id: number; value: string };
-            classifications?: { 
+            classifications?: {
                 id: number;
                 classification: string;
                 confidence: number;

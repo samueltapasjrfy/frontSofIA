@@ -35,11 +35,12 @@ import { usePublications } from "@/hooks/usePublications";
 import ModalViewText from "../modalViewText";
 import { Pagination } from "../pagination";
 import { TruncateText } from "../truncateText";
+import { TableButtons } from "../tableButtons";
 
 interface PublicationsTableProps {
   onConfirm: (publication: PublicationsApi.FindAll.Publication) => void;
   onDiscard: (id: string) => void;
-  onRefresh: () => void;
+  onRefresh: () => Promise<void>;
   className?: string;
 }
 
@@ -364,48 +365,12 @@ export function PublicationsTable({
       <div className="p-4 border-b">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">Publicações</h2>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleFilters}
-              className={cn(
-                "flex items-center gap-1",
-                showFilters && "bg-blue-50 border-primary-blue text-primary-blue"
-              )}
-            >
-              <Filter className="h-4 w-4" />
-              Filtros
-              {Object.values(filters).some(v => v !== "" && v !== null) && (
-                <Badge className="ml-1 bg-primary-blue text-white">
-                  {Object.values(filters).filter(v => v !== "" && v !== null).length}
-                </Badge>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              loading={isExporting}
-              disabled={exportBlock}
-              onClick={handleExport}
-              className="flex items-center gap-1"
-            >
-              <Download className="h-4 w-4" />
-              Exportar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRefresh}
-              className={cn(
-                "flex items-center gap-1",
-                showFilters && "bg-blue-50 border-primary-blue text-primary-blue"
-              )}
-            >
-              <RefreshCcw className={`h-4 w-4 ${getPublicationsQuery.isFetching ? "animate-spin" : ""}`} />
-              Recarregar
-            </Button>
-          </div>
+          <TableButtons
+            onRefresh={onRefresh}
+            onExport={handleExport}
+            toggleFilters={toggleFilters}
+            totalFilters={Object.values(filters || {}).filter(v => !!v).length}
+          />
         </div>
 
         {showFilters && (
