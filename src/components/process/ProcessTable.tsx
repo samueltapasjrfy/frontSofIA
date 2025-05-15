@@ -136,6 +136,18 @@ export function ProcessTable({
       }
     },
     {
+      key: 'preliminaryInjunction',
+      label: 'Liminar',
+      className: 'font-semibold text-gray-700 py-3 w-[10%]',
+      render: (process) => {
+        return (
+          <span className="font-medium text-gray-700">
+            {process.preliminaryInjunction ? 'Sim' : 'Não'}
+          </span>
+        )
+      }
+    },
+    {
       key: 'monitoring',
       label: 'Monitoramento',
       className: 'font-semibold text-gray-700 w-[10%] py-3',
