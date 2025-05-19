@@ -46,7 +46,6 @@ export const TableButtons = ({ toggleFilters, totalFilters, onExport, onRefresh 
                     onClick={toggleFilters}
                     className={cn(
                         "flex items-center gap-1",
-                        "bg-blue-50 border-primary-blue text-primary-blue"
                     )}
                 >
                     <Filter className="h-4 w-4" />
@@ -79,7 +78,6 @@ export const TableButtons = ({ toggleFilters, totalFilters, onExport, onRefresh 
                     disabled={refreshBlock}
                     className={cn(
                         "flex items-center gap-1",
-                        "bg-blue-50 border-primary-blue text-primary-blue"
                     )}
                 >
                     <RefreshCcw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
