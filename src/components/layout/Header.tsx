@@ -18,6 +18,8 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { SidebarMobile } from "./SidebarMobile";
 import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { LoginResponse } from "@/api/authApi";
+import { cn } from "@/utils/cn";
+import { GetBgColor } from "./GetBgColor";
 
 interface HeaderProps {
   isCollapsed: boolean;
@@ -28,9 +30,9 @@ export function Header({ isCollapsed, toggleSidebar }: HeaderProps) {
   const [userName, setUserName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const isMobile = useIsMobile();
+  const userData = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
   useEffect(() => {
-    const userData = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
     setCompanyName(userData.companies?.[0]?.name);
     setUserName(userData.user.name.split(' ')[0]);
   }, []);
@@ -40,7 +42,10 @@ export function Header({ isCollapsed, toggleSidebar }: HeaderProps) {
   };
 
   return (
-    <header className="h-16 bg-primary-blue border-b border-blue-700 flex items-center justify-between px-6 w-full flex-shrink-0">
+    <header className={cn(
+      "h-16  border-b border-blue-700 flex items-center justify-between px-6 w-full flex-shrink-0",
+      GetBgColor(userData.companies?.[0]?.id)
+    )}>
       {isMobile ? <SidebarMobile isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} /> : <div />}
       <div className="font-semibold text-lg text-white">
         {companyName}
@@ -48,7 +53,10 @@ export function Header({ isCollapsed, toggleSidebar }: HeaderProps) {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-blue-700">
+          <Button variant="ghost" className={cn(
+            "flex items-center gap-2 text-white",
+            GetBgColor(userData.companies?.[0]?.id, true)
+          )}>
             <User size={18} />
             <span>{userName}</span>
             <ChevronDown size={16} />

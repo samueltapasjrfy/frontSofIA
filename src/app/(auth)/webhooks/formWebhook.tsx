@@ -11,6 +11,9 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge";
+import { GetBgColor } from "@/components/layout/GetBgColor";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 type FormWebhookProps = {
     formData: WebhookFormData;
@@ -30,6 +33,8 @@ export default function FormWebhook({
     handleRemoveWebhook,
     isActive
 }: FormWebhookProps) {
+    const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
+
     return (
         <div className="bg-white border rounded-lg shadow-sm px-4">
             {isLoading ? (
@@ -70,7 +75,7 @@ export default function FormWebhook({
                                             onClick={() => setFormData({ ...formData, authenticationType: 'bearer' })}
                                             disabled={!!isPerformingAction}
                                             className={cn(
-                                                formData.authenticationType === 'bearer' && "bg-primary-blue hover:bg-blue-700"
+                                                formData.authenticationType === 'bearer' && GetBgColor(user?.companies?.[0]?.id, true)
                                             )}
                                         >
                                             Bearer Token
@@ -80,7 +85,7 @@ export default function FormWebhook({
                                             onClick={() => setFormData({ ...formData, authenticationType: 'basic' })}
                                             disabled={!!isPerformingAction}
                                             className={cn(
-                                                formData.authenticationType === 'basic' && "bg-primary-blue hover:bg-blue-700"
+                                                formData.authenticationType === 'basic' && GetBgColor(user?.companies?.[0]?.id, true)
                                             )}
                                         >
                                             Basic Auth
@@ -90,7 +95,7 @@ export default function FormWebhook({
                                             onClick={() => setFormData({ ...formData, authenticationType: 'apiKey' })}
                                             disabled={!!isPerformingAction}
                                             className={cn(
-                                                formData.authenticationType === 'apiKey' && "bg-primary-blue hover:bg-blue-700"
+                                                formData.authenticationType === 'apiKey' && GetBgColor(user?.companies?.[0]?.id, true)
                                             )}
                                         >
                                             API Token
@@ -148,7 +153,9 @@ export default function FormWebhook({
                                 <div className="flex gap-2">
                                     <Button
                                         onClick={handleSaveWebhook}
-                                        className="bg-primary-blue hover:bg-blue-700"
+                                        className={cn(
+                                            GetBgColor(user?.companies?.[0]?.id, true)
+                                        )}
                                         disabled={!!isPerformingAction}
                                         loading={isPerformingAction === "save"}
                                     >

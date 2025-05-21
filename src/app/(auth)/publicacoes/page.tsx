@@ -13,6 +13,10 @@ import { usePublications } from "@/hooks/usePublications";
 import { QUERY_KEYS } from "@/constants/cache";
 import { usePublicationStats } from "@/hooks/usePublicationStats";
 import { useReport } from "@/hooks/useReport";
+import { cn } from "@/utils/cn";
+import { GetBgColor } from "@/components/layout/GetBgColor";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -33,6 +37,8 @@ export default function PublicationsPage() {
     await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATIONS] });
     await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATION_STATS] });
   }
+
+  const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
   const discardPublication = async (id: string) => {
     try {
@@ -126,7 +132,10 @@ export default function PublicationsPage() {
           </Button>
           <Button
             onClick={handleOpenImportModal}
-            className="bg-primary-blue hover:bg-blue-700 text-white"
+            className={cn(
+              "text-white",
+              GetBgColor(user?.companies?.[0]?.id, true)
+            )}
           >
             <Upload className="h-4 w-4 mr-2" />
             Registrar Publicação

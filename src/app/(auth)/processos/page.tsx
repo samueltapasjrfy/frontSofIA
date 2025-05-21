@@ -11,6 +11,10 @@ import { ImportProcessModal } from "@/components/process/ImportProcessModal";
 import { useProcesses } from "@/hooks/useProcess";
 import { ProcessApi } from "@/api/processApi";
 import { ProcessStats } from "@/components/process/ProcessStats";
+import { cn } from "@/utils/cn";
+import { GetBgColor } from "@/components/layout/GetBgColor";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -21,6 +25,7 @@ const litigationColumns = {
 export default function ProcessesPage() {
   const [isModalImportDataOpen, setIsModalImportDataOpen] = useState(false);
   const { invalidateProcessesQuery, invalidateReport, saveProcesses } = useProcesses();
+  const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
   const onRefresh = async () => {
     invalidateProcessesQuery();
@@ -101,7 +106,10 @@ export default function ProcessesPage() {
           </Button>
           <Button
             onClick={handleOpenImportModal}
-            className="bg-primary-blue hover:bg-blue-700 text-white"
+            className={cn(
+              "text-white",
+              GetBgColor(user?.companies?.[0]?.id, true)
+            )}
           >
             <Upload className="h-4 w-4 mr-2" />
             Registrar Processo

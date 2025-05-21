@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { LoginResponse } from "@/api/authApi";
+import { GetBgColor } from "./GetBgColor";
 
 interface SidebarItemProps {
   icon: React.ReactNode;
@@ -21,15 +22,17 @@ interface SidebarItemProps {
   href: string;
   isActive?: boolean;
   isCollapsed?: boolean;
+  idCompany: string;
 }
 
-function SidebarItem({ icon, label, href, isActive, isCollapsed }: SidebarItemProps) {
+function SidebarItem({ icon, label, href, isActive, isCollapsed, idCompany }: SidebarItemProps) {
   return (
     <Link href={href} className="w-full">
       <Button
         variant="ghost"
         className={cn(
-          "w-full justify-start gap-2 px-2 text-white bg-primary-blue",
+          "w-full justify-start gap-2 px-2 text-white",
+          GetBgColor(idCompany),
           isActive
             ? "bg-white/20"
             : "hover:bg-white/10",
@@ -127,6 +130,7 @@ export function SidebarContent({
             href={item.href}
             isActive={pathname === item.href}
             isCollapsed={isCollapsed}
+            idCompany={user?.companies?.[0]?.id}
           />
         ))}
       </div>

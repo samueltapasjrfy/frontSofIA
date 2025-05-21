@@ -3,6 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toPercent } from "@/utils/toPercent";
+import { GetBgColor } from "../layout/GetBgColor";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 interface BarChartProps {
   title: string;
@@ -22,6 +25,8 @@ export function BarChart({
   maxValue = 100,
   className,
 }: BarChartProps) {
+  const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
+
   return (
     <Card className={cn("overflow-hidden bg-white border", className)}>
       <CardHeader className="bg-white">
@@ -37,9 +42,12 @@ export function BarChart({
                   <span>{item.label}</span>
                   <span className="font-medium">{item.value}%</span>
                 </div>
-                <div className="h-2 w-full rounded-full bg-light-blue">
+                <div className="h-2 w-full">
                   <div
-                    className="h-full rounded-full bg-primary-blue"
+                    className={cn(
+                      "h-full rounded-full",
+                      GetBgColor(user?.companies?.[0]?.id, true)
+                    )}
                     style={{ width: `${toPercent(item.value / maxValue)}%` }}
                   />
                 </div>
