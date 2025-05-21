@@ -1,23 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { WebhooksApi } from "@/api/webhooksApi";
-import { toast } from "sonner";
 import { useWebhook } from "@/hooks/useWebhook";
-import FormWebhook from "./formWebhook";
-import TableWebhook from "./tableWebhook";
-import { webhookFormSchema, WebhookFormData } from "./schemas";
-import { ZodError } from "zod";
+import FormWebhook from "@/components/pages/webhooks/form/formWebhook";
+import TableWebhook from "@/components/pages/webhooks/tableWebhook";
 import { TableButtons } from "@/components/tableButtons";
-
-type AuthType = 'bearer' | 'basic' | 'apiKey';
+import { webhookHandle } from "./webhookHandle";
+import { useEffect, useState } from "react";
+import { WebhookFormData } from "@/components/pages/webhooks/form/schemas";
 
 export default function WebhooksPage() {
   const [formData, setFormData] = useState<WebhookFormData>({
     url: '',
     authenticationType: 'bearer',
   });
-
   const [isPerformingAction, setIsPerformingAction] = useState<"save" | "remove" | undefined>(undefined);
   const [isWebhookActive, setIsWebhookActive] = useState(false);
 
@@ -30,113 +25,26 @@ export default function WebhooksPage() {
     invalidateWebhookHistoryQuery,
   } = useWebhook();
 
-  const handleSaveWebhook = async () => {
-    try {
-      setIsPerformingAction("save");
-
-      // Validar o formulário com Zod
-      const validatedData = webhookFormSchema.parse(formData);
-
-      let authData = {};
-      switch (validatedData.authenticationType) {
-        case 'bearer':
-          authData = { bearer: { token: validatedData.bearerToken } };
-          break;
-        case 'basic':
-          authData = { basic: { username: validatedData.username, password: validatedData.password } };
-          break;
-        case 'apiKey':
-          authData = { apiKey: { token: validatedData.apiKeyToken, header: validatedData.apiKeyHeader } };
-          break;
-      }
-
-      const response = await WebhooksApi.save({
-        url: validatedData.url,
-        authentication: {
-          type: validatedData.authenticationType,
-          ...authData
-        }
-      });
-
-      if (response.error) {
-        toast.error(response.message || "Erro ao salvar webhook");
-        return;
-      }
-
-      toast.success("Webhook salvo com sucesso");
-      invalidateWebhookQuery();
-    } catch (error) {
-      console.error(error);
-
-      if (error instanceof ZodError) {
-        // Mostrar o primeiro erro de validação
-        const firstError = error.errors[0];
-        toast.error(firstError.message);
-      } else {
-        toast.error("Erro ao salvar webhook");
-      }
-    } finally {
-      setIsPerformingAction(undefined);
-    }
-  };
-
-  const handleRemoveWebhook = async () => {
-    try {
-      setIsPerformingAction("remove");
-
-      const response = await WebhooksApi.delete();
-
-      if (response.error) {
-        toast.error(response.message || "Erro ao remover webhook");
-        return;
-      }
-      toast.success("Webhook removido com sucesso");
-      invalidateWebhookQuery();
-      setIsWebhookActive(false);
-      setFormData({
-        url: '',
-        authenticationType: 'bearer',
-        bearerToken: undefined,
-        username: undefined,
-        password: undefined,
-        apiKeyToken: undefined,
-        apiKeyHeader: undefined,
-      });
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao remover webhook");
-    } finally {
-      setIsPerformingAction(undefined);
-    }
-  };
-
-  const handleRefresh = async () => {
-    invalidateWebhookHistoryQuery()
-    invalidateWebhookQuery()
-    setWebhookHistoryParams({
-      page: 1,
-      limit: webhookHistoryParams.limit
-    })
-  }
+  const {
+    handleSaveWebhook,
+    handleRemoveWebhook,
+    handleRefresh,
+    handleChangeWebhookData,
+  } = webhookHandle({
+    formData,
+    setFormData,
+    isPerformingAction,
+    setIsPerformingAction,
+    isWebhookActive,
+    setIsWebhookActive,
+    setWebhookHistoryParams,
+    webhookHistoryParams,
+    invalidateWebhookQuery,
+    invalidateWebhookHistoryQuery,
+  });
 
   useEffect(() => {
-    if (!getWebhookQuery.data) return
-    setIsWebhookActive(!!getWebhookQuery.data.id);
-    setFormData({
-      url: getWebhookQuery.data.url,
-      authenticationType: getWebhookQuery.data.authenticationType as AuthType,
-      ...(getWebhookQuery.data.authentication?.bearer && {
-        bearerToken: getWebhookQuery.data.authentication.bearer.token
-      }),
-      ...(getWebhookQuery.data.authentication?.basic && {
-        username: getWebhookQuery.data.authentication.basic.username,
-        password: getWebhookQuery.data.authentication.basic.password
-      }),
-      ...(getWebhookQuery.data.authentication?.apiKey && {
-        apiKeyToken: getWebhookQuery.data.authentication.apiKey.token,
-        apiKeyHeader: getWebhookQuery.data.authentication.apiKey.header
-      })
-    });
+    handleChangeWebhookData(getWebhookQuery.data);
   }, [getWebhookQuery.data]);
 
   return (

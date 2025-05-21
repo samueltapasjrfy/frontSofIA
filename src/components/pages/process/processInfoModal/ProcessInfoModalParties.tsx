@@ -1,10 +1,10 @@
 import { ProcessApi } from "@/api/processApi";
-import { Table } from "../../ui/table";
-import { TableHeader } from "../../ui/table";
-import { TableRow } from "../../ui/table";
-import { TableHead } from "../../ui/table";
-import { TableBody } from "../../ui/table";
-import { TableCell } from "../../ui/table";
+import { Table } from "../../../ui/table";
+import { TableHeader } from "../../../ui/table";
+import { TableRow } from "../../../ui/table";
+import { TableHead } from "../../../ui/table";
+import { TableBody } from "../../../ui/table";
+import { TableCell } from "../../../ui/table";
 
 type ProcessInfoModalPartiesProps = {
     parties: ProcessApi.FindAll.Process['parties'];

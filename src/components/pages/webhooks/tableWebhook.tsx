@@ -6,8 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/utils/cn";
 import { Info, Loader2 } from "lucide-react";
 import { useState } from "react";
-import ModalWebhookInfo from "./modalWebhookInfo";
-import BadgeWebhookStatus from "./badgeWebhookStatus";
+import ModalWebhookInfo from "../../../components/pages/webhooks/modalWebhookInfo";
+import BadgeWebhookStatus from "../../../components/pages/webhooks/badgeWebhookStatus";
 type TableWebhookProps = {
     history: WebhooksApi.History.Find.Log[];
     total: number;

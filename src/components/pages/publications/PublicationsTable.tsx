@@ -24,15 +24,15 @@ import { cn } from "@/lib/utils";
 import { PublicationsApi } from "@/api/publicationsApi";
 import { CLASSIFICATION_STATUS, classificationStatusColors, PUBLICATION_CASE_TYPE, PUBLICATION_STATUS, publicationStatusColors } from "@/constants/publications";
 import dayjs from "dayjs";
-import PopConfirm from "../ui/popconfirm";
+import PopConfirm from "../../ui/popconfirm";
 import { toast } from "sonner";
 import { ReclassifyPublicationModal } from "./ReclassifyPublicationModal";
 import { useClassifications } from "@/hooks/useClassifications";
 import { usePublications } from "@/hooks/usePublications";
-import ModalViewText from "../modalViewText";
-import { Pagination } from "../pagination";
-import { TruncateText } from "../truncateText";
-import { TableButtons } from "../tableButtons";
+import ModalViewText from "../../modalViewText";
+import { Pagination } from "../../pagination";
+import { TruncateText } from "../../truncateText";
+import { TableButtons } from "../../tableButtons";
 import { toPercent } from "@/utils/toPercent";
 
 interface PublicationsTableProps {

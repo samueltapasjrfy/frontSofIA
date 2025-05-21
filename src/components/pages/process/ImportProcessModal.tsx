@@ -12,28 +12,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, AlertCircle } from "lucide-react";
+import { RegisterProcess } from "./types";
 
-interface ImportPublicationModalProps {
+interface ImportProcessModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (data: { litigationNumber: string; text: string; idInternal?: string }) => Promise<boolean>;
+  onImport: (data: RegisterProcess) => Promise<boolean>;
 }
 
-export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPublicationModalProps) {
+export function ImportProcessModal({ isOpen, onClose, onImport }: ImportProcessModalProps) {
   const [litigationNumber, setLitigationNumber] = useState("");
-  const [text, setText] = useState("");
+  const [instance, setInstance] = useState<number | null>(null);
   const [idInternal, setIdInternal] = useState("");
-  const [errors, setErrors] = useState<{ litigationNumber?: string; text?: string }>({});
+  const [errors, setErrors] = useState<{ litigationNumber?: string; instance?: string }>({});
 
   const validateForm = () => {
-    const newErrors: { litigationNumber?: string; text?: string } = {};
+    const newErrors: { litigationNumber?: string; instance?: string } = {};
 
     if (!litigationNumber.trim()) {
       newErrors.litigationNumber = "Número do processo é obrigatório";
-    }
-
-    if (!text.trim()) {
-      newErrors.text = "Texto da publicação é obrigatório";
     }
 
     setErrors(newErrors);
@@ -44,7 +41,7 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
     if (!validateForm()) return;
     const success = await onImport({
       litigationNumber,
-      text,
+      instance: instance || undefined,
       idInternal: idInternal || undefined
     });
     if (!success) return;
@@ -53,7 +50,7 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
 
   const resetForm = () => {
     setLitigationNumber("");
-    setText("");
+    setInstance(null);
     setIdInternal("");
     setErrors({});
   };
@@ -67,9 +64,9 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gray-800">Importar Publicação</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-gray-800">Registrar Processo</DialogTitle>
           <DialogDescription>
-            Preencha os dados da publicação para processamento pela I.A. Sofia.
+            Preencha os dados do processo.
           </DialogDescription>
         </DialogHeader>
 
@@ -95,34 +92,41 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
 
           <div className="grid gap-2">
             <label htmlFor="text" className="text-sm font-medium text-gray-700">
-              Texto da Publicação <span className="text-red-500">*</span>
+              Instância
             </label>
-            <textarea
-              id="text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Insira o texto completo da publicação..."
-              rows={5}
-              className={`min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.text ? "border-red-500" : ""
-                }`}
+            <Input
+              id="instance"
+              value={instance || ""}
+              onChange={(e) => {
+                const str = String(e.target.value)
+                let value: number | null = str.at(-1) ? +str.at(-1)!.replace(/\D/g, "") : null
+                if (!value) value = null
+                else if (value > 3) value = 3
+                else if (value < 1) value = 1
+                setInstance(value)
+              }}
+              maxLength={3}
+              minLength={1}
+              type="number"
+              placeholder="N⁰ da Instância"
             />
-            {errors.text && (
+            {errors.instance && (
               <div className="flex items-center text-red-500 text-sm mt-1">
                 <AlertCircle className="h-4 w-4 mr-1" />
-                {errors.text}
+                {errors.instance}
               </div>
             )}
           </div>
 
           <div className="grid gap-2">
             <label htmlFor="idInternal" className="text-sm font-medium text-gray-700">
-              ID da Publicação <span className="text-gray-400 text-xs">(opcional)</span>
+              ID do Processo <span className="text-gray-400 text-xs">(opcional)</span>
             </label>
             <Input
               id="idInternal"
               value={idInternal}
               onChange={(e) => setIdInternal(e.target.value)}
-              placeholder="Identificador único da publicação (se disponível)"
+              placeholder="Identificador único do processo (se disponível)"
             />
           </div>
         </div>
@@ -136,7 +140,7 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
             className="bg-primary-blue hover:bg-blue-700 text-white"
           >
             <Upload className="h-4 w-4 mr-2" />
-            Importar
+            Registrar
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -25,18 +25,18 @@ import {
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 import { toast } from "sonner";
-import { Pagination } from "../pagination";
+import { Pagination } from "../../pagination";
 import { ProcessApi } from "@/api/processApi";
 import { useProcesses } from "@/hooks/useProcess";
 import { PROCESS_STATUS, processStatusColors } from "@/constants/process";
-import PopConfirm from "../ui/popconfirm";
+import PopConfirm from "../../ui/popconfirm";
 import { ProcessInfoModal } from "./processInfoModal";
-import { SelectInfinityScroll } from "../selectInfinityScroll";
+import { SelectInfinityScroll } from "../../selectInfinityScroll";
 import { BatchApi } from "@/api/batchApi";
 import { BATCH_TYPES } from "@/constants/batch";
-import { TableButtons } from "../tableButtons";
+import { TableButtons } from "../../tableButtons";
 import { CompanyApi } from "@/api/companyApi";
-import { DatePickerWithRange } from "../dateRangePicker";
+import { DatePickerWithRange } from "../../dateRangePicker";
 import { DateRange } from "react-day-picker";
 
 interface ProcessTableProps {

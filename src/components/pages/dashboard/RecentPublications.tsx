@@ -8,10 +8,9 @@ import { Eye, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PublicationsApi } from "@/api/publicationsApi";
 import { classificationStatusColors } from "@/constants/publications";
-import ModalViewText from "../modalViewText";
-import { useState } from "react";
+import ModalViewText from "@/components/modalViewText";
 import { useRouter } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { toPercent } from "@/utils/toPercent";
 
 interface RecentPublicationsProps {

@@ -14,7 +14,6 @@ export function useWebhook() {
         queryKey: [QUERY_KEYS.WEBHOOK],
         queryFn: async () => {
             try {
-
                 const response = await WebhooksApi.find(true);
                 if (response.error) {
                     const error = new Error(response.message) as Error & { status?: number };
