@@ -1,6 +1,9 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../ui/button";
 import { cn } from "@/utils/cn";
+import { GetBgColor } from "../layout/GetBgColor";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 type PaginationProps = {
     total: number;
@@ -11,6 +14,7 @@ type PaginationProps = {
     setPagination: (pagination: { page: number, limit: number }) => void;
 }
 export const Pagination = ({ total, pagination: { page, limit }, setPagination }: PaginationProps) => {
+    const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
     return (
 
@@ -91,7 +95,7 @@ export const Pagination = ({ total, pagination: { page, limit }, setPagination }
                                     })}
                                     className={cn(
                                         "h-10 w-10 p-0",
-                                        page === pageNumber && "bg-primary-blue hover:bg-blue-700"
+                                        page === pageNumber && GetBgColor(user?.companies?.[0]?.id, true)
                                     )}
                                 >
                                     {pageNumber}

@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarContent } from "./SidebarContent";
+import { cn } from "@/utils/cn";
+import { GetBgColor } from "./GetBgColor";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 interface SidebarMobileProps {
   isCollapsed: boolean;
@@ -13,6 +17,7 @@ interface SidebarMobileProps {
 
 export function SidebarMobile({ toggleSidebar }: SidebarMobileProps) {
   const [open, setOpen] = useState(false);
+  const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -21,9 +26,12 @@ export function SidebarMobile({ toggleSidebar }: SidebarMobileProps) {
           <Menu />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 bg-primary-blue text-white w-64 border-none">
-        <SidebarContent 
-          isCollapsed={false} 
+      <SheetContent side="left" className={cn(
+        "p-0 text-white w-64 border-none",
+        GetBgColor(user?.companies?.[0]?.id)
+      )}>
+        <SidebarContent
+          isCollapsed={false}
           toggleSidebar={toggleSidebar}
           showToggleButton={false}
         />

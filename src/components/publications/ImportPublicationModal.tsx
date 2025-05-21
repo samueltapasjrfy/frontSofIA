@@ -12,6 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, AlertCircle } from "lucide-react";
+import { cn } from "@/utils/cn";
+import { GetBgColor } from "../layout/GetBgColor";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 interface ImportPublicationModalProps {
   isOpen: boolean;
@@ -24,6 +28,7 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
   const [text, setText] = useState("");
   const [idInternal, setIdInternal] = useState("");
   const [errors, setErrors] = useState<{ litigationNumber?: string; text?: string }>({});
+  const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
   const validateForm = () => {
     const newErrors: { litigationNumber?: string; text?: string } = {};
@@ -133,7 +138,10 @@ export function ImportPublicationModal({ isOpen, onClose, onImport }: ImportPubl
           </Button>
           <Button
             onClick={handleSubmit}
-            className="bg-primary-blue hover:bg-blue-700 text-white"
+            className={cn(
+              "text-white",
+              GetBgColor(user?.companies?.[0]?.id, true)
+            )}
           >
             <Upload className="h-4 w-4 mr-2" />
             Importar
