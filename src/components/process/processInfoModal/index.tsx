@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessInfoModalInfos } from "./ProcessInfoModalInfos";
 import { ProcessInfoModalAudiences } from "./ProcessInfoModalAudiences";
 import { ProcessInfoModalParties } from "./ProcessInfoModalParties";
+import { ProcessInfoModalClasses } from "./ProcessInfoModalClasses";
 
 interface ProcessInfoModalProps {
   isOpen: boolean;
@@ -30,16 +31,22 @@ export function ProcessInfoModal({ isOpen, onClose, processInfoSelected }: Proce
             <TabsTrigger value="info">Informações</TabsTrigger>
             <TabsTrigger value="audiences">Audiências</TabsTrigger>
             <TabsTrigger value="parties">Partes</TabsTrigger>
+            <TabsTrigger value="classes">Classes</TabsTrigger>
           </TabsList>
-          <TabsContent value="info">
-            <ProcessInfoModalInfos processInfoSelected={processInfoSelected} />
-          </TabsContent>
-          <TabsContent value="audiences">
-            <ProcessInfoModalAudiences audiences={processInfoSelected?.audiences || []} />
-          </TabsContent>
-          <TabsContent value="parties">
-            <ProcessInfoModalParties parties={processInfoSelected?.parties || []} />
-          </TabsContent>
+          <div className="max-h-[500px] overflow-y-auto">
+            <TabsContent value="info">
+              <ProcessInfoModalInfos processInfoSelected={processInfoSelected} />
+            </TabsContent>
+            <TabsContent value="audiences">
+              <ProcessInfoModalAudiences audiences={processInfoSelected?.audiences || []} />
+            </TabsContent>
+            <TabsContent value="parties">
+              <ProcessInfoModalParties parties={processInfoSelected?.parties || []} />
+            </TabsContent>
+            <TabsContent value="classes">
+              <ProcessInfoModalClasses classes={processInfoSelected?.classes || []} />
+            </TabsContent>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>

@@ -18,7 +18,6 @@ const labelMap = {
     "Citado em": { key: "citedAt", type: "date" },
     "Segredo de Justiça": { key: "secret", type: "boolean" },
     "Natureza": { key: "nature", type: "text" },
-    "Classe": { key: "classes", type: "array" },
     "Justiça Gratuita": { key: "legalAid", type: "boolean" },
     "Sistema": { key: "system", type: "text" },
     "Origem": { key: "originalCourt", type: "text" },
