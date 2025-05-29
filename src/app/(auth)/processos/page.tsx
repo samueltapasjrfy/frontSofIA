@@ -5,11 +5,14 @@ import { toast } from "sonner"
 import ModalImportData from "@/components/modalImportData/modalImportData";
 import { QUERY_KEYS } from "@/constants/cache";
 import { ProcessTable } from "@/components/process/ProcessTable";
-import { ImportProcessModal } from "@/components/process/ImportProcessModal";
+import { RegisterProcessModal } from "@/components/process/ImportProcessModal";
 import { useProcesses } from "@/hooks/useProcess";
 import { ProcessApi } from "@/api/processApi";
 import { ProcessStats } from "@/components/process/ProcessStats";
 import { HandleEntitiesButtons } from "@/components/handleEntitiesButtons";
+import { cn } from "@/utils/cn";
+import { Check, Trash } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -20,7 +23,8 @@ const litigationColumns = {
 export default function ProcessesPage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [isRemoveMonitoringModalOpen, setIsRemoveMonitoringModalOpen] = useState(false);
+  const [isActivateMonitoringBulkModalOpen, setIsActivateMonitoringBulkModalOpen] = useState(false);
   const { invalidateProcessesQuery, invalidateReport, saveProcesses } = useProcesses();
 
   const onRefresh = async () => {
@@ -45,11 +49,11 @@ export default function ProcessesPage() {
   };
 
   const handleOpenRemoveModal = () => {
-    setIsRemoveModalOpen(true);
+    setIsRemoveMonitoringModalOpen(true);
   };
 
-  const handleCloseRemoveModal = () => {
-    setIsRemoveModalOpen(false);
+  const handleOpenActivateMonitoringBulkModal = () => {
+    setIsActivateMonitoringBulkModalOpen(true);
   };
 
   const handleFinishImport = async (
@@ -59,7 +63,6 @@ export default function ProcessesPage() {
     const params: ProcessApi.Save.Params = {
       processes: rows.map((row: { [k: string]: string }) => ({
         cnj: row[expectedColumnsToRows[litigationColumns.litigation]],
-        instance: +row[expectedColumnsToRows[litigationColumns.instance]] || undefined,
         metadata: {
           idInternal: row[expectedColumnsToRows[litigationColumns.idInternal]],
         },
@@ -78,11 +81,32 @@ export default function ProcessesPage() {
     return true;
   };
 
+  const handleFinishActivateMonitoringBulk = async (
+    rows: Array<{ [k: string]: string }>,
+    expectedColumnsToRows: { [k: string]: string },
+  ): Promise<boolean> => {
+    const params: ProcessApi.Save.Params = {
+      processes: rows.map((row: { [k: string]: string }) => ({
+        cnj: row[expectedColumnsToRows[litigationColumns.litigation]],
+      })),
+      monitoring: true,
+      registration: false,
+    };
+    const response = await ProcessApi.save(params);
+    if (response.error) {
+      toast.error(response.message || "Erro ao ativar monitoramento");
+      return false;
+    }
+    toast.success("Monitoramento ativado com sucesso");
+    setIsImportModalOpen(false);
+    setTimeout(onRefresh, 1000);
+    return true;
+  };
+
   const handleSaveProtocol = async (data: { litigationNumber: string; instance?: number; idInternal?: string }): Promise<boolean> => {
     const response = await saveProcesses({
       processes: [{
         cnj: data.litigationNumber,
-        instance: data.instance,
         metadata: {
           idInternal: data.idInternal,
         },
@@ -99,6 +123,24 @@ export default function ProcessesPage() {
     return true;
   };
 
+  const handleRemoveMonitoring = async (
+    rows: Array<{ [k: string]: string }>,
+    expectedColumnsToRows: { [k: string]: string },
+  ): Promise<boolean> => {
+    const params: ProcessApi.DeactivateMonitoringBulk.Params = {
+      cnjs: rows.map((row: { [k: string]: string }) => row[expectedColumnsToRows[litigationColumns.litigation]])
+    };
+    const response = await ProcessApi.deactivateMonitoringBulk(params);
+    if (response.error) {
+      toast.error(response.message || "Erro ao desativar monitoramento");
+      return false;
+    }
+    toast.success("Monitoramento desativado com sucesso");
+    setIsRemoveMonitoringModalOpen(false);
+    setTimeout(onRefresh, 1000);
+    return true;
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -107,7 +149,28 @@ export default function ProcessesPage() {
           entityName="Processos"
           handleImport={handleOpenImportModal}
           handleRegister={handleOpenRegisterModal}
-          handleRemove={handleOpenRemoveModal}
+          otherButtons={
+            <>
+              <Button
+                onClick={handleOpenActivateMonitoringBulkModal}
+                variant="outline"
+                className="bg-primary-white hover:bg-primary-white text-primary-blue border border-primary-blue"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Ativar Monitoramento
+              </Button>
+              <Button
+                onClick={handleOpenRemoveModal}
+                variant="outline"
+                className={cn(
+                  "text-red-500 hover:text-white hover:bg-red-500 border-red-500",
+                )}
+              >
+                <Trash className="h-4 w-4 mr-2" />
+                Remover Monitoramento
+              </Button>
+            </>
+          }
         />
       </div>
 
@@ -117,7 +180,7 @@ export default function ProcessesPage() {
         onRefresh={onRefresh}
       />
 
-      <ImportProcessModal
+      <RegisterProcessModal
         isOpen={isRegisterModalOpen}
         onClose={handleCloseRegisterModal}
         onImport={handleSaveProtocol}
@@ -137,12 +200,6 @@ export default function ProcessesPage() {
             variant: ['NÚMERO DO PROCESSO', 'PROCESSO', 'LITIGATION', 'NUMBER'],
           },
           {
-            key: litigationColumns.instance,
-            example: '1',
-            previewWidth: 200,
-            variant: ['INSTÂNCIA', 'INSTANCE', 'INSTANCE NUMBER'],
-          },
-          {
             key: litigationColumns.idInternal,
             example: '1234567890',
             previewWidth: 200,
@@ -151,10 +208,10 @@ export default function ProcessesPage() {
         ]}
       />
       <ModalImportData
-        isModalOpen={isRemoveModalOpen}
-        setIsModalOpen={setIsRemoveModalOpen}
-        title="Remover Processos"
-        finish={handleFinishImport}
+        isModalOpen={isActivateMonitoringBulkModalOpen}
+        setIsModalOpen={setIsActivateMonitoringBulkModalOpen}
+        title="Ativar Monitoramento"
+        finish={handleFinishActivateMonitoringBulk}
         docExampleUrl={``}
         expectedColumns={[
           {
@@ -162,12 +219,21 @@ export default function ProcessesPage() {
             example: '0001234-56.2024.8.26.0001',
             previewWidth: 200,
             variant: ['NÚMERO DO PROCESSO', 'PROCESSO', 'LITIGATION', 'NUMBER'],
-          },
+          }
+        ]}
+      />
+      <ModalImportData
+        isModalOpen={isRemoveMonitoringModalOpen}
+        setIsModalOpen={setIsRemoveMonitoringModalOpen}
+        title="Remover Monitoramento"
+        finish={handleRemoveMonitoring}
+        docExampleUrl={``}
+        expectedColumns={[
           {
-            key: litigationColumns.instance,
-            example: '1',
+            key: litigationColumns.litigation,
+            example: '0001234-56.2024.8.26.0001',
             previewWidth: 200,
-            variant: ['INSTÂNCIA', 'INSTANCE', 'INSTANCE NUMBER'],
+            variant: ['NÚMERO DO PROCESSO', 'PROCESSO', 'LITIGATION', 'NUMBER'],
           }
         ]}
       />

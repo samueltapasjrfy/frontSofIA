@@ -1,4 +1,4 @@
-import { Upload } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { Button } from "../ui/button";
 import { cn } from "@/utils/cn";
 import { GetBgColor } from "../layout/GetBgColor";
@@ -9,9 +9,9 @@ type HandleEntitiesButtonsProps = {
     entityName: string;
     handleImport?: () => void;
     handleRegister?: () => void;
-    handleRemove?: () => void;
+    otherButtons?: React.ReactNode;
 }
-export const HandleEntitiesButtons = ({ entityName, handleImport, handleRegister, handleRemove }: HandleEntitiesButtonsProps) => {
+export const HandleEntitiesButtons = ({ entityName, handleImport, handleRegister, otherButtons }: HandleEntitiesButtonsProps) => {
     const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
     return (
@@ -25,19 +25,6 @@ export const HandleEntitiesButtons = ({ entityName, handleImport, handleRegister
                     Importar {entityName}
                 </Button>
             )}
-            {handleRemove && (
-                <Button
-                    onClick={handleRemove}
-                    className={cn(
-                        "text-red-500 hover:text-white hover:bg-red-500 border-red-500",
-                    )}
-                    variant="outline"
-                    type="button"
-                >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Remover {entityName}
-                </Button>
-            )}
             {handleRegister && (
                 <Button
                     onClick={handleRegister}
@@ -46,11 +33,11 @@ export const HandleEntitiesButtons = ({ entityName, handleImport, handleRegister
                         GetBgColor(user?.companies?.[0]?.id, true)
                     )}
                 >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 mr-2" />
                     Registrar {entityName}
                 </Button>
             )}
-
+            {otherButtons}
         </div>
     );
 };

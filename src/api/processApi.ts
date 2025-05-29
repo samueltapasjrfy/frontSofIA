@@ -62,6 +62,15 @@ export const ProcessApi = {
         };
     },
 
+    deactivateMonitoringBulk: async (data: ProcessApi.DeactivateMonitoringBulk.Params): Promise<APIResponse<void>> => {
+        const response = await http.post('/Process/Monitoring/DeactivateBulk', data);
+        return {
+            data: undefined,
+            message: response.message,
+            error: response.error
+        };
+    },
+
     report: async (): Promise<ProcessApi.Report.Response> => {
         const response = await http.get<ProcessApi.Report.Response>('/Process/report');
         return response.data;
@@ -360,7 +369,6 @@ export namespace ProcessApi {
         export type Params = {
             processes: {
                 cnj: string;
-                instance?: number;
                 metadata?: Record<string, any>;
             }[];
             monitoring: boolean;
@@ -376,6 +384,12 @@ export namespace ProcessApi {
         export type Response = {
             total: number;
             monitored: number;
+        };
+    }
+
+    export namespace DeactivateMonitoringBulk {
+        export type Params = {
+            cnjs: string[];
         };
     }
 }

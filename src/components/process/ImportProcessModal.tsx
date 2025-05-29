@@ -17,21 +17,20 @@ import { GetBgColor } from "../layout/GetBgColor";
 import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { LoginResponse } from "@/api/authApi";
 
-interface ImportProcessModalProps {
+interface RegisterProcessModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (data: { litigationNumber: string; instance?: number; idInternal?: string }) => Promise<boolean>;
+  onImport: (data: { litigationNumber: string; idInternal?: string }) => Promise<boolean>;
 }
 
-export function ImportProcessModal({ isOpen, onClose, onImport }: ImportProcessModalProps) {
+export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProcessModalProps) {
   const [litigationNumber, setLitigationNumber] = useState("");
-  const [instance, setInstance] = useState<number | null>(null);
   const [idInternal, setIdInternal] = useState("");
-  const [errors, setErrors] = useState<{ litigationNumber?: string; instance?: string }>({});
+  const [errors, setErrors] = useState<{ litigationNumber?: string }>({});
   const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
   const validateForm = () => {
-    const newErrors: { litigationNumber?: string; instance?: string } = {};
+    const newErrors: { litigationNumber?: string } = {};
 
     if (!litigationNumber.trim()) {
       newErrors.litigationNumber = "Número do processo é obrigatório";
@@ -45,7 +44,6 @@ export function ImportProcessModal({ isOpen, onClose, onImport }: ImportProcessM
     if (!validateForm()) return;
     const success = await onImport({
       litigationNumber,
-      instance: instance || undefined,
       idInternal: idInternal || undefined
     });
     if (!success) return;
@@ -54,7 +52,6 @@ export function ImportProcessModal({ isOpen, onClose, onImport }: ImportProcessM
 
   const resetForm = () => {
     setLitigationNumber("");
-    setInstance(null);
     setIdInternal("");
     setErrors({});
   };
@@ -90,34 +87,6 @@ export function ImportProcessModal({ isOpen, onClose, onImport }: ImportProcessM
               <div className="flex items-center text-red-500 text-sm mt-1">
                 <AlertCircle className="h-4 w-4 mr-1" />
                 {errors.litigationNumber}
-              </div>
-            )}
-          </div>
-
-          <div className="grid gap-2">
-            <label htmlFor="text" className="text-sm font-medium text-gray-700">
-              Instância
-            </label>
-            <Input
-              id="instance"
-              value={instance || ""}
-              onChange={(e) => {
-                const str = String(e.target.value)
-                let value: number | null = str.at(-1) ? +str.at(-1)!.replace(/\D/g, "") : null
-                if (!value) value = null
-                else if (value > 3) value = 3
-                else if (value < 1) value = 1
-                setInstance(value)
-              }}
-              maxLength={3}
-              minLength={1}
-              type="number"
-              placeholder="N⁰ da Instância"
-            />
-            {errors.instance && (
-              <div className="flex items-center text-red-500 text-sm mt-1">
-                <AlertCircle className="h-4 w-4 mr-1" />
-                {errors.instance}
               </div>
             )}
           </div>
