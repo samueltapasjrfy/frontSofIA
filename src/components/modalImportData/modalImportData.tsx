@@ -265,13 +265,12 @@ const ModalImportData = ({
       onOpenChange={handleCancel}
     >
       <DialogContent
-        className="max-w-[1200px] modal-import-data">
-        <DialogHeader className="sr-only">
-          <DialogTitle >Importar Dados</DialogTitle>
+        className="max-w-[1200px] modal-import-data overflow-x-auto"
+      >
+        <DialogHeader>
+          <DialogTitle className="font-bold">{title}</DialogTitle>
         </DialogHeader>
         <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">{title}</h2>
-
           <ModalImportFormStepper
             currentStep={String(currentStep)}
             steps={itemsSteps.map((step) => ({
@@ -334,11 +333,25 @@ const ModalImportData = ({
                   </div>
                   <div className="mt-12" />
                   <h3 className="text-lg font-semibold mb-4">Se tornará</h3>
-                  <div className="flex flex-row pb-10 ">
+                  <div className="flex flex-row pb-10">
                     {(Array.isArray(rows) && rows.length > 0) &&
                       Object.keys(rows[0]).map((rowKey) => (
                         <div key={rowKey} className="validate-column-box select-column-box" >
                           <Select<{ value: string; label: string }>
+                            components={{
+                              Menu: (props) => (
+                                <div className="relative">
+                                  <div {...props.innerProps} className="fixed border-1 bg-white border-gray-300 w-[250px]">{props.children}</div>
+                                </div>
+                              ),
+                              Option: (props) => (
+                                <div className="flex items-center justify-between hover:bg-blue-500 hover:text-white cursor-pointer" {...props.innerProps}>
+                                  <div className="flex items-center gap-2 p-2">
+                                    <span className="text-sm">{props.data.label}</span>
+                                  </div>
+                                </div>
+                              ),
+                            }}
                             key={JSON.stringify(expectedColumnsToRows)}
                             className="w-full text-sm"
                             placeholder="Selecione uma coluna"

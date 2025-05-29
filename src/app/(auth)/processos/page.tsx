@@ -1,8 +1,6 @@
 "use client";
 import { useState } from "react";
 import { queryClient } from "@/lib/reactQuery";
-import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
 import { toast } from "sonner"
 import ModalImportData from "@/components/modalImportData/modalImportData";
 import { QUERY_KEYS } from "@/constants/cache";
@@ -11,10 +9,7 @@ import { ImportProcessModal } from "@/components/process/ImportProcessModal";
 import { useProcesses } from "@/hooks/useProcess";
 import { ProcessApi } from "@/api/processApi";
 import { ProcessStats } from "@/components/process/ProcessStats";
-import { cn } from "@/utils/cn";
-import { GetBgColor } from "@/components/layout/GetBgColor";
-import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
-import { LoginResponse } from "@/api/authApi";
+import { HandleEntitiesButtons } from "@/components/handleEntitiesButtons";
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -23,9 +18,10 @@ const litigationColumns = {
 }
 
 export default function ProcessesPage() {
-  const [isModalImportDataOpen, setIsModalImportDataOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const { invalidateProcessesQuery, invalidateReport, saveProcesses } = useProcesses();
-  const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
   const onRefresh = async () => {
     invalidateProcessesQuery();
@@ -35,14 +31,25 @@ export default function ProcessesPage() {
     await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.REPORT] });
   }
 
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  const handleOpenRegisterModal = () => {
+    setIsRegisterModalOpen(true);
+  };
+
+  const handleCloseRegisterModal = () => {
+    setIsRegisterModalOpen(false);
+  };
 
   const handleOpenImportModal = () => {
     setIsImportModalOpen(true);
   };
 
-  const handleCloseImportModal = () => {
-    setIsImportModalOpen(false);
+  const handleOpenRemoveModal = () => {
+    setIsRemoveModalOpen(true);
+  };
+
+  const handleCloseRemoveModal = () => {
+    setIsRemoveModalOpen(false);
   };
 
   const handleFinishImport = async (
@@ -66,7 +73,7 @@ export default function ProcessesPage() {
       return false;
     }
     toast.success("Processos enviados para a fila de importação");
-    setIsModalImportDataOpen(false);
+    setIsImportModalOpen(false);
     setTimeout(onRefresh, 1000);
     return true;
   };
@@ -88,7 +95,7 @@ export default function ProcessesPage() {
       return false;
     }
     toast.success("Processo registrado com sucesso");
-    setIsImportModalOpen(false);
+    setIsRegisterModalOpen(false);
     return true;
   };
 
@@ -96,25 +103,12 @@ export default function ProcessesPage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Processos</h1>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setIsModalImportDataOpen(true)}
-            className="bg-primary-white hover:bg-primary-white text-primary-blue border border-primary-blue"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Importar Processos
-          </Button>
-          <Button
-            onClick={handleOpenImportModal}
-            className={cn(
-              "text-white",
-              GetBgColor(user?.companies?.[0]?.id, true)
-            )}
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Registrar Processo
-          </Button>
-        </div>
+        <HandleEntitiesButtons
+          entityName="Processos"
+          handleImport={handleOpenImportModal}
+          handleRegister={handleOpenRegisterModal}
+          handleRemove={handleOpenRemoveModal}
+        />
       </div>
 
       <ProcessStats />
@@ -124,14 +118,14 @@ export default function ProcessesPage() {
       />
 
       <ImportProcessModal
-        isOpen={isImportModalOpen}
-        onClose={handleCloseImportModal}
+        isOpen={isRegisterModalOpen}
+        onClose={handleCloseRegisterModal}
         onImport={handleSaveProtocol}
       />
 
       <ModalImportData
-        isModalOpen={isModalImportDataOpen}
-        setIsModalOpen={setIsModalImportDataOpen}
+        isModalOpen={isImportModalOpen}
+        setIsModalOpen={setIsImportModalOpen}
         title="Importar Processos"
         finish={handleFinishImport}
         docExampleUrl={``}
@@ -153,6 +147,27 @@ export default function ProcessesPage() {
             example: '1234567890',
             previewWidth: 200,
             variant: ['ID INTERNO', 'ID DA PUBLICAÇÃO'],
+          }
+        ]}
+      />
+      <ModalImportData
+        isModalOpen={isRemoveModalOpen}
+        setIsModalOpen={setIsRemoveModalOpen}
+        title="Remover Processos"
+        finish={handleFinishImport}
+        docExampleUrl={``}
+        expectedColumns={[
+          {
+            key: litigationColumns.litigation,
+            example: '0001234-56.2024.8.26.0001',
+            previewWidth: 200,
+            variant: ['NÚMERO DO PROCESSO', 'PROCESSO', 'LITIGATION', 'NUMBER'],
+          },
+          {
+            key: litigationColumns.instance,
+            example: '1',
+            previewWidth: 200,
+            variant: ['INSTÂNCIA', 'INSTANCE', 'INSTANCE NUMBER'],
           }
         ]}
       />
