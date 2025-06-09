@@ -23,27 +23,27 @@ export const PublicationV2Api = {
 }
 
 // Funções auxiliares para mapeamento
-const getCaseTypeLabel = (caseType: number): string => {
-    const caseTypeMap: Record<number, string> = {
-        1: "Cível",
-        2: "Criminal",
-        3: "Trabalhista",
-        4: "Tributário",
-        // Adicionar mais conforme necessário
-    };
-    return caseTypeMap[caseType] || "Não informado";
-};
+// const getCaseTypeLabel = (caseType: number): string => {
+//     const caseTypeMap: Record<number, string> = {
+//         1: "Cível",
+//         2: "Criminal",
+//         3: "Trabalhista",
+//         4: "Tributário",
+//         // Adicionar mais conforme necessário
+//     };
+//     return caseTypeMap[caseType] || "Não informado";
+// };
 
-const getStatusLabel = (status: number): string => {
-    const statusMap: Record<number, string> = {
-        1: "Pendente",
-        2: "Processando",
-        3: "Concluído",
-        4: "Erro",
-        // Adicionar mais conforme necessário
-    };
-    return statusMap[status] || "Desconhecido";
-};
+// const getStatusLabel = (status: number): string => {
+//     const statusMap: Record<number, string> = {
+//         1: "Pendente",
+//         2: "Processando",
+//         3: "Concluído",
+//         4: "Erro",
+//         // Adicionar mais conforme necessário
+//     };
+//     return statusMap[status] || "Desconhecido";
+// };
 
 export namespace PublicationV2Api {
     export type Block = {

@@ -6,20 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
     FileText,
-    BarChart3,
     Download,
     Filter,
     RotateCcw,
     Eye,
-    ThumbsUp,
-    ThumbsDown,
-    Trash2,
     ChevronDown,
     ChevronRight,
     Calendar,
     Building2,
     Hash,
-    Timer,
     Target,
     Users,
     Loader2,
@@ -111,17 +106,17 @@ export const TableV2 = ({
         navigator.clipboard.writeText(text)
     }
 
-    const handlePublicationAction = (action: string, publication: PublicationV2Api.Publication) => {
-        if (onPublicationAction) {
-            onPublicationAction(action, publication)
-        }
-    }
+    // const handlePublicationAction = (action: string, publication: PublicationV2Api.Publication) => {
+    //     if (onPublicationAction) {
+    //         onPublicationAction(action, publication)
+    //     }
+    // }
 
-    const handleBlockAction = (action: string, block: PublicationV2Api.Block) => {
-        if (onBlockAction) {
-            onBlockAction(action, block)
-        }
-    }
+    // const handleBlockAction = (action: string, block: PublicationV2Api.Block) => {
+    //     if (onBlockAction) {
+    //         onBlockAction(action, block)
+    //     }
+    // }
 
     return (
         <div className="space-y-6">

@@ -44,6 +44,7 @@ export default function LoginPage() {
     })
     // Salvar os dados da empresa se existirem
     const { token, ...localStorageData } = data
+    console.log({ token })
     setLocalStorage(LocalStorageKeys.USER, localStorageData)
     let version = getLocalStorage<string>(LocalStorageKeys.VERSION)
     if (!version || typeof version !== 'string') {

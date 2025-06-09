@@ -1,7 +1,7 @@
 "use client"
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/cache";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { PublicationV2Api } from "@/api/publicationV2Api";
 import { queryClient } from "@/lib/reactQuery";
 
@@ -11,8 +11,19 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
         limit: initialLimit,
     });
 
+    // Debug: Monitor changes in publicationParams
+    useEffect(() => {
+        console.log("publicationParams changed:", publicationParams);
+    }, [publicationParams]);
+
     const getPublicationsQuery = useQuery({
-        queryKey: [QUERY_KEYS.PUBLICATIONS_V2, publicationParams],
+        queryKey: [
+            QUERY_KEYS.PUBLICATIONS_V2,
+            publicationParams.page,
+            publicationParams.limit,
+            publicationParams.status,
+            publicationParams.caseType
+        ],
         queryFn: async () => {
             const params: PublicationV2Api.FindAll.Params = {
                 page: publicationParams.page,
@@ -24,6 +35,7 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
             if (publicationParams.caseType) {
                 params.caseType = publicationParams.caseType;
             }
+            console.log("Executing query with params:", params);
             const data = await PublicationV2Api.findAll(params);
             return data;
         },
@@ -32,17 +44,17 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
         retryDelay: 1000,
     });
 
-    const getPublicationByIdQuery = useCallback((id: string) => {
-        return useQuery({
-            queryKey: [QUERY_KEYS.PUBLICATION_V2, id],
-            queryFn: async () => {
-                return await PublicationV2Api.findOne({ id });
-            },
-            enabled: !!id,
-            staleTime: 1000 * 60 * 5, // 5 minutes
-            retry: 2,
-        });
-    }, []);
+    // const getPublicationByIdQuery = useCallback((id: string) => {
+    //     return useQuery({
+    //         queryKey: [QUERY_KEYS.PUBLICATION_V2, id],
+    //         queryFn: async () => {
+    //             return await PublicationV2Api.findOne({ id });
+    //         },
+    //         enabled: !!id,
+    //         staleTime: 1000 * 60 * 5, // 5 minutes
+    //         retry: 2,
+    //     });
+    // }, []);
 
     const savePublicationsMutation = useMutation({
         mutationFn: async (data: PublicationV2Api.Save.Params) => {
@@ -65,7 +77,12 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
     }, [initialLimit]);
 
     const changePage = useCallback((page: number): void => {
-        setPublicationParams(prev => ({ ...prev, page }));
+        console.log("changePage called with:", { page });
+        setPublicationParams(prev => {
+            const newParams = { ...prev, page };
+            console.log("Updating params from:", prev, "to:", newParams);
+            return newParams;
+        });
     }, []);
 
     const changeLimit = useCallback((limit: number): void => {
@@ -91,7 +108,7 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
     return {
         // Queries
         getPublicationsQuery,
-        getPublicationByIdQuery,
+        // getPublicationByIdQuery,
 
         // Mutations
         savePublications,

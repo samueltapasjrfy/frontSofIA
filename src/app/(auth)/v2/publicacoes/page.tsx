@@ -5,12 +5,10 @@ import { PublicationV2Api } from '@/api/publicationV2Api'
 import { useEffect, useState } from 'react'
 import { usePublicationsV2 } from '@/hooks/usePublicationsV2'
 import { HandleEntitiesButtons } from '@/components/handleEntitiesButtons'
-import { Button } from '@/components/ui/button'
-import { Check, Trash } from 'lucide-react'
-import { cn } from '@/utils/cn'
 import { ImportPublicationModal } from '@/components/publications/ImportPublicationModal'
 import ModalImportData from '@/components/modalImportData/modalImportData'
 import { toast } from 'sonner'
+import { Pagination } from '@/components/pagination'
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -18,17 +16,18 @@ const litigationColumns = {
   idInternal: 'ID',
 }
 
-export function TableV2Example() {
-  const { getPublicationsQuery } = usePublicationsV2()
+export default function PublicationV2Page() {
+  const { getPublicationsQuery, changePage, changeLimit, publicationParams } = usePublicationsV2()
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
   const handlePublicationAction = (action: string, publication: PublicationV2Api.Publication) => {
+    console.log({ action, publication })
 
   }
 
   const handleBlockAction = (action: string, block: PublicationV2Api.Block) => {
-
+    console.log({ action, block })
   }
 
   const handleImportPublication = async (data: { litigationNumber: string; text: string; idInternal?: string }) => {
@@ -50,8 +49,6 @@ export function TableV2Example() {
 
   useEffect(() => {
     console.log(getPublicationsQuery?.data?.publications)
-    if (getPublicationsQuery.data?.publications) {
-    }
   }, [getPublicationsQuery.data])
 
   const handleFinishImport = async (
@@ -99,6 +96,25 @@ export function TableV2Example() {
       //   console.log("Exportando dados")
       // }}
       />
+      <Pagination
+        total={getPublicationsQuery.data?.total || 0}
+        pagination={{
+          page: publicationParams.page || 1,
+          limit: publicationParams.limit || 10
+        }}
+        setPagination={({ page, limit }) => {
+          console.log("setPagination called with:", { page, limit, currentParams: publicationParams })
+
+          // Se o limit mudou, usamos changeLimit (que já reseta página para 1)
+          if (limit !== publicationParams.limit) {
+            changeLimit(limit);
+          }
+          // Se apenas a página mudou, usamos changePage
+          else if (page !== publicationParams.page) {
+            changePage(page);
+          }
+        }}
+      />
       <ImportPublicationModal
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
@@ -135,6 +151,3 @@ export function TableV2Example() {
     </div>
   )
 }
-
-
-export default TableV2Example 

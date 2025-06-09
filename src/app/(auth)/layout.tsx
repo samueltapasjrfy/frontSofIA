@@ -73,7 +73,6 @@ export default function Layout({ children }: LayoutProps) {
 
   // Effect para redirecionamento baseado na versão
   useEffect(() => {
-    console.log({ isMounted, isReady })
     if (!isMounted || !isReady) return;
 
     let version = getLocalStorage<string>(LocalStorageKeys.VERSION);
@@ -82,8 +81,7 @@ export default function Layout({ children }: LayoutProps) {
       setLocalStorage(LocalStorageKeys.VERSION, version);
     }
     // Verificar se a rota atual não está em /v1 ou /v2
-    let routeVersion = pathname.startsWith('/v1/') ? '1' : pathname.startsWith('/v2/') ? '2' : null;
-    console.log({ routeVersion, version })
+    const routeVersion = pathname.startsWith('/v1/') ? '1' : pathname.startsWith('/v2/') ? '2' : null;
 
     if (!routeVersion) {
       // Pegar a versão do localStorage
