@@ -12,9 +12,8 @@ export default function Home() {
       setLocalStorage(LocalStorageKeys.VERSION, version);
     }
     const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER);
-    console.log({ version, user })
-    if (user) {
-      return redirect(`/v${version}/dashboard`);
+    if (typeof user === 'object' && user?.user?.id) {
+      return redirect(`/v${version}/publicacoes`);
     }
     return redirect("/login");
   }, []);
