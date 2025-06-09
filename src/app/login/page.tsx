@@ -6,7 +6,7 @@ import GoogleBtnScripts from './googleBtnScripts'
 import { loginGoogle, LoginResponse } from '@/api/authApi'
 import { PERSON_STATUS } from '@/constants/auth'
 import { toast } from 'sonner'
-import { LocalStorageKeys, setLocalStorage } from '@/utils/localStorage'
+import { getLocalStorage, LocalStorageKeys, setLocalStorage } from '@/utils/localStorage'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { setCookie } from '@/utils/cookie'
@@ -44,10 +44,14 @@ export default function LoginPage() {
     })
     // Salvar os dados da empresa se existirem
     const { token, ...localStorageData } = data
-    console.log(token)
     setLocalStorage(LocalStorageKeys.USER, localStorageData)
+    let version = getLocalStorage<string>(LocalStorageKeys.VERSION)
+    if (!version || typeof version !== 'string') {
+      version = '1'
+    }
+    setLocalStorage(LocalStorageKeys.VERSION, version)
     // Redireciona para a página anterior ou dashboard
-    const from = searchParams.get('from') || '/dashboard'
+    const from = searchParams.get('from') || `/v${version}/dashboard`
     router.push(from)
     router.refresh() // Força a atualização do layout
   }

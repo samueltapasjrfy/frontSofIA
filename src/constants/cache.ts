@@ -1,6 +1,8 @@
 export const QUERY_KEYS = {
     CLASSIFICATIONS: 'classifications',
     PUBLICATIONS: 'publications',
+    PUBLICATIONS_V2: 'publications_v2',
+    PUBLICATION_V2: 'publication_v2',
     PUBLICATION_STATS: 'publication_stats',
     REPORT_RESUME: 'report_resume',
     CLASSIFICATION_CONFIDENCE: 'classification_confidence',

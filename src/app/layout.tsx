@@ -5,6 +5,7 @@ import { AppProviders } from "@/providers/AppProviders";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { preloadLottieAnimations } from '@/utils/lottieCache'
+import { useEffect } from 'react';
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="pt-BR">
       <body className={inter.variable}>

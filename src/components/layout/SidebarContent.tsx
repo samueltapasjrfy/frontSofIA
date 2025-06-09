@@ -59,24 +59,25 @@ export function SidebarContent({
 }: SidebarContentProps) {
   const pathname = usePathname();
   const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
+  const version = getLocalStorage(LocalStorageKeys.VERSION)
   //temp
   const processCompanyHabilitados = ['01JDSEG2G5PQ1GCX86K3BV8EKR', '01JTNVAEYETZAJP0F4X7YQYQBR', '01J99YK3X66J2T2A7W9V533TM1'].includes(user?.companies?.[0]?.id)
 
-  const sidebarItems = [
+  const sidebarItemsV1 = [
     {
       icon: <LayoutDashboard size={20} />,
       label: "Dashboard",
-      href: "/dashboard",
+      href: "/v1/dashboard",
     },
     {
       icon: <FileText size={20} />,
       label: "Publicações",
-      href: "/publicacoes",
+      href: "/v1/publicacoes",
     },
     {
       icon: <Webhook size={20} />,
       label: "Webhooks",
-      href: "/webhooks",
+      href: "/v1/webhooks",
     },
     // {
     //   icon: <BookOpen size={20} />,
@@ -99,17 +100,44 @@ export function SidebarContent({
     //   href: "/configuracoes",
     // },
   ];
+  const sidebarItemsV2 = [
+    // {
+    //   icon: <LayoutDashboard size={20} />,
+    //   label: "Dashboard",
+    //   href: "/v2/dashboard",
+    // },
+    {
+      icon: <FileText size={20} />,
+      label: "Publicações",
+      href: "/v2/publicacoes",
+    },
+    // {
+    //   icon: <Webhook size={20} />,
+    //   label: "Webhooks",
+    //   href: "/v2/webhooks",
+    // },
+
+  ];
+
   if (processCompanyHabilitados) {
-    sidebarItems.splice(2, 0, {
+    sidebarItemsV1.splice(2, 0, {
       icon: <Scale size={20} />,
       label: "Processos",
-      href: "/processos",
+      href: "/v1/processos",
+    })
+    sidebarItemsV2.splice(2, 0, {
+      icon: <Scale size={20} />,
+      label: "Processos",
+      href: "/v2/processos",
     })
   }
+
+  const sidebarItems = version === '1' ? sidebarItemsV1 : sidebarItemsV2;
+
   return (
     <div className="flex h-full flex-col gap-4 py-4 relative">
       <div className={cn("px-4 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
-        {!isCollapsed && <h2 className="text-xl font-bold text-white">Sofia</h2>}
+        {!isCollapsed && <div className="text-white text-sm font-bold">V{version}</div>}
         {showToggleButton && (
           <Button
             variant="ghost"

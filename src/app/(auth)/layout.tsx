@@ -1,12 +1,13 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { DashboardProvider } from "@/contexts/DashboardContext";
 import { FirmProvider } from "@/contexts/FirmContext";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { verifyCompany } from "@/utils/verifyCompany";
-import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { getLocalStorage, LocalStorageKeys, setLocalStorage } from "@/utils/localStorage";
 import { LoginResponse } from "@/api/authApi";
 import { getCookie } from "@/utils/cookie";
 import { COOKIE_NAME } from "@/constants/cookies";
@@ -19,6 +20,8 @@ export default function Layout({ children }: LayoutProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -67,6 +70,37 @@ export default function Layout({ children }: LayoutProps) {
       setIsReady(true)
     }
   }, [])
+
+  // Effect para redirecionamento baseado na versão
+  useEffect(() => {
+    console.log({ isMounted, isReady })
+    if (!isMounted || !isReady) return;
+
+    let version = getLocalStorage<string>(LocalStorageKeys.VERSION);
+    if (!version) {
+      version = '1';
+      setLocalStorage(LocalStorageKeys.VERSION, version);
+    }
+    // Verificar se a rota atual não está em /v1 ou /v2
+    let routeVersion = pathname.startsWith('/v1/') ? '1' : pathname.startsWith('/v2/') ? '2' : null;
+    console.log({ routeVersion, version })
+
+    if (!routeVersion) {
+      // Pegar a versão do localStorage
+
+      // Extrair a página atual (remover a barra inicial se existir)
+      const currentPage = pathname.startsWith('/') ? pathname.slice(1) : pathname;
+
+      // Redirecionar para a versão correta
+      const newPath = `/v${version}/${currentPage}`;
+      router.replace(newPath);
+      return
+    }
+    if (routeVersion !== version) {
+      setLocalStorage(LocalStorageKeys.VERSION, routeVersion);
+      window.location.reload();
+    }
+  }, [isMounted, isReady, pathname, router]);
 
   const toggleSidebar = () => {
     const newValue = !isCollapsed;

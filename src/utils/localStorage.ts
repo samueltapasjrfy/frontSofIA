@@ -1,5 +1,6 @@
 export enum LocalStorageKeys {
   USER = 'user',
+  VERSION = 'version',
 }
 
 export const setLocalStorage = (key: LocalStorageKeys, value: any) => {
