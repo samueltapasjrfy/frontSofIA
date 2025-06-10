@@ -31,11 +31,13 @@ import { ModalPublicationInfo } from "./modalPublicationInfo"
 import { getCategoriaColor, getClassificacaoColor, getConfiancaColor, getValidationColor } from "./common"
 import { ModalBlockInfo } from "./modalBlockInfo"
 import PopConfirm from "../ui/popconfirm"
+import { TruncateText } from "../truncateText"
+import ModalViewText from "../modalViewText"
 
 const headers = [
     "ID Publicação",
     "Nº Processo",
-    "Tribunal",
+    "Texto",
     "Modalidade",
     "Blocos",
     "Status",
@@ -76,7 +78,7 @@ export const TableV2 = ({
     const [showFilter, setShowFilter] = useState(false)
     const [isReloading, setIsReloading] = useState(false)
     const publications = propPublications || []
-
+    const [selectedText, setSelectedText] = useState<string>("")
     const handleReload = () => {
         setIsReloading(true)
         onReload?.()
@@ -210,10 +212,13 @@ export const TableV2 = ({
                                             {publication.info.cnj}
                                         </td>
                                         <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
-                                            <div className="flex items-center gap-2">
-                                                <Building2 className="h-4 w-4 text-gray-400" />
-                                                {publication.info.court}
-                                            </div>
+                                            <TruncateText
+                                                text={publication.text || ""}
+                                                maxLength={15}
+                                                onClick={() => {
+                                                    setSelectedText(publication.text || "");
+                                                }}
+                                            />
                                         </td>
                                         <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{publication.caseType.name}</td>
                                         <td className="px-4 py-4 text-sm">
@@ -490,6 +495,12 @@ export const TableV2 = ({
                 setSelectedBlock={setSelectedBlock}
                 onDelete={onDeleteBlock}
                 onValidate={onValidateBlock}
+            />
+
+            <ModalViewText
+                isOpen={!!selectedText}
+                onClose={() => setSelectedText("")}
+                text={selectedText}
             />
         </div>
     )
