@@ -103,8 +103,6 @@ export default function PublicationV2Page() {
           limit: publicationParams.limit || 10
         }}
         setPagination={({ page, limit }) => {
-          console.log("setPagination called with:", { page, limit, currentParams: publicationParams })
-
           // Se o limit mudou, usamos changeLimit (que já reseta página para 1)
           if (limit !== publicationParams.limit) {
             changeLimit(limit);

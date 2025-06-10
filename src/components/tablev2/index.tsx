@@ -22,6 +22,12 @@ import {
 
 import { PublicationV2Api } from '@/api/publicationV2Api'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
+import { cn } from "@/utils/cn"
+import { publicationStatusColors } from "@/constants/publications"
+import { getStatusColor, PUBLICATION_STATUS } from "@/constants/publicationsV2"
+import { ModalPublicationInfo } from "./modalPublicationInfo"
+import { getCategoriaColor, getClassificacaoColor, getConfiancaColor } from "./common"
+import { ModalBlockInfo } from "./modalBlockInfo"
 
 export interface TableV2Props {
     publications?: PublicationV2Api.Publication[]
@@ -66,40 +72,6 @@ export const TableV2 = ({
             newExpanded.add(id)
         }
         setExpandedPublications(newExpanded)
-    }
-
-    const getCategoriaColor = (categoria: string) => {
-        const colors: Record<string, string> = {
-            "DECISÃO JUDICIAL":
-                "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/30",
-            "ORDEM COM PRAZO":
-                "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/30",
-            "MERO EXPEDIENTE":
-                "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/30",
-        }
-        return colors[categoria] || "bg-gray-50 text-gray-700 border-gray-200"
-    }
-
-    const getClassificacaoColor = (classificacao: string) => {
-        const colors: Record<string, string> = {
-            Audiência:
-                "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800/30",
-            Sentença:
-                "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30",
-            "Determinação de Pagamento":
-                "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800/30",
-        }
-        return colors[classificacao] || "bg-gray-50 text-gray-700 border-gray-200"
-    }
-
-    const getConfiancaColor = (confianca: { id: number, name: string } | null) => {
-        if (!confianca)
-            return "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800/30"
-        if (confianca.id === 3)
-            return "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30"
-        if (confianca.id === 2)
-            return "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800/30"
-        return "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/30"
     }
 
     const copyToClipboard = (text: string) => {
@@ -267,7 +239,7 @@ export const TableV2 = ({
                                             </Badge>
                                         </td>
                                         <td className="px-4 py-4 text-sm">
-                                            <Badge className="font-medium bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700">
+                                            <Badge className={cn("font-medium", getStatusColor(publication.status.id))}>
                                                 {publication.status.name}
                                             </Badge>
                                         </td>
@@ -472,240 +444,15 @@ export const TableV2 = ({
             </Card>
 
             {/* Detail Modal */}
-            <Dialog open={!!selectedPublication} onOpenChange={() => setSelectedPublication(null)}>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 p-0 border-none">
-                    {selectedPublication && (
-                        <>
-                            <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                                    {`Publicação - ${selectedPublication.id}`}
-                                </DialogTitle>
-                                <DialogDescription className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    {`Processo ${selectedPublication.info.cnj}`}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="p-6 space-y-6">
-                                {/* Metadata Grid */}
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 p-5 bg-gray-50 dark:bg-gray-900/30 rounded-lg">
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">ID Publicação</label>
-                                        <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                                            {selectedPublication.id}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Nº Processo</label>
-                                        <p className="mt-1 text-sm font-mono text-gray-900 dark:text-white">
-                                            {selectedPublication.info.cnj}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Tipo de Caso</label>
-                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">{selectedPublication.caseType.name}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</label>
-                                        <p className="mt-1">
-                                            <Badge className="font-medium bg-amber-500 dark:bg-amber-600">
-                                                {selectedPublication.status.name}
-                                            </Badge>
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Tribunal</label>
-                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">{selectedPublication.info.court}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Blocos</label>
-                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">{selectedPublication.blocks.length}</p>
-                                    </div>
-                                </div>
+            <ModalPublicationInfo
+                selectedPublication={selectedPublication}
+                setSelectedPublication={setSelectedPublication}
+            />
 
-                                {/* Full Text */}
-                                <div>
-                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Texto Completo</label>
-                                    <div className="mt-2 p-5 bg-white dark:bg-gray-900/30 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                                            {selectedPublication.text}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() =>
-                                            copyToClipboard(
-                                                selectedPublication.text,
-                                            )
-                                        }
-                                        className="flex items-center gap-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        Copiar Texto
-                                    </Button>
-                                    {/* <Button
-                                        variant="outline"
-                                        className="flex items-center gap-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
-                                        onClick={() => {
-                                            if (selectedItem.type === "publication") {
-                                                handlePublicationAction('approve', selectedItem.data)
-                                            } else {
-                                                handleBlockAction('approve', selectedItem.data)
-                                            }
-                                            setSelectedItem(null)
-                                        }}
-                                    >
-                                        <ThumbsUp className="h-4 w-4" />
-                                        Aprovar
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="flex items-center gap-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
-                                        onClick={() => {
-                                            if (selectedItem.type === "publication") {
-                                                handlePublicationAction('reject', selectedItem.data)
-                                            } else {
-                                                handleBlockAction('reject', selectedItem.data)
-                                            }
-                                            setSelectedItem(null)
-                                        }}
-                                    >
-                                        <ThumbsDown className="h-4 w-4" />
-                                        Rejeitar
-                                    </Button> */}
-                                    <Button
-                                        className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
-                                        onClick={() => setSelectedPublication(null)}
-                                    >
-                                        Fechar
-                                    </Button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </DialogContent>
-            </Dialog>
-
-
-            <Dialog open={!!selectedBlock} onOpenChange={() => setSelectedBlock(null)}>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 p-0 border-none">
-                    {selectedBlock && (
-                        <>
-                            <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                                    {`Bloco - ${selectedBlock.id}`}
-                                </DialogTitle>
-                                <DialogDescription className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    {`Publicação - ${selectedBlock.idPublication}`}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="p-6 space-y-6">
-                                {/* Metadata Grid */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-5 bg-gray-50 dark:bg-gray-900/30 rounded-lg">
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Categoria</label>
-                                        <div className="mt-1">
-                                            <Badge variant="outline" className={getCategoriaColor(selectedBlock.category?.name)}>
-                                                {selectedBlock.category?.name}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Classificação</label>
-                                        <div className="mt-1">
-                                            <Badge variant="outline" className={getClassificacaoColor(selectedBlock.classification?.name)}>
-                                                {selectedBlock.classification?.name}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Subclasse</label>
-                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">{selectedBlock.subClassification?.name}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Confiança</label>
-                                        <div className="mt-1">
-                                            <Badge variant="outline" className={getConfiancaColor(selectedBlock.classification?.confidence)}>
-                                                {selectedBlock.classification?.confidence?.name}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                    {/* <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Prazo</label>
-                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {"-"}
-                                        </p>
-                                    </div> */}
-                                </div>
-
-                                {/* Full Text */}
-                                <div>
-                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Texto Completo</label>
-                                    <div className="mt-2 p-5 bg-white dark:bg-gray-900/30 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                                            {selectedBlock.text}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() =>
-                                            copyToClipboard(
-                                                selectedBlock.text,
-                                            )
-                                        }
-                                        className="flex items-center gap-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        Copiar Texto
-                                    </Button>
-                                    {/* <Button
-                                        variant="outline"
-                                        className="flex items-center gap-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
-                                        onClick={() => {
-                                            if (selectedItem.type === "publication") {
-                                                handlePublicationAction('approve', selectedItem.data)
-                                            } else {
-                                                handleBlockAction('approve', selectedItem.data)
-                                            }
-                                            setSelectedItem(null)
-                                        }}
-                                    >
-                                        <ThumbsUp className="h-4 w-4" />
-                                        Aprovar
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="flex items-center gap-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
-                                        onClick={() => {
-                                            if (selectedItem.type === "publication") {
-                                                handlePublicationAction('reject', selectedItem.data)
-                                            } else {
-                                                handleBlockAction('reject', selectedItem.data)
-                                            }
-                                            setSelectedItem(null)
-                                        }}
-                                    >
-                                        <ThumbsDown className="h-4 w-4" />
-                                        Rejeitar
-                                    </Button> */}
-                                    <Button
-                                        className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
-                                        onClick={() => setSelectedBlock(null)}
-                                    >
-                                        Fechar
-                                    </Button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </DialogContent>
-            </Dialog>
+            <ModalBlockInfo
+                selectedBlock={selectedBlock}
+                setSelectedBlock={setSelectedBlock}
+            />
         </div>
     )
 }
