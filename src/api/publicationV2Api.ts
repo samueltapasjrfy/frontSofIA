@@ -20,6 +20,42 @@ export const PublicationV2Api = {
             error: response.error
         };
     },
+
+    delete: async (id: string): Promise<APIResponse<void>> => {
+        const response = await http.delete<void>(`/Publications/${id}`);
+        return {
+            data: response.data,
+            message: response.message,
+            error: response.error
+        };
+    },
+
+    deleteBlock: async (id: string): Promise<APIResponse<void>> => {
+        const response = await http.delete<void>(`/Blocks/${id}`);
+        return {
+            data: response.data,
+            message: response.message,
+            error: response.error
+        };
+    },
+
+    validateBlock: async (id: string, status: 'approve' | 'reprove'): Promise<APIResponse<void>> => {
+        const response = await http.patch<void>(`/Blocks/${id}/${status}`);
+        return {
+            data: response.data,
+            message: response.message,
+            error: response.error
+        };
+    },
+    validatePublication: async (id: string, status: 'approve' | 'reprove'): Promise<APIResponse<void>> => {
+        const response = await http.patch<void>(`/Publications/${id}/validate/${status}`);
+        console.log(response)
+        return {
+            data: response.data,
+            message: response.message,
+            error: response.error
+        };
+    }
 }
 
 // Funções auxiliares para mapeamento

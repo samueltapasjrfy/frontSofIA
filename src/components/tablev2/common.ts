@@ -1,3 +1,5 @@
+import { PUBLICATION_VALIDATION_STATUS } from "@/constants/publicationsV2"
+
 export const getCategoriaColor = (categoria: string) => {
     const colors: Record<string, string> = {
         "DECISÃO JUDICIAL":
@@ -18,6 +20,16 @@ export const getConfiancaColor = (confianca: { id: number, name: string } | null
     if (confianca.id === 2)
         return "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800/30"
     return "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/30"
+}
+
+export const getValidationColor = (validation: number | null) => {
+    if (!validation)
+        return "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800/30"
+    if (validation === PUBLICATION_VALIDATION_STATUS.APPROVED)
+        return "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30"
+    if (validation === PUBLICATION_VALIDATION_STATUS.REPROVED)
+        return "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/30"
+    return "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800/30"
 }
 
 export const getClassificacaoColor = (classificacao: string) => {

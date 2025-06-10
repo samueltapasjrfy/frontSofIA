@@ -1,18 +1,21 @@
-import { Download } from "lucide-react"
+import { Download, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react"
 import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
 import { PublicationV2Api } from "@/api/publicationV2Api"
 import { toast } from "sonner"
 import { getCategoriaColor, getClassificacaoColor, getConfiancaColor } from "./common"
+import PopConfirm from "../ui/popconfirm"
 
 type BlockWithPublication = PublicationV2Api.Block & { idPublication: string }
 export interface ModalBlockInfoProps {
     selectedBlock: BlockWithPublication | null
     setSelectedBlock: (block: BlockWithPublication | null) => void
+    onDelete?: (id: string) => Promise<boolean>
+    onValidate?: (id: string, status: 'approve' | 'reprove') => Promise<boolean>
 }
 
-export const ModalBlockInfo = ({ selectedBlock, setSelectedBlock }: ModalBlockInfoProps) => {
+export const ModalBlockInfo = ({ selectedBlock, setSelectedBlock, onDelete, onValidate }: ModalBlockInfoProps) => {
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text)
         toast.success("Texto copiado para a área de transferência")
@@ -80,55 +83,90 @@ export const ModalBlockInfo = ({ selectedBlock, setSelectedBlock }: ModalBlockIn
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <Button
-                                    variant="outline"
-                                    onClick={() =>
-                                        copyToClipboard(
-                                            selectedBlock.text,
-                                        )
-                                    }
-                                    className="flex items-center gap-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
-                                >
-                                    <Download className="h-4 w-4" />
-                                    Copiar Texto
-                                </Button>
-                                {/* <Button
-                                        variant="outline"
-                                        className="flex items-center gap-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
-                                        onClick={() => {
-                                            if (selectedItem.type === "publication") {
-                                                handlePublicationAction('approve', selectedItem.data)
-                                            } else {
-                                                handleBlockAction('approve', selectedItem.data)
-                                            }
-                                            setSelectedItem(null)
-                                        }}
-                                    >
-                                        <ThumbsUp className="h-4 w-4" />
-                                        Aprovar
-                                    </Button>
+                            <div className="flex justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <div>
+                                    {!!onDelete && (
+                                        <PopConfirm
+                                            title="Tem certeza que deseja deletar o bloco?"
+                                            modal={true}
+                                            onConfirm={async () => {
+                                                const response = await onDelete(selectedBlock.id)
+                                                if (response) {
+                                                    setSelectedBlock(null)
+                                                }
+                                            }}
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                className="flex items-center gap-2 border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-800/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                Deletar Bloco
+                                            </Button>
+                                        </PopConfirm>
+                                    )}
+                                </div>
+                                <div className="flex gap-3">
                                     <Button
                                         variant="outline"
-                                        className="flex items-center gap-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
-                                        onClick={() => {
-                                            if (selectedItem.type === "publication") {
-                                                handlePublicationAction('reject', selectedItem.data)
-                                            } else {
-                                                handleBlockAction('reject', selectedItem.data)
-                                            }
-                                            setSelectedItem(null)
-                                        }}
+                                        onClick={() =>
+                                            copyToClipboard(
+                                                selectedBlock.text,
+                                            )
+                                        }
+                                        className="flex items-center gap-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
                                     >
-                                        <ThumbsDown className="h-4 w-4" />
-                                        Rejeitar
-                                    </Button> */}
-                                <Button
-                                    className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
-                                    onClick={() => setSelectedBlock(null)}
-                                >
-                                    Fechar
-                                </Button>
+                                        <Download className="h-4 w-4" />
+                                        Copiar Texto
+                                    </Button>
+                                    {!!onValidate && (
+                                        <>
+                                            <PopConfirm
+                                                title="Tem certeza que deseja aprovar o bloco?"
+                                                modal={true}
+                                                onConfirm={async () => {
+                                                    const response = await onValidate?.(selectedBlock.id, 'approve')
+                                                    if (response) {
+                                                        setSelectedBlock(null)
+                                                    }
+                                                }}
+                                            >
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex items-center gap-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+                                                >
+                                                    <ThumbsUp className="h-4 w-4" />
+                                                    Aprovar
+                                                </Button>
+                                            </PopConfirm>
+                                            <PopConfirm
+                                                title="Tem certeza que deseja rejeitar o bloco?"
+                                                modal={true}
+                                                onConfirm={async () => {
+                                                    const response = await onValidate?.(selectedBlock.id, 'reprove')
+                                                    if (response) {
+                                                        setSelectedBlock(null)
+                                                    }
+                                                }}
+                                            >
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex items-center gap-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                                                >
+                                                    <ThumbsDown className="h-4 w-4" />
+                                                    Rejeitar
+                                                </Button>
+                                            </PopConfirm>
+                                        </>
+                                    )}
+
+                                    <Button
+                                        className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
+                                        onClick={() => setSelectedBlock(null)}
+                                    >
+                                        Fechar
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </>

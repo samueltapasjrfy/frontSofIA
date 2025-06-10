@@ -1,4 +1,4 @@
-import { Download } from "lucide-react"
+import { Download, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react"
 import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
@@ -6,13 +6,16 @@ import { PublicationV2Api } from "@/api/publicationV2Api"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { getStatusColor } from "@/constants/publicationsV2"
+import PopConfirm from "../ui/popconfirm"
 
 export interface ModalPublicationInfoProps {
     selectedPublication: PublicationV2Api.Publication | null
     setSelectedPublication: (publication: PublicationV2Api.Publication | null) => void
+    onDelete?: (id: string) => Promise<boolean>
+    onValidate?: (id: string, status: 'approve' | 'reprove') => Promise<boolean>
 }
 
-export const ModalPublicationInfo = ({ selectedPublication, setSelectedPublication }: ModalPublicationInfoProps) => {
+export const ModalPublicationInfo = ({ selectedPublication, setSelectedPublication, onDelete, onValidate }: ModalPublicationInfoProps) => {
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text)
         toast.success("Texto copiado para a área de transferência")
@@ -78,20 +81,84 @@ export const ModalPublicationInfo = ({ selectedPublication, setSelectedPublicati
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <Button
-                                    variant="outline"
-                                    onClick={() =>
-                                        copyToClipboard(
-                                            selectedPublication.text,
-                                        )
-                                    }
-                                    className="flex items-center gap-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
-                                >
-                                    <Download className="h-4 w-4" />
-                                    Copiar Texto
-                                </Button>
-                                {/* <Button
+                            <div className="flex justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <div>
+                                    {!!onDelete && (
+                                        <PopConfirm
+                                            title="Tem certeza que deseja deletar a publicação?"
+                                            modal={true}
+                                            onConfirm={async () => {
+                                                const response = await onDelete(selectedPublication.id)
+                                                if (response) {
+                                                    setSelectedPublication(null)
+                                                }
+                                            }}
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                type="button"
+                                                className="flex items-center gap-2 border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-700 dark:border-red-800/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                Deletar Publicação
+                                            </Button>
+                                        </PopConfirm>
+                                    )}
+                                </div>
+                                <div className="flex gap-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            copyToClipboard(
+                                                selectedPublication.text,
+                                            )
+                                        }
+                                        className="flex items-center gap-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Copiar Texto
+                                    </Button>
+                                    {!!onValidate && (
+                                        <>
+                                            <PopConfirm
+                                                title="Tem certeza que deseja aprovar a publicação?"
+                                                modal={true}
+                                                onConfirm={async () => {
+                                                    const response = await onValidate?.(selectedPublication.id, 'approve')
+                                                    if (response) {
+                                                        setSelectedPublication(null)
+                                                    }
+                                                }}
+                                            >
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex items-center gap-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+                                                >
+                                                    <ThumbsUp className="h-4 w-4" />
+                                                    Aprovar
+                                                </Button>
+                                            </PopConfirm>
+                                            <PopConfirm
+                                                title="Tem certeza que deseja rejeitar a publicação?"
+                                                modal={true}
+                                                onConfirm={async () => {
+                                                    const response = await onValidate?.(selectedPublication.id, 'reprove')
+                                                    if (response) {
+                                                        setSelectedPublication(null)
+                                                    }
+                                                }}
+                                            >
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex items-center gap-2 border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-800/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+                                                >
+                                                    <ThumbsDown className="h-4 w-4" />
+                                                    Rejeitar
+                                                </Button>
+                                            </PopConfirm>
+                                        </>
+                                    )}
+                                    {/* <Button
                                 variant="outline"
                                 className="flex items-center gap-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
                                 onClick={() => {
@@ -121,12 +188,14 @@ export const ModalPublicationInfo = ({ selectedPublication, setSelectedPublicati
                                 <ThumbsDown className="h-4 w-4" />
                                 Rejeitar
                             </Button> */}
-                                <Button
-                                    className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
-                                    onClick={() => setSelectedPublication(null)}
-                                >
-                                    Fechar
-                                </Button>
+
+                                    <Button
+                                        className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
+                                        onClick={() => setSelectedPublication(null)}
+                                    >
+                                        Fechar
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </>

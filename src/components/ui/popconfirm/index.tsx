@@ -10,9 +10,10 @@ type PopoverProps = {
     onConfirm: () => Promise<any>
     autoConfirm?: boolean
     disabled?: boolean
+    modal?: boolean
 }
 
-const PopConfirm = ({ children, title, description, onConfirm, autoConfirm = false, disabled = false }: PopoverProps) => {
+const PopConfirm = ({ children, title, description, onConfirm, autoConfirm = false, disabled = false, modal = false }: PopoverProps) => {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
 
@@ -30,10 +31,10 @@ const PopConfirm = ({ children, title, description, onConfirm, autoConfirm = fal
     }
 
     return (
-        <ReactPopover.Root open={autoConfirm ? false : open} onOpenChange={changeChange}>
+        <ReactPopover.Root open={autoConfirm ? false : open} onOpenChange={changeChange} modal={modal}>
             <ReactPopover.Trigger asChild>{children}</ReactPopover.Trigger>
             <ReactPopover.Portal>
-                <ReactPopover.Content className="Popconfirm" sideOffset={5} style={{ zIndex: 9999 }}>
+                <ReactPopover.Content className="Popconfirm" sideOffset={5} style={{ zIndex: 99999 }}>
                     <div className="flex flex-col gap-2">
                         <h4 className="text-md font-medium">{title}</h4>
                         <p className="text-sm text-gray-500">{description}</p>
