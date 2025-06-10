@@ -18,34 +18,55 @@ import {
     Target,
     Users,
     Loader2,
+    Trash2,
+    ThumbsUp,
+    ThumbsDown,
+    Check,
 } from "lucide-react"
 
 import { PublicationV2Api } from '@/api/publicationV2Api'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
 import { cn } from "@/utils/cn"
-import { publicationStatusColors } from "@/constants/publications"
-import { getStatusColor, PUBLICATION_STATUS } from "@/constants/publicationsV2"
+import { getStatusColor } from "@/constants/publicationsV2"
 import { ModalPublicationInfo } from "./modalPublicationInfo"
-import { getCategoriaColor, getClassificacaoColor, getConfiancaColor } from "./common"
+import { getCategoriaColor, getClassificacaoColor, getConfiancaColor, getValidationColor } from "./common"
 import { ModalBlockInfo } from "./modalBlockInfo"
+import PopConfirm from "../ui/popconfirm"
 
+const headers = [
+    "ID Publicação",
+    "Nº Processo",
+    "Tribunal",
+    "Modalidade",
+    "Blocos",
+    "Status",
+    "Data Inserção",
+    "Ações",
+]
 export interface TableV2Props {
     publications?: PublicationV2Api.Publication[]
     filterComponent?: React.ReactNode
     onPublicationAction?: (action: string, publication: PublicationV2Api.Publication) => void
     onBlockAction?: (action: string, block: PublicationV2Api.Block) => void
-    onExport?: () => void
-    onReload?: () => void
+    onExport?: () => Promise<void>
+    onReload?: () => Promise<void>
+    onDelete?: (id: string) => Promise<boolean>
+    onDeleteBlock?: (id: string) => Promise<boolean>
+    onValidateBlock?: (id: string, status: 'approve' | 'reprove') => Promise<boolean>
+    onValidatePublication?: (id: string, status: 'approve' | 'reprove') => Promise<boolean>
     loading?: boolean
+    total?: number
 }
 export const TableV2 = ({
     publications: propPublications,
-    onPublicationAction,
-    onBlockAction,
     filterComponent,
     onExport,
     onReload,
+    onDelete,
+    onDeleteBlock,
+    onValidateBlock,
+    onValidatePublication,
     loading,
+    total,
 }: TableV2Props) => {
     const [expandedPublications, setExpandedPublications] = useState<Set<string>>(new Set())
     const [selectedPublication, setSelectedPublication] = useState<PublicationV2Api.Publication | null>(null)
@@ -74,22 +95,6 @@ export const TableV2 = ({
         setExpandedPublications(newExpanded)
     }
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text)
-    }
-
-    // const handlePublicationAction = (action: string, publication: PublicationV2Api.Publication) => {
-    //     if (onPublicationAction) {
-    //         onPublicationAction(action, publication)
-    //     }
-    // }
-
-    // const handleBlockAction = (action: string, block: PublicationV2Api.Block) => {
-    //     if (onBlockAction) {
-    //         onBlockAction(action, block)
-    //     }
-    // }
-
     return (
         <div className="space-y-6">
             {/* Publications Table */}
@@ -97,7 +102,7 @@ export const TableV2 = ({
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between">
                         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                            Publicações ({publications.length})
+                            Publicações ({total || publications.length})
                         </h3>
                         <div className="flex gap-2">
 
@@ -148,30 +153,11 @@ export const TableV2 = ({
                         <thead className="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
                             <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12"></th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    ID Publicação
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Nº Processo
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Tribunal
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Modalidade
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Blocos
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Data Inserção
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Ações
-                                </th>
+                                {headers.map(header => (
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {header}
+                                    </th>
+                                ))}
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" >
@@ -259,30 +245,54 @@ export const TableV2 = ({
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
-                                                {/* <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-8 w-8 p-0 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20"
-                                                    onClick={() => handlePublicationAction('approve', publication)}
-                                                >
-                                                    <ThumbsUp className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20"
-                                                    onClick={() => handlePublicationAction('reject', publication)}
-                                                >
-                                                    <ThumbsDown className="h-4 w-4" />
-                                                </Button> */}
-                                                {/* <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-8 w-8 p-0 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20"
-                                                    onClick={() => handlePublicationAction('delete', publication)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button> */}
+                                                {!!onValidatePublication && (
+                                                    <>
+                                                        <PopConfirm
+                                                            title="Tem certeza que deseja aprovar a publicação?"
+                                                            onConfirm={async () => {
+                                                                await onValidatePublication?.(publication.id, 'approve')
+                                                            }}
+                                                        >
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 p-0 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20"
+                                                            >
+                                                                <ThumbsUp className="h-4 w-4" />
+                                                            </Button>
+                                                        </PopConfirm>
+                                                        <PopConfirm
+                                                            title="Tem certeza que deseja rejeitar a publicação?"
+                                                            onConfirm={async () => {
+                                                                await onValidatePublication?.(publication.id, 'reprove')
+                                                            }}
+                                                        >
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20"
+                                                            >
+                                                                <ThumbsDown className="h-4 w-4" />
+                                                            </Button>
+                                                        </PopConfirm>
+                                                    </>
+                                                )}
+                                                {!!onDelete && (
+                                                    <PopConfirm
+                                                        title="Tem certeza que deseja deletar a publicação?"
+                                                        onConfirm={async () => {
+                                                            await onDelete?.(publication.id)
+                                                        }}
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </PopConfirm>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -326,30 +336,54 @@ export const TableV2 = ({
                                                                         >
                                                                             <Eye className="h-4 w-4" />
                                                                         </Button>
-                                                                        {/* <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-8 w-8 p-0 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20"
-                                                                            onClick={() => handleBlockAction('approve', block)}
-                                                                        >
-                                                                            <ThumbsUp className="h-4 w-4" />
-                                                                        </Button>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20"
-                                                                            onClick={() => handleBlockAction('reject', block)}
-                                                                        >
-                                                                            <ThumbsDown className="h-4 w-4" />
-                                                                        </Button> */}
-                                                                        {/* <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-8 w-8 p-0 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20"
-                                                                            onClick={() => handleBlockAction('delete', block)}
-                                                                        >
-                                                                            <Trash2 className="h-4 w-4" />
-                                                                        </Button> */}
+                                                                        {!!onValidateBlock && (
+                                                                            <>
+                                                                                <PopConfirm
+                                                                                    title="Tem certeza que deseja aprovar o bloco?"
+                                                                                    onConfirm={async () => {
+                                                                                        await onValidateBlock?.(block.id, 'approve')
+                                                                                    }}
+                                                                                >
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="sm"
+                                                                                        className="h-8 w-8 p-0 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20"
+                                                                                    >
+                                                                                        <ThumbsUp className="h-4 w-4" />
+                                                                                    </Button>
+                                                                                </PopConfirm>
+                                                                                <PopConfirm
+                                                                                    title="Tem certeza que deseja rejeitar o bloco?"
+                                                                                    onConfirm={async () => {
+                                                                                        await onValidateBlock?.(block.id, 'reprove')
+                                                                                    }}
+                                                                                >
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="sm"
+                                                                                        className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20"
+                                                                                    >
+                                                                                        <ThumbsDown className="h-4 w-4" />
+                                                                                    </Button>
+                                                                                </PopConfirm>
+                                                                            </>
+                                                                        )}
+                                                                        {!!onDeleteBlock && (
+                                                                            <PopConfirm
+                                                                                title="Tem certeza que deseja deletar o bloco?"
+                                                                                onConfirm={async () => {
+                                                                                    await onDeleteBlock?.(block.id)
+                                                                                }}
+                                                                            >
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="sm"
+                                                                                    className="h-8 w-8 p-0 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20"
+                                                                                >
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </PopConfirm>
+                                                                        )}
                                                                     </div>
                                                                 </div>
 
@@ -404,20 +438,20 @@ export const TableV2 = ({
                                                                         </div>
                                                                     </div>
 
-                                                                    {/* {block.deadline && (
-                                                                        <div className="flex items-center gap-2">
-                                                                            <Timer className="h-4 w-4 text-gray-400" />
-                                                                            <div>
-                                                                                <p className="text-xs text-gray-500 dark:text-gray-400">Prazo</p>
-                                                                                <Badge
-                                                                                    variant="outline"
-                                                                                    className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/30"
-                                                                                >
-                                                                                    {block.deadline}
-                                                                                </Badge>
-                                                                            </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Check className="h-4 w-4 text-gray-400" />
+                                                                        <div>
+                                                                            <p className="text-xs text-gray-500 dark:text-gray-400">Validação</p>
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className={getValidationColor(block.validation?.id)}
+                                                                            >
+                                                                                {block.validation?.name || '-'}
+                                                                            </Badge>
                                                                         </div>
-                                                                    )} */}
+                                                                    </div>
+
+
                                                                 </div>
 
                                                                 {/* Block Content */}
@@ -447,11 +481,15 @@ export const TableV2 = ({
             <ModalPublicationInfo
                 selectedPublication={selectedPublication}
                 setSelectedPublication={setSelectedPublication}
+                onDelete={onDelete}
+                onValidate={onValidatePublication}
             />
 
             <ModalBlockInfo
                 selectedBlock={selectedBlock}
                 setSelectedBlock={setSelectedBlock}
+                onDelete={onDeleteBlock}
+                onValidate={onValidateBlock}
             />
         </div>
     )

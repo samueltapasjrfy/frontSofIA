@@ -30,7 +30,7 @@ export default function PublicationV2Page() {
     console.log({ action, block })
   }
 
-  const handleImportPublication = async (data: { litigationNumber: string; text: string; idInternal?: string }) => {
+  const handleRegisterPublication = async (data: { litigationNumber: string; text: string; idInternal?: string }) => {
     const params: PublicationV2Api.Save.Params = [
       {
         idInternal: data.idInternal,
@@ -44,12 +44,12 @@ export default function PublicationV2Page() {
       return false;
     }
     toast.success("Publicação importada com sucesso");
+    setIsRegisterModalOpen(false);
+    setTimeout(() => {
+      getPublicationsQuery.refetch()
+    }, 1000);
     return true
   }
-
-  useEffect(() => {
-    console.log(getPublicationsQuery?.data?.publications)
-  }, [getPublicationsQuery.data])
 
   const handleFinishImport = async (
     rows: Array<{ [k: string]: string }>,
@@ -74,6 +74,51 @@ export default function PublicationV2Page() {
     }, 1000);
     return true;
   };
+
+  const handleDeletePublication = async (id: string) => {
+    const response = await PublicationV2Api.delete(id);
+    if (response.error) {
+      toast.error(response.message || "Erro ao deletar publicação");
+      return false;
+    }
+    toast.success("Publicação deletada com sucesso");
+    getPublicationsQuery.refetch()
+    return true;
+  }
+
+  const handleDeleteBlock = async (id: string) => {
+    const response = await PublicationV2Api.deleteBlock(id);
+    if (response.error) {
+      toast.error(response.message || "Erro ao deletar bloco");
+      return false;
+    }
+    toast.success("Bloco deletado com sucesso");
+    getPublicationsQuery.refetch()
+    return true;
+  }
+
+  const handleValidateBlock = async (id: string, status: 'approve' | 'reprove') => {
+    const response = await PublicationV2Api.validateBlock(id, status);
+    if (response.error) {
+      toast.error(response.message || "Erro ao validar bloco");
+      return false;
+    }
+    toast.success(response.message || "Bloco validado com sucesso");
+    getPublicationsQuery.refetch()
+    return true;
+  }
+
+  const handleValidatePublication = async (id: string, status: 'approve' | 'reprove') => {
+    const response = await PublicationV2Api.validatePublication(id, status);
+    if (response.error) {
+      toast.error(response.message || "Erro ao validar publicação");
+      return false;
+    }
+    toast.success(response.message || "Publicação validada com sucesso");
+    getPublicationsQuery.refetch()
+    return true;
+  }
+
   return (
     <div className="container mx-auto">
       <div className="flex justify-end items-end">
@@ -88,8 +133,13 @@ export default function PublicationV2Page() {
         loading={getPublicationsQuery.isLoading}
         onPublicationAction={handlePublicationAction}
         onBlockAction={handleBlockAction}
-        onReload={() => {
-          getPublicationsQuery.refetch()
+        total={getPublicationsQuery.data?.total || 0}
+        onDelete={handleDeletePublication}
+        onDeleteBlock={handleDeleteBlock}
+        onValidateBlock={handleValidateBlock}
+        onValidatePublication={handleValidatePublication}
+        onReload={async () => {
+          await getPublicationsQuery.refetch()
         }}
       // filterComponent={<FilterComponent />}
       // onExport={() => {
@@ -116,7 +166,7 @@ export default function PublicationV2Page() {
       <ImportPublicationModal
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
-        onImport={handleImportPublication}
+        onImport={handleRegisterPublication}
       />
 
       <ModalImportData

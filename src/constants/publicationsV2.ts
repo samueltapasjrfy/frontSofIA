@@ -5,6 +5,12 @@ export const PUBLICATION_STATUS = {
     ERROR: 4,
 };
 
+export const PUBLICATION_VALIDATION_STATUS = {
+    PENDING: 1,
+    APPROVED: 2,
+    REPROVED: 3,
+};
+
 export const getStatusColor = (id: number) => {
     const colors: Record<number, string> = {
         [PUBLICATION_STATUS.PENDING]: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800/30",
@@ -14,3 +20,4 @@ export const getStatusColor = (id: number) => {
     }
     return colors[id] || "bg-gray-50 text-gray-700 border-gray-200"
 }
+
