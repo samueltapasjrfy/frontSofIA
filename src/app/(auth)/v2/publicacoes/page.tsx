@@ -2,7 +2,7 @@
 
 import { TableV2 } from '@/components/tablev2'
 import { PublicationV2Api } from '@/api/publicationV2Api'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { usePublicationsV2 } from '@/hooks/usePublicationsV2'
 import { HandleEntitiesButtons } from '@/components/handleEntitiesButtons'
 import { ImportPublicationModal } from '@/components/publications/ImportPublicationModal'

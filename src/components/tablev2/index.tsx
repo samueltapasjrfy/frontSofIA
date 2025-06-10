@@ -153,8 +153,8 @@ export const TableV2 = ({
                         <thead className="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
                             <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12"></th>
-                                {headers.map(header => (
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {headers.map((header, i) => (
+                                    <th key={i} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {header}
                                     </th>
                                 ))}
