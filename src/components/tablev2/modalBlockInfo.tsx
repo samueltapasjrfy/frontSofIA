@@ -4,7 +4,7 @@ import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
 import { PublicationV2Api } from "@/api/publicationV2Api"
 import { toast } from "sonner"
-import { getCategoriaColor, getClassificacaoColor, getConfiancaColor } from "./common"
+import { getCategoriaColor, getClassificacaoColor, getConfiancaColor, getValidationColor } from "./common"
 import PopConfirm from "../ui/popconfirm"
 
 type BlockWithPublication = PublicationV2Api.Block & { idPublication: string }
@@ -61,6 +61,14 @@ export const ModalBlockInfo = ({ selectedBlock, setSelectedBlock, onDelete, onVa
                                     <div className="mt-1">
                                         <Badge variant="outline" className={getConfiancaColor(selectedBlock.classification?.confidence)}>
                                             {selectedBlock.classification?.confidence?.name}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Validação</label>
+                                    <div className="mt-1">
+                                        <Badge variant="outline" className={getValidationColor(selectedBlock.validation?.id)}>
+                                            {selectedBlock.validation?.name}
                                         </Badge>
                                     </div>
                                 </div>
