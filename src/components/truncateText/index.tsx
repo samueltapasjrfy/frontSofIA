@@ -9,7 +9,7 @@ type TruncateTextProps = {
 export const TruncateText = ({ text, maxLength, onClick }: TruncateTextProps) => {
     if (!text || text.length <= maxLength) return text || "";
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex justify-between gap-2">
             <span className="line-clamp-2">{text.substring(0, maxLength)}...</span>
             <Button
                 variant="ghost"
