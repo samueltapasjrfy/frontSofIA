@@ -72,6 +72,14 @@ export const ModalBlockInfo = ({ selectedBlock, setSelectedBlock, onDelete, onVa
                                         </Badge>
                                     </div>
                                 </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Remetente</label>
+                                    <div className="mt-1">
+                                        <Badge variant="outline">
+                                            {selectedBlock.recipient?.name}
+                                        </Badge>
+                                    </div>
+                                </div>
                                 {/* <div>
                                         <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Prazo</label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
