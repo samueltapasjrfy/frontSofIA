@@ -101,6 +101,22 @@ export namespace PublicationV2Api {
             id: number;
             name: string;
         };
+        recipient?: {
+            id: number;
+            name: string;
+            method: {
+                id: number;
+                name: string;
+            };
+            confidence: {
+                id: number;
+                name: string;
+            };
+            polo: {
+                id: number;
+                name: string;
+            };
+        };
         classification: {
             id: number;
             name: string;

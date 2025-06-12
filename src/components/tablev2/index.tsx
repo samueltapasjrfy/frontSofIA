@@ -442,7 +442,22 @@ export const TableV2 = ({
                                                                             </Badge>
                                                                         </div>
                                                                     </div>
-
+                                                                    {block.recipient?.name && (
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Check className="h-4 w-4 text-gray-400" />
+                                                                            <div>
+                                                                                <p className="text-xs text-gray-500 dark:text-gray-400">Remetente</p>
+                                                                                <Badge
+                                                                                    variant="outline"
+                                                                                >
+                                                                                    {block.recipient?.name ?
+                                                                                        String(block.recipient?.name).slice(0, 1).toUpperCase() + String(block.recipient?.name).slice(1).toLowerCase()
+                                                                                        : '-'
+                                                                                    }
+                                                                                </Badge>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                     <div className="flex items-center gap-2">
                                                                         <Check className="h-4 w-4 text-gray-400" />
                                                                         <div>
