@@ -1,6 +1,6 @@
 "use client"
 
-import { TableV2 } from '@/components/tablev2'
+import { TablePublicationsV2 } from '@/components/tablePublicationsv2'
 import { PublicationV2Api } from '@/api/publicationV2Api'
 import { useState } from 'react'
 import { usePublicationsV2 } from '@/hooks/usePublicationsV2'
@@ -128,7 +128,7 @@ export default function PublicationV2Page() {
           handleRegister={() => setIsRegisterModalOpen(true)}
         />
       </div>
-      <TableV2
+      <TablePublicationsV2
         publications={getPublicationsQuery.data?.publications}
         loading={getPublicationsQuery.isLoading}
         onPublicationAction={handlePublicationAction}

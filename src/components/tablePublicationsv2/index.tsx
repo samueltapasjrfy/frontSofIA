@@ -13,7 +13,6 @@ import {
     ChevronDown,
     ChevronRight,
     Calendar,
-    Building2,
     Hash,
     Target,
     Users,
@@ -58,7 +57,7 @@ export interface TableV2Props {
     loading?: boolean
     total?: number
 }
-export const TableV2 = ({
+export const TablePublicationsV2 = ({
     publications: propPublications,
     filterComponent,
     onExport,
