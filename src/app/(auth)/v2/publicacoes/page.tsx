@@ -9,6 +9,9 @@ import { ImportPublicationModal } from '@/components/publications/ImportPublicat
 import ModalImportData from '@/components/modalImportData/modalImportData'
 import { toast } from 'sonner'
 import { Pagination } from '@/components/pagination'
+import { FilterComponent } from './filterComponent'
+import { useQueryClient } from '@tanstack/react-query'
+import { QUERY_KEYS } from '@/constants/cache'
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -17,18 +20,11 @@ const litigationColumns = {
 }
 
 export default function PublicationV2Page() {
-  const { getPublicationsQuery, changePage, changeLimit, publicationParams } = usePublicationsV2()
+  const { getPublicationsQuery, changePage, changeLimit, publicationParams, changeFilter, resetFilters } = usePublicationsV2()
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
-  const handlePublicationAction = (action: string, publication: PublicationV2Api.Publication) => {
-    console.log({ action, publication })
-
-  }
-
-  const handleBlockAction = (action: string, block: PublicationV2Api.Block) => {
-    console.log({ action, block })
-  }
+  const queryClient = useQueryClient()
 
   const handleRegisterPublication = async (data: { litigationNumber: string; text: string; idInternal?: string }) => {
     const params: PublicationV2Api.Save.Params = [
@@ -131,17 +127,20 @@ export default function PublicationV2Page() {
       <TablePublicationsV2
         publications={getPublicationsQuery.data?.publications}
         loading={getPublicationsQuery.isLoading}
-        onPublicationAction={handlePublicationAction}
-        onBlockAction={handleBlockAction}
         total={getPublicationsQuery.data?.total || 0}
         onDelete={handleDeletePublication}
         onDeleteBlock={handleDeleteBlock}
         onValidateBlock={handleValidateBlock}
         onValidatePublication={handleValidatePublication}
         onReload={async () => {
-          await getPublicationsQuery.refetch()
+          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PUBLICATIONS_V2] })
         }}
-      // filterComponent={<FilterComponent />}
+        filterComponent={
+          <FilterComponent
+            onFilterChange={changeFilter}
+            onResetFilters={resetFilters}
+          />
+        }
       // onExport={() => {
       //   console.log("Exportando dados")
       // }}

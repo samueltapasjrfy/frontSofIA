@@ -11,39 +11,44 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
         limit: initialLimit,
     });
 
-    // Debug: Monitor changes in publicationParams
-    useEffect(() => {
-        console.log("publicationParams changed:", publicationParams);
-    }, [publicationParams]);
+    const [caseTypesParams, setCaseTypesParams] = useState<PublicationV2Api.FindCaseTypes.Params>({
+        lastId: 0,
+        limit: initialLimit,
+    });
+
+    const [classificationsParams, setClassificationsParams] = useState<PublicationV2Api.FindClassifications.Params>({
+        lastId: 0,
+        limit: initialLimit,
+    });
+
+    const [recipientsParams, setRecipientsParams] = useState<PublicationV2Api.FindRecipients.Params>({
+        lastId: 0,
+        limit: initialLimit,
+    });
+
+    const handlePublicationParams = (params: PublicationV2Api.FindAll.Params) => {
+        Object.keys(params).forEach((key) => {
+            const value = params[key as keyof typeof params];
+            if (Array.isArray(value)) {
+                value.sort((a, b) => a - b);
+            }
+        });
+        return params;
+    }
 
     const getPublicationsQuery = useQuery({
         queryKey: [
             QUERY_KEYS.PUBLICATIONS_V2,
-            publicationParams.page,
-            publicationParams.limit,
-            publicationParams.status,
-            publicationParams.caseType
+            { ...handlePublicationParams(publicationParams) }
         ],
         queryFn: async () => {
-            const params: PublicationV2Api.FindAll.Params = {
-                page: publicationParams.page,
-                limit: publicationParams.limit,
-            }
-            if (publicationParams.status) {
-                params.status = publicationParams.status;
-            }
-            if (publicationParams.caseType) {
-                params.caseType = publicationParams.caseType;
-            }
-            console.log("Executing query with params:", params);
-            const data = await PublicationV2Api.findAll(params);
+            const data = await PublicationV2Api.findAll(publicationParams);
             return data;
         },
         staleTime: 1000 * 60 * 10, // 10 minutes
         retry: 3,
         retryDelay: 1000,
     });
-
     // const getPublicationByIdQuery = useCallback((id: string) => {
     //     return useQuery({
     //         queryKey: [QUERY_KEYS.PUBLICATION_V2, id],
@@ -55,6 +60,39 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
     //         retry: 2,
     //     });
     // }, []);
+
+    const getCaseTypesQuery = useQuery({
+        queryKey: [QUERY_KEYS.CASE_TYPES_V2, caseTypesParams],
+        queryFn: async () => {
+            const data = await PublicationV2Api.findCaseTypes(caseTypesParams);
+            return data;
+        },
+        staleTime: 1000 * 60 * 60, // 1 hour
+        retry: 3,
+        retryDelay: 1000,
+    });
+
+    const getClassificationsQuery = useQuery({
+        queryKey: [QUERY_KEYS.CLASSIFICATIONS_V2, classificationsParams],
+        queryFn: async () => {
+            const data = await PublicationV2Api.findClassifications(classificationsParams);
+            return data;
+        },
+        staleTime: 1000 * 60 * 60, // 1 hour
+        retry: 3,
+        retryDelay: 1000,
+    });
+
+    const getRecipientsQuery = useQuery({
+        queryKey: [QUERY_KEYS.RECIPIENTS_V2, recipientsParams],
+        queryFn: async () => {
+            const data = await PublicationV2Api.findRecipients(recipientsParams);
+            return data;
+        },
+        staleTime: 1000 * 60 * 60, // 1 hour
+        retry: 3,
+        retryDelay: 1000,
+    });
 
     const savePublicationsMutation = useMutation({
         mutationFn: async (data: PublicationV2Api.Save.Params) => {
@@ -69,9 +107,33 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
         setPublicationParams(prev => ({ ...prev, ...params }));
     }, []);
 
+    const changeCaseTypesFilter = useCallback((params: Partial<PublicationV2Api.FindCaseTypes.Params>): void => {
+        setCaseTypesParams(prev => ({ ...prev, ...params }));
+    }, []);
+
+    const changeClassificationsFilter = useCallback((params: Partial<PublicationV2Api.FindClassifications.Params>): void => {
+        setClassificationsParams(prev => ({ ...prev, ...params }));
+    }, []);
+
+    const changeRecipientsFilter = useCallback((params: Partial<PublicationV2Api.FindRecipients.Params>): void => {
+        setRecipientsParams(prev => ({ ...prev, ...params }));
+    }, []);
+
     const resetFilters = useCallback((): void => {
         setPublicationParams({
             page: 1,
+            limit: initialLimit,
+        });
+        setCaseTypesParams({
+            lastId: 0,
+            limit: initialLimit,
+        });
+        setClassificationsParams({
+            lastId: 0,
+            limit: initialLimit,
+        });
+        setRecipientsParams({
+            lastId: 0,
             limit: initialLimit,
         });
     }, [initialLimit]);
@@ -108,7 +170,9 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
     return {
         // Queries
         getPublicationsQuery,
-        // getPublicationByIdQuery,
+        getCaseTypesQuery,
+        getClassificationsQuery,
+        getRecipientsQuery,
 
         // Mutations
         savePublications,
@@ -116,10 +180,16 @@ export function usePublicationsV2(initialPage: number = 1, initialLimit: number 
 
         // Filter management
         changeFilter,
+        changeCaseTypesFilter,
+        changeClassificationsFilter,
+        changeRecipientsFilter,
         resetFilters,
         changePage,
         changeLimit,
         publicationParams,
+        caseTypesParams,
+        classificationsParams,
+        recipientsParams,
 
         // Cache management
         invalidateQuery,

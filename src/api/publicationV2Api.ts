@@ -1,9 +1,16 @@
+import { handleApiParams } from "@/utils/handleApiParams";
 import { http } from "./fetchv2";
 import { APIResponse } from "./response";
 
 export const PublicationV2Api = {
     findAll: async (params: PublicationV2Api.FindAll.Params): Promise<PublicationV2Api.FindAll.Response> => {
-        const response = await http.get<PublicationV2Api.FindAll.Response>('/Publications', params);
+        if (params.status && !Array.isArray(params.status)) {
+            params.status = [params.status];
+        }
+        if (params.caseType && !Array.isArray(params.caseType)) {
+            params.caseType = [params.caseType];
+        }
+        const response = await http.get<PublicationV2Api.FindAll.Response>(`/Publications?${handleApiParams(params).toString()}`);
         return response.data;
     },
 
@@ -47,14 +54,34 @@ export const PublicationV2Api = {
             error: response.error
         };
     },
+
     validatePublication: async (id: string, status: 'approve' | 'reprove'): Promise<APIResponse<void>> => {
         const response = await http.patch<void>(`/Publications/${id}/validate/${status}`);
-        console.log(response)
         return {
             data: response.data,
             message: response.message,
             error: response.error
         };
+    },
+
+    findCaseTypes: async (params: PublicationV2Api.FindCaseTypes.Params): Promise<PublicationV2Api.FindCaseTypes.Response> => {
+        const response = await http.get<PublicationV2Api.FindCaseTypes.Response>(`/Publications/CaseTypes?${handleApiParams(params).toString()}`);
+        return response.data;
+    },
+
+    findClassifications: async (params: PublicationV2Api.FindClassifications.Params): Promise<PublicationV2Api.FindClassifications.Response> => {
+        const response = await http.get<PublicationV2Api.FindClassifications.Response>(`/Blocks/Classifications?${handleApiParams(params).toString()}`);
+        return response.data;
+    },
+
+    findRecipients: async (params: PublicationV2Api.FindRecipients.Params): Promise<PublicationV2Api.FindRecipients.Response> => {
+        const response = await http.get<PublicationV2Api.FindRecipients.Response>(`/Blocks/Recipients?${handleApiParams(params).toString()}`);
+        return response.data;
+    },
+
+    findCategories: async (params: PublicationV2Api.FindCategories.Params): Promise<PublicationV2Api.FindCategories.Response> => {
+        const response = await http.get<PublicationV2Api.FindCategories.Response>(`/Blocks/Categories?${handleApiParams(params).toString()}`);
+        return response.data;
     }
 }
 
@@ -164,8 +191,12 @@ export namespace PublicationV2Api {
         export type Params = {
             page?: number;
             limit?: number;
-            status?: number;
-            caseType?: number;
+            status?: number[];
+            caseType?: number[];
+            classification?: number[];
+            recipient?: number[];
+            category?: number[];
+            search?: string;
         };
 
 
@@ -213,5 +244,89 @@ export namespace PublicationV2Api {
                 errors: number;
             };
         };
+    }
+
+    export namespace FindCaseTypes {
+        export type Params = {
+            lastId?: number;
+            limit?: number;
+            search?: string;
+        };
+
+        export type CaseType = {
+            id: number;
+            name: string;
+        }
+
+        export type Response = {
+            caseTypes: Array<CaseType>;
+            total: number;
+            hasMore: boolean;
+            lastId: number | null;
+        };
+    }
+
+    export namespace FindClassifications {
+        export type Params = {
+            lastId?: number;
+            limit?: number;
+            search?: string;
+        };
+
+        export type Classification = {
+            id: number;
+            classification: string;
+        }
+
+        export type Response = {
+            classifications: Array<Classification>;
+            total: number;
+            hasMore: boolean;
+            lastId: number | null;
+        };
+    }
+
+    export namespace FindRecipients {
+        export type Params = {
+            lastId?: number;
+            limit?: number;
+            search?: string;
+        };
+
+        export type Recipient = {
+            id: number;
+            recipient: string;
+            polo: {
+                id: number;
+                name: string;
+            };
+        }
+
+        export type Response = {
+            recipients: Array<Recipient>;
+            total: number;
+            hasMore: boolean;
+            lastId: number | null;
+        };
+    }
+
+    export namespace FindCategories {
+        export type Params = {
+            lastId?: number;
+            limit?: number;
+            search?: string;
+        };
+
+        export type Category = {
+            id: number;
+            category: string;
+        }
+
+        export type Response = {
+            categories: Array<Category>;
+            total: number;
+            hasMore: boolean;
+            lastId: number | null;
+        }
     }
 }

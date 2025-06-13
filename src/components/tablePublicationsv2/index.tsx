@@ -143,15 +143,16 @@ export const TablePublicationsV2 = ({
                         </div>
                     </div>
                 </div>
-                {showFilter && (
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                        {filterComponent}
-                    </div>
-                )}
+                <div className={cn(
+                    "border-b border-gray-200 dark:border-gray-700",
+                    !showFilter ? "hidden" : ""
+                )}>
+                    {filterComponent}
+                </div>
 
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
+                        <thead className="bg-gray-50 dark:bg-gray-900/50 top-0">
                             <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12"></th>
                                 {headers.map((header, i) => (

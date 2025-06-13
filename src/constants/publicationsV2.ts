@@ -5,6 +5,13 @@ export const PUBLICATION_STATUS = {
     ERROR: 4,
 };
 
+export const PUBLICATION_STATUS_LABEL = {
+    PENDING: "Pendente",
+    PROCESSING: "Processando",
+    COMPLETED: "Concluído",
+    ERROR: "Erro",
+};
+
 export const PUBLICATION_VALIDATION_STATUS = {
     PENDING: 1,
     APPROVED: 2,
