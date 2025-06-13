@@ -10,6 +10,7 @@ import { useRef, useState } from "react"
 interface FilterComponentProps {
     onFilterChange: (params: Partial<PublicationV2Api.FindAll.Params>) => void
     onResetFilters: () => void
+    limit: number
 }
 
 const defaultFilter: Partial<PublicationV2Api.FindAll.Params> = {
@@ -25,7 +26,7 @@ type Option = {
     value: string
 }
 
-export const FilterComponent = ({ onFilterChange, onResetFilters }: FilterComponentProps) => {
+export const FilterComponent = ({ onFilterChange, onResetFilters, limit }: FilterComponentProps) => {
     const [searchTerm, setSearchTerm] = useState("")
     const [filter, setFilter] = useState<Partial<PublicationV2Api.FindAll.Params>>(defaultFilter)
     const [isLoadingComponents, setIsLoadingComponents] = useState({
@@ -39,16 +40,9 @@ export const FilterComponent = ({ onFilterChange, onResetFilters }: FilterCompon
     const [recipients, setRecipients] = useState<Option[]>([])
     const [categories, setCategories] = useState<Option[]>([])
 
-    const handleResetFilters = () => {
-        onResetFilters()
-        setSearchTerm("")
-        setFilter(defaultFilter)
-    }
-
     const handleFilterChange = (key: keyof PublicationV2Api.FindAll.Params, value: string[]) => {
-        console.log("handleFilterChange", key, value)
         setFilter({ ...filter, [key]: value })
-        onFilterChange({ ...filter, [key]: value })
+        onFilterChange({ ...filter, [key]: value, limit: limit || 10, page: 1 })
     }
 
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -164,7 +158,7 @@ export const FilterComponent = ({ onFilterChange, onResetFilters }: FilterCompon
     }
 
     return (
-        <Card className="bg-white dark:bg-gray-800 border-none shadow-sm" >
+        <Card className="bg-white dark:bg-gray-800 border-none shadow-sm">
             <CardContent>
                 <div className="flex gap-2">
                     <div className="w-full md:w-1/2 lg:w-4/12 xl:w-3/12">
@@ -287,52 +281,6 @@ export const FilterComponent = ({ onFilterChange, onResetFilters }: FilterCompon
                             isLoading={isLoadingComponents.category}
                         />
                     </div>
-                    {/*
-
-                    .concat(Object.keys(PUBLICATION_STATUS).map((status, index) => (
-                                {
-                                    value: PUBLICATION_STATUS[status as keyof typeof PUBLICATION_STATUS].toString(),
-                                    label: PUBLICATION_STATUS_LABEL[status as keyof typeof PUBLICATION_STATUS_LABEL]
-                                }
-                            )))
-
-                    <Select value={filter.caseType?.toString()} onValueChange={(value) => handleFilterChange("caseType", value)}>
-                        <SelectTrigger className="w-48 border-gray-200 dark:border-gray-700 focus:ring-gray-400 dark:focus:ring-gray-500">
-                            <SelectValue placeholder="Categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="0">Todas as categorias</SelectItem>
-                            <SelectItem value="DECISÃO JUDICIAL">Decisão Judicial</SelectItem>
-                            <SelectItem value="ORDEM COM PRAZO">Ordem com Prazo</SelectItem>
-                            <SelectItem value="MERO EXPEDIENTE">Mero Expediente</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select value={filter.classification?.toString() || "all"} onValueChange={(value) => handleFilterChange("classification", value)}>
-                        <SelectTrigger className="w-48 border-gray-200 dark:border-gray-700 focus:ring-gray-400 dark:focus:ring-gray-500">
-                            <SelectValue placeholder="Classificação" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todas as classificações</SelectItem>
-                            <SelectItem value="Audiência">Audiência</SelectItem>
-                            <SelectItem value="Sentença">Sentença</SelectItem>
-                            <SelectItem value="Determinação de Pagamento">Determinação de Pagamento</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select value={filter.sender?.toString() || "all"} onValueChange={(value) => handleFilterChange("sender", value)}>
-                        <SelectTrigger className="w-48 border-gray-200 dark:border-gray-700 focus:ring-gray-400 dark:focus:ring-gray-500">
-                            <SelectValue placeholder="Remetente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos os remetentes</SelectItem>
-                            <SelectItem value="Autor">Autor</SelectItem>
-                            <SelectItem value="Réu">Réu</SelectItem>
-                            <SelectItem value="Exequente">Exequente</SelectItem>
-                            <SelectItem value="Executado">Executado</SelectItem>
-                            <SelectItem value="Ambos">Ambos</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    */}
-
                 </div>
             </CardContent>
         </Card >

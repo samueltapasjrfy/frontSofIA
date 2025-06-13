@@ -1,6 +1,6 @@
 "use client"
 
-import { TablePublicationsV2 } from '@/components/tablePublicationsv2'
+import { TablePublicationsV2 } from '@/components/publicationsV2/tablePublicationsv2'
 import { PublicationV2Api } from '@/api/publicationV2Api'
 import { useState } from 'react'
 import { usePublicationsV2 } from '@/hooks/usePublicationsV2'
@@ -12,6 +12,8 @@ import { Pagination } from '@/components/pagination'
 import { FilterComponent } from './filterComponent'
 import { useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants/cache'
+import PublicationsV2Stats from '@/components/publicationsV2/stats'
+import { usePublicationsV2Stats } from '@/hooks/usePublicationsV2Stats'
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -21,6 +23,7 @@ const litigationColumns = {
 
 export default function PublicationV2Page() {
   const { getPublicationsQuery, changePage, changeLimit, publicationParams, changeFilter, resetFilters } = usePublicationsV2()
+  const { getTotalQuery, getStatisticsQuery, getProcessingStatusQuery } = usePublicationsV2Stats()
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
@@ -116,7 +119,7 @@ export default function PublicationV2Page() {
   }
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto space-y-6">
       <div className="flex justify-end items-end">
         <HandleEntitiesButtons
           entityName="Publicações"
@@ -124,44 +127,75 @@ export default function PublicationV2Page() {
           handleRegister={() => setIsRegisterModalOpen(true)}
         />
       </div>
-      <TablePublicationsV2
-        publications={getPublicationsQuery.data?.publications}
-        loading={getPublicationsQuery.isLoading}
-        total={getPublicationsQuery.data?.total || 0}
-        onDelete={handleDeletePublication}
-        onDeleteBlock={handleDeleteBlock}
-        onValidateBlock={handleValidateBlock}
-        onValidatePublication={handleValidatePublication}
-        onReload={async () => {
-          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PUBLICATIONS_V2] })
-        }}
-        filterComponent={
-          <FilterComponent
-            onFilterChange={changeFilter}
-            onResetFilters={resetFilters}
-          />
-        }
-      // onExport={() => {
-      //   console.log("Exportando dados")
-      // }}
-      />
-      <Pagination
-        total={getPublicationsQuery.data?.total || 0}
-        pagination={{
-          page: publicationParams.page || 1,
-          limit: publicationParams.limit || 10
-        }}
-        setPagination={({ page, limit }) => {
-          // Se o limit mudou, usamos changeLimit (que já reseta página para 1)
-          if (limit !== publicationParams.limit) {
-            changeLimit(limit);
+      <div>
+        <PublicationsV2Stats stats={{
+          total: getTotalQuery.data?.total || 0,
+          lastDay: getTotalQuery.data?.lastDay || 0,
+          processed: getProcessingStatusQuery.data?.classified || 0,
+          pending: getProcessingStatusQuery.data?.pending || 0,
+          processing: getProcessingStatusQuery.data?.processing || 0,
+          notClassified: getProcessingStatusQuery.data?.notClassified || 0,
+          errorRate: getStatisticsQuery.data?.errorsPercentage || 0,
+          avgProcessingTime: getStatisticsQuery.data?.avgTime || 0,
+          aiAccuracy: getStatisticsQuery.data?.precision || 0,
+          aiAccuracyChange: getStatisticsQuery.data?.precision || 0,
+        }} />
+      </div>
+      <div>
+
+        <TablePublicationsV2
+          publications={getPublicationsQuery.data?.publications}
+          loading={getPublicationsQuery.isLoading}
+          total={getPublicationsQuery.data?.total || 0}
+          onDelete={handleDeletePublication}
+          onDeleteBlock={handleDeleteBlock}
+          onValidateBlock={handleValidateBlock}
+          onValidatePublication={handleValidatePublication}
+          onReload={async () => {
+            await Promise.all([
+              queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.PUBLICATIONS_V2]
+              }),
+              queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.PUBLICATIONS_V2_TOTAL]
+              }),
+              queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.PUBLICATIONS_V2_PROCESSING_STATUS]
+              }),
+              queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.PUBLICATIONS_V2_STATISTICS]
+              })
+            ])
+          }}
+          filterComponent={
+            <FilterComponent
+              onFilterChange={changeFilter}
+              onResetFilters={resetFilters}
+              limit={publicationParams.limit || 10}
+            />
           }
-          // Se apenas a página mudou, usamos changePage
-          else if (page !== publicationParams.page) {
-            changePage(page);
-          }
-        }}
-      />
+        // onExport={() => {
+        //   console.log("Exportando dados")
+        // }}
+        />
+        <Pagination
+          total={getPublicationsQuery.data?.total || 0}
+          pagination={{
+            page: publicationParams.page || 1,
+            limit: publicationParams.limit || 10
+          }}
+          setPagination={({ page, limit }) => {
+            // Se o limit mudou, usamos changeLimit (que já reseta página para 1)
+            if (limit !== publicationParams.limit) {
+              changeLimit(limit);
+            }
+            // Se apenas a página mudou, usamos changePage
+            else if (page !== publicationParams.page) {
+              changePage(page);
+            }
+          }}
+        />
+      </div>
       <ImportPublicationModal
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}

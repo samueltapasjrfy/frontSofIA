@@ -29,9 +29,9 @@ import { getStatusColor } from "@/constants/publicationsV2"
 import { ModalPublicationInfo } from "./modalPublicationInfo"
 import { getCategoriaColor, getClassificacaoColor, getConfiancaColor, getValidationColor } from "./common"
 import { ModalBlockInfo } from "./modalBlockInfo"
-import PopConfirm from "../ui/popconfirm"
-import { TruncateText } from "../truncateText"
-import ModalViewText from "../modalViewText"
+import PopConfirm from "../../ui/popconfirm"
+import { TruncateText } from "../../truncateText"
+import ModalViewText from "../../modalViewText"
 
 const headers = [
     "ID Publicação",

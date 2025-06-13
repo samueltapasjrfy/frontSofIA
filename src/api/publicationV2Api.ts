@@ -82,31 +82,23 @@ export const PublicationV2Api = {
     findCategories: async (params: PublicationV2Api.FindCategories.Params): Promise<PublicationV2Api.FindCategories.Response> => {
         const response = await http.get<PublicationV2Api.FindCategories.Response>(`/Blocks/Categories?${handleApiParams(params).toString()}`);
         return response.data;
+    },
+
+    getTotal: async (): Promise<PublicationV2Api.GetTotal.Response> => {
+        const response = await http.get<PublicationV2Api.GetTotal.Response>('/Publications/report/total');
+        return response.data;
+    },
+
+    getStatistics: async (): Promise<PublicationV2Api.GetStatistics.Response> => {
+        const response = await http.get<PublicationV2Api.GetStatistics.Response>('/Publications/report/statistics');
+        return response.data;
+    },
+
+    getProcessingStatus: async (): Promise<PublicationV2Api.GetProcessingStatus.Response> => {
+        const response = await http.get<PublicationV2Api.GetProcessingStatus.Response>('/Publications/report/processingStatus');
+        return response.data;
     }
 }
-
-// Funções auxiliares para mapeamento
-// const getCaseTypeLabel = (caseType: number): string => {
-//     const caseTypeMap: Record<number, string> = {
-//         1: "Cível",
-//         2: "Criminal",
-//         3: "Trabalhista",
-//         4: "Tributário",
-//         // Adicionar mais conforme necessário
-//     };
-//     return caseTypeMap[caseType] || "Não informado";
-// };
-
-// const getStatusLabel = (status: number): string => {
-//     const statusMap: Record<number, string> = {
-//         1: "Pendente",
-//         2: "Processando",
-//         3: "Concluído",
-//         4: "Erro",
-//         // Adicionar mais conforme necessário
-//     };
-//     return statusMap[status] || "Desconhecido";
-// };
 
 export namespace PublicationV2Api {
     export type Block = {
@@ -327,6 +319,31 @@ export namespace PublicationV2Api {
             total: number;
             hasMore: boolean;
             lastId: number | null;
+        }
+    }
+
+    export namespace GetTotal {
+        export type Response = {
+            total: number;
+            lastDay: number;
+        }
+    }
+
+    export namespace GetStatistics {
+        export type Response = {
+            errorsPercentage: number;
+            avgTime: number;
+            precision: number;
+        }
+    }
+
+    export namespace GetProcessingStatus {
+        export type Response = {
+            total: number;
+            classified: number;
+            pending: number;
+            processing: number;
+            notClassified: number;
         }
     }
 }
