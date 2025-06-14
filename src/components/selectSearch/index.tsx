@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
-import Select, { MultiValue } from 'react-select';
+import { useEffect } from 'react';
+import Select from 'react-select';
 
 type Option = { value: string, label: string }
 

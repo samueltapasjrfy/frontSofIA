@@ -20,7 +20,6 @@ import {
   Trash2,
   MonitorOff,
   Monitor,
-  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
@@ -261,18 +260,7 @@ export function ProcessTable({
   ];
 
   const renderBatch = (batch: BatchApi.Batch) => {
-    return <span className="text-gray-600 whitespace-nowrap">
-      <div className="flex items-center text-gray-500 text-sm">
-        <Clock className="h-3 w-3 mr-2" />
-        {dayjs(batch.createdAt).format("DD/MM/YYYY HH:mm")}
-      </div>
-      <div className="flex items-center gap-3">
-        {`${batch.total} ${+batch.total === 1 ? "processo" : "processos"}`}
-        <Badge className={cn(getProcessStatusColor(batch.status.id), "font-medium text-xs")}>
-          {batch.status.value}
-        </Badge>
-      </div>
-    </span>
+    return `${dayjs(batch.createdAt).format("DD/MM/YYYY HH:mm")} - ${batch.total} ${+batch.total === 1 ? "processo" : "processos"} - ${batch.status.value}`;
   }
 
   const changeProcessTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -428,7 +416,8 @@ export function ProcessTable({
                     console.error(error);
                     return {
                       options: [],
-                      hasMore: false
+                      hasMore: false,
+                      additional: { page: 1, hasMore: false }
                     };
                   }
                 }}
@@ -481,7 +470,8 @@ export function ProcessTable({
                     console.error(error);
                     return {
                       options: [],
-                      hasMore: false
+                      hasMore: false,
+                      additional: { page: 1, hasMore: false }
                     };
                   }
                 }}

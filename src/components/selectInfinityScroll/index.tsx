@@ -1,6 +1,4 @@
-import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
-import { InputActionMeta } from "react-select";
 import { AsyncPaginate } from "react-select-async-paginate";
 
 type LoadOptionsParams = {
@@ -9,20 +7,16 @@ type LoadOptionsParams = {
     additional: any;
 }
 
-type LoadOptionsResponse = {
+type LoadOptionsResponse<T = any> = {
     options: { label: string, value: string }[];
     hasMore: boolean;
-    additional: {
-        lastId: number;
-        limit: number;
-        search: string;
-    }
+    additional: T;
 }
 
-type SelectInfinityScrollProps = {
+type SelectInfinityScrollProps<T = any> = {
     instanceId: string;
     placeholder: string;
-    loadOptions: (params: LoadOptionsParams) => Promise<LoadOptionsResponse>;
+    loadOptions: (params: LoadOptionsParams) => Promise<LoadOptionsResponse<T>>;
     onChange: (value: any) => void;
     value: { label: string; value: string }[];
     isLoading?: boolean;
@@ -53,7 +47,7 @@ export const SelectInfinityScroll = ({
     const [isDebouncing, setIsDebouncing] = useState(false)
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-    const handleInputChange = (inputValue: string, actionMeta: InputActionMeta) => {
+    const handleInputChange = () => {
         setIsDebouncing(true)
 
         if (timeoutRef.current) {

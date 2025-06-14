@@ -26,7 +26,7 @@ type Option = {
     value: string
 }
 
-export const FilterComponent = ({ onFilterChange, onResetFilters, limit }: FilterComponentProps) => {
+export const FilterComponent = ({ onFilterChange, limit }: FilterComponentProps) => {
     const [searchTerm, setSearchTerm] = useState("")
     const [filter, setFilter] = useState<Partial<PublicationV2Api.FindAll.Params>>(defaultFilter)
     const [isLoadingComponents, setIsLoadingComponents] = useState({
