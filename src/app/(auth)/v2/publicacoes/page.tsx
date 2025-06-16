@@ -151,7 +151,7 @@ export default function PublicationV2Page() {
           onValidateBlock={handleValidateBlock}
           onValidatePublication={handleValidatePublication}
           onReload={async () => {
-            invalidateQueriesPublicationsStatus()
+            resetPageCache(1)
           }}
           filterComponent={
             <FilterComponent
