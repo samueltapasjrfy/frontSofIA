@@ -1,9 +1,11 @@
 "use client"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { QUERY_KEYS } from "@/constants/cache"
 import { PublicationV2Api } from "@/api/publicationV2Api"
 
 export function usePublicationsV2Stats() {
+    const queryClient = useQueryClient()
+
     const getTotalQuery = useQuery({
         queryKey: [QUERY_KEYS.PUBLICATIONS_V2_TOTAL],
         queryFn: async () => {
@@ -37,10 +39,31 @@ export function usePublicationsV2Stats() {
         retryDelay: 1000,
     });
 
+    const refetchQueries = () => {
+        getTotalQuery.refetch()
+        getStatisticsQuery.refetch()
+        getProcessingStatusQuery.refetch()
+    }
+
+    const invalidateQueries = () => {
+        const queries = [
+            QUERY_KEYS.PUBLICATIONS_V2_TOTAL,
+            QUERY_KEYS.PUBLICATIONS_V2_STATISTICS,
+            QUERY_KEYS.PUBLICATIONS_V2_PROCESSING_STATUS
+        ]
+        queries.forEach(query => {
+            queryClient.invalidateQueries({
+                queryKey: [query]
+            })
+        })
+    }
+
     return {
         // Queries
         getTotalQuery,
         getStatisticsQuery,
         getProcessingStatusQuery,
+        refetchQueries,
+        invalidateQueries,
     }
 } 

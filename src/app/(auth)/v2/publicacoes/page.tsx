@@ -10,8 +10,6 @@ import ModalImportData from '@/components/modalImportData/modalImportData'
 import { toast } from 'sonner'
 import { Pagination } from '@/components/pagination'
 import { FilterComponent } from './filterComponent'
-import { useQueryClient } from '@tanstack/react-query'
-import { QUERY_KEYS } from '@/constants/cache'
 import PublicationsV2Stats from '@/components/publicationsV2/stats'
 import { usePublicationsV2Stats } from '@/hooks/usePublicationsV2Stats'
 
@@ -22,12 +20,17 @@ const litigationColumns = {
 }
 
 export default function PublicationV2Page() {
-  const { getPublicationsQuery, changePage, changeLimit, publicationParams, changeFilter, resetFilters } = usePublicationsV2()
-  const { getTotalQuery, getStatisticsQuery, getProcessingStatusQuery } = usePublicationsV2Stats()
+  const { getPublicationsQuery, changePage, changeLimit, publicationParams, changeFilter, resetFilters, invalidateQuery: invalidateQueryPublications } = usePublicationsV2()
+  const { getTotalQuery, getStatisticsQuery, getProcessingStatusQuery, invalidateQueries: invalidateQueriesPublicationsStatus } = usePublicationsV2Stats()
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
-  const queryClient = useQueryClient()
+  const resetPageCache = (time: number = 1000) => {
+    setTimeout(() => {
+      invalidateQueryPublications()
+      invalidateQueriesPublicationsStatus()
+    }, time)
+  }
 
   const handleRegisterPublication = async (data: { litigationNumber: string; text: string; idInternal?: string }) => {
     const params: PublicationV2Api.Save.Params = [
@@ -44,9 +47,7 @@ export default function PublicationV2Page() {
     }
     toast.success("Publicação importada com sucesso");
     setIsRegisterModalOpen(false);
-    setTimeout(() => {
-      getPublicationsQuery.refetch()
-    }, 1000);
+    resetPageCache()
     return true
   }
 
@@ -68,9 +69,7 @@ export default function PublicationV2Page() {
     }
     toast.success("Publicações importadas com sucesso");
     setIsImportModalOpen(false);
-    setTimeout(() => {
-      getPublicationsQuery.refetch()
-    }, 1000);
+    resetPageCache()
     return true;
   };
 
@@ -81,7 +80,7 @@ export default function PublicationV2Page() {
       return false;
     }
     toast.success("Publicação deletada com sucesso");
-    getPublicationsQuery.refetch()
+    resetPageCache(100)
     return true;
   }
 
@@ -92,7 +91,7 @@ export default function PublicationV2Page() {
       return false;
     }
     toast.success("Bloco deletado com sucesso");
-    getPublicationsQuery.refetch()
+    resetPageCache(100)
     return true;
   }
 
@@ -103,7 +102,7 @@ export default function PublicationV2Page() {
       return false;
     }
     toast.success(response.message || "Bloco validado com sucesso");
-    getPublicationsQuery.refetch()
+    resetPageCache(100)
     return true;
   }
 
@@ -114,7 +113,7 @@ export default function PublicationV2Page() {
       return false;
     }
     toast.success(response.message || "Publicação validada com sucesso");
-    getPublicationsQuery.refetch()
+    resetPageCache(100)
     return true;
   }
 
@@ -152,20 +151,7 @@ export default function PublicationV2Page() {
           onValidateBlock={handleValidateBlock}
           onValidatePublication={handleValidatePublication}
           onReload={async () => {
-            await Promise.all([
-              queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.PUBLICATIONS_V2]
-              }),
-              queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.PUBLICATIONS_V2_TOTAL]
-              }),
-              queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.PUBLICATIONS_V2_PROCESSING_STATUS]
-              }),
-              queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.PUBLICATIONS_V2_STATISTICS]
-              })
-            ])
+            invalidateQueriesPublicationsStatus()
           }}
           filterComponent={
             <FilterComponent
