@@ -160,9 +160,13 @@ export default function PublicationV2Page() {
               limit={publicationParams.limit || 10}
             />
           }
-        // onExport={() => {
-        //   console.log("Exportando dados")
-        // }}
+          onExport={async () => {
+            toast.info("Exportando dados (limitado a 1000 resultados)...")
+            await PublicationV2Api.exportToXLSX({
+              ...publicationParams,
+              noPagination: true,
+            })
+          }}
         />
         <Pagination
           total={getPublicationsQuery.data?.total || 0}

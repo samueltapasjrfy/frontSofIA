@@ -32,6 +32,7 @@ import { ModalBlockInfo } from "./modalBlockInfo"
 import PopConfirm from "../../ui/popconfirm"
 import { TruncateText } from "../../truncateText"
 import ModalViewText from "../../modalViewText"
+import { toast } from "sonner"
 
 const headers = [
     "ID Publicação",
@@ -76,6 +77,9 @@ export const TablePublicationsV2 = ({
         { idPublication: string, cnj?: string } | null>(null)
     const [showFilter, setShowFilter] = useState(false)
     const [isReloading, setIsReloading] = useState(false)
+    const [isExporting, setIsExporting] = useState(false)
+    const [isExportBlocks, setIsExportBlocks] = useState(false)
+
     const publications = propPublications || []
     const [selectedText, setSelectedText] = useState<string>("")
     const handleReload = () => {
@@ -94,6 +98,22 @@ export const TablePublicationsV2 = ({
             newExpanded.add(id)
         }
         setExpandedPublications(newExpanded)
+    }
+
+    const handleExport = async () => {
+        try {
+            setIsExporting(true)
+            await onExport?.()
+        } catch (error) {
+            console.error(error)
+            toast.error("Erro ao exportar dados")
+        } finally {
+            setIsExporting(false)
+            setIsExportBlocks(true)
+            setTimeout(() => {
+                setIsExportBlocks(false)
+            }, 10000)
+        }
     }
 
     return (
@@ -123,6 +143,9 @@ export const TablePublicationsV2 = ({
                                     variant="outline"
                                     size="sm"
                                     className="flex items-center gap-2 h-8 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                                    onClick={handleExport}
+                                    disabled={isExporting || isExportBlocks}
+                                    loading={isExporting}
                                 >
                                     <Download className="h-3.5 w-3.5" />
                                     <span className="hidden sm:inline">Exportar</span>

@@ -1,6 +1,9 @@
 import { handleApiParams } from "@/utils/handleApiParams";
 import { http } from "./fetchv2";
 import { APIResponse } from "./response";
+import dayjs from "dayjs";
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 export const PublicationV2Api = {
     findAll: async (params: PublicationV2Api.FindAll.Params): Promise<PublicationV2Api.FindAll.Response> => {
@@ -97,6 +100,106 @@ export const PublicationV2Api = {
     getProcessingStatus: async (): Promise<PublicationV2Api.GetProcessingStatus.Response> => {
         const response = await http.get<PublicationV2Api.GetProcessingStatus.Response>('/Publications/report/processingStatus');
         return response.data;
+    },
+    exportToXLSX: async (params: PublicationV2Api.FindAll.Params): Promise<void> => {
+        try {
+            // Buscar todas as publicações sem paginação
+            params.noPagination = true
+            delete params.limit
+            delete params.page
+            const response = await http.get<PublicationV2Api.FindAll.Response>('/Publications', params);
+            // Preparar dados para exportação
+            const publications = response.data.publications.map(pub => ({
+                'ID Publicação': pub.id,
+                'ID Externo': pub.idExternal || '-',
+                'Nº Processo': pub.info?.cnj || '-',
+                'Texto': (pub.text || '-').slice(0, 32000),
+                'Modalidade': pub.caseType?.name || '-',
+                'Blocos': pub.blocks.length,
+                'Status': pub.status.name || '-',
+                'Data Inserção': pub.createdAt
+                    ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm')
+                    : '-',
+            }));
+
+            // Criar workbook e worksheet
+            const publicationsWs = XLSX.utils.json_to_sheet(publications);
+
+            // Ajustar largura das colunas
+            const colWidths = [
+                { wch: 10 }, // ID
+                { wch: 20 }, // ID Externo
+                { wch: 20 }, // Nº Processo
+                { wch: 50 }, // Texto
+                { wch: 15 }, // Modalidade
+                { wch: 15 }, // Blocos
+                { wch: 15 }, // Status
+                { wch: 20 }, // Data Inserção
+            ];
+            publicationsWs['!cols'] = colWidths;
+
+            const blocks = response.data.publications
+                .filter(pub => pub.blocks.length > 0)
+                .map(pub => pub.blocks.map(block => ({
+                    'ID Bloco': block.id,
+                    'ID Publicação': pub.id,
+                    'ID Externo': pub.idExternal || '-',
+                    'Nº Processo': pub.info?.cnj || '-',
+                    'Texto': block.text,
+                    'Status': block.status?.name || '-',
+                    'Categoria': block.category?.name || '-',
+                    'Tipo': block.type?.name || '-',
+                    'Classificação': block.classification?.name || '-',
+                    'Subclassificação': block.subClassification?.name || '-',
+                    'Recipiente': block.recipient?.name || '-',
+                    'Método': block.recipient?.method?.name || '-',
+                    'Confiança': block.classification?.confidence?.name || '-',
+                    'Polo': block.recipient?.id ? block.recipient?.name + ' - ' + block.recipient?.polo.name : '-',
+                })
+                )).flat();
+            console.log(blocks)
+            const blocksWs = XLSX.utils.json_to_sheet(blocks);
+
+            const blocksColWidths = [
+                { wch: 10 }, // ID Bloco
+                { wch: 10 }, // ID Publicação
+                { wch: 20 }, // ID Externo
+                { wch: 20 }, // Nº Processo
+                { wch: 50 }, // Texto
+                { wch: 15 }, // Status
+                { wch: 15 }, // Categoria
+                { wch: 15 }, // Tipo
+                { wch: 15 }, // Classificação
+                { wch: 15 }, // Subclassificação
+                { wch: 15 }, // Recipiente  
+                { wch: 15 }, // Método
+                { wch: 15 }, // Confiança
+                { wch: 15 }, // Polo
+            ];
+            blocksWs['!cols'] = blocksColWidths;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, publicationsWs, 'Publicações');
+            XLSX.utils.book_append_sheet(wb, blocksWs, 'Blocos');
+
+            // Gerar arquivo e fazer download
+            const excelBuffer = XLSX.write(wb, {
+                bookType: 'xlsx',
+                type: 'array'
+            });
+
+            const dataBlob = new Blob([excelBuffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            // Nome do arquivo com timestamp
+            const fileName = `publicacoes_${dayjs().format('YYYY-MM-DD_HH-mm')}.xlsx`;
+
+            saveAs(dataBlob, fileName);
+        } catch (error) {
+            console.error('Erro ao exportar publicações:', error);
+            throw error; // Propagar erro para ser tratado no componente
+        }
     }
 }
 
@@ -189,6 +292,7 @@ export namespace PublicationV2Api {
             recipient?: number[];
             category?: number[];
             search?: string;
+            noPagination?: boolean;
         };
 
 
