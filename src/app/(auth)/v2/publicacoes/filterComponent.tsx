@@ -53,7 +53,7 @@ export const FilterComponent = ({ onFilterChange, limit }: FilterComponentProps)
         }
         debounceTimeout.current = setTimeout(() => {
             console.log("search", e.target.value)
-            onFilterChange({ search: e.target.value })
+            onFilterChange({ ...filter, search: e.target.value, limit: limit || 10, page: 1 })
         }, 1000)
     }
 
