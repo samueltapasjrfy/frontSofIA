@@ -1,9 +1,7 @@
 "use client";
 import { useState } from "react";
-import { queryClient } from "@/lib/reactQuery";
 import { toast } from "sonner"
 import ModalImportData from "@/components/modalImportData/modalImportData";
-import { QUERY_KEYS } from "@/constants/cache";
 import { ProcessTable } from "@/components/process/ProcessTable";
 import { ImportProcessData, RegisterProcessModal } from "@/components/process/ImportProcessModal";
 import { useProcesses } from "@/hooks/useProcess";

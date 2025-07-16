@@ -101,7 +101,7 @@ const ModalImportData = ({
         sheet[column].t = 'd';
         sheet[column].v = columnValue;
       });
-      let values: Array<{ [k: string]: string }> = utilsXlsx.sheet_to_json(sheet, {
+      const values: Array<{ [k: string]: string }> = utilsXlsx.sheet_to_json(sheet, {
         defval: '',
         blankrows: false,
         dateNF: 'dd/mm/yyyy',
