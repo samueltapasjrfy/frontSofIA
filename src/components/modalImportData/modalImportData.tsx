@@ -62,8 +62,6 @@ const ModalImportData = ({
   const [rows, setRows] = useState<Array<{ [k: string]: string }>>([]);
   const [expectedColumnsToRows, setExpectedColumnsToRows] = useState<{ [k: string]: string }>({});
 
-  const exampleColumnNumber = 13;
-
   const handleCancel = () => {
     setCurrentStep(STEPS.UPLOAD_FILE);
     setErrorStep(undefined);
@@ -91,36 +89,26 @@ const ModalImportData = ({
       setErrorStep(undefined);
       setErrorMessage('');
       const data = await file.arrayBuffer();
-      const workbook = readXlsx(data, { sheetStubs: true, bookDeps: true });
+      const workbook = readXlsx(data, { sheetStubs: true, bookDeps: true, dateNF: 'dd/mm/yyyy', raw: true, });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
 
+      //gambiarra para ler as colunas com o formato de data
+      const dateColumns = Object.keys(sheet).filter((key) => (+(String(key).replace(/[^0-9]/g, '').trim()) || 1) > 1);
+      dateColumns.forEach((column) => {
+        const columnValue = sheet[column].w;
+        if (isNaN(new Date(columnValue).getTime()) && isNaN(new Date(columnValue.split('/').reverse().join('-')).getTime())) return
+        sheet[column].t = 'd';
+        sheet[column].v = columnValue;
+      });
       let values: Array<{ [k: string]: string }> = utilsXlsx.sheet_to_json(sheet, {
         defval: '',
         blankrows: false,
+        dateNF: 'dd/mm/yyyy',
+        raw: true,
+        skipHidden: true,
+        rawNumbers: true,
       });
-
-      // Verifica se há a linha de exemplo (por exemplo, na célula da coluna 14)
-      const exampleColumnArray = Array(9)
-        .fill(65)
-        .map((_, i) => String.fromCharCode(65 + i) + `${exampleColumnNumber + 1}`);
-
-      const hasColumnExample = exampleColumnArray.every((cell) => sheet[cell]?.v);
-
-      if (hasColumnExample) {
-        const valuesFromColumnExample: Array<{ [k: string]: string }> = utilsXlsx.sheet_to_json(
-          sheet,
-          {
-            range: exampleColumnNumber,
-            defval: '',
-            blankrows: false,
-          },
-        );
-        const { hasAll } = verifyColumns(valuesFromColumnExample);
-        if (hasAll) {
-          values = valuesFromColumnExample;
-        }
-      }
       if (values.length === 0) {
         setErrorMessage('Arquivo selecionado não contém dados');
         return;
@@ -280,7 +268,7 @@ const ModalImportData = ({
             }))}
           />
 
-          <div className="mt-6">
+          <div className="mt-6  max-w-[1100px] overflow-x-auto">
             {currentStep === STEPS.UPLOAD_FILE && (
               <>
                 <div className="flex items-center justify-between mb-4">
@@ -289,6 +277,9 @@ const ModalImportData = ({
                     <Button
                       variant="default"
                       className="flex items-center gap-2"
+                      onClick={() => {
+                        window.open(docExampleUrl, '_blank');
+                      }}
                     >
                       <LucideDownload size={16} /> Baixar exemplo de planilha
                     </Button>
@@ -338,14 +329,32 @@ const ModalImportData = ({
                       Object.keys(rows[0]).map((rowKey) => (
                         <div key={rowKey} className="validate-column-box select-column-box" >
                           <Select<{ value: string; label: string }>
+                            menuPlacement="auto"
+                            maxMenuHeight={160}
+                            styles={{
+                              menu: (base) => ({
+                                ...base,
+                                zIndex: 999999,
+                                minWidth: "250px",
+                                border: "1px solid #d1d5db",
+                                backgroundColor: "white"
+                              }),
+                              control: (base) => ({
+                                ...base,
+                                minHeight: "38px"
+                              }),
+                              menuList: (base) => ({
+                                ...base,
+                                maxHeight: "160px",
+                                overflowY: "auto"
+                              })
+                            }}
                             components={{
-                              Menu: (props) => (
-                                <div className="relative">
-                                  <div {...props.innerProps} className="fixed border-1 bg-white border-gray-300 w-[250px]">{props.children}</div>
-                                </div>
-                              ),
                               Option: (props) => (
-                                <div className="flex items-center justify-between hover:bg-blue-500 hover:text-white cursor-pointer" {...props.innerProps}>
+                                <div
+                                  className="flex items-center justify-between hover:bg-blue-500 hover:text-white cursor-pointer"
+                                  {...props.innerProps}
+                                >
                                   <div className="flex items-center gap-2 p-2">
                                     <span className="text-sm">{props.data.label}</span>
                                   </div>
@@ -380,7 +389,7 @@ const ModalImportData = ({
 
             {currentStep === STEPS.VALIDATE_DATE && (
               <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-                <p className="mb-4">Total: {rows.length}</p>
+                <p className="mb-4">Total: {rows.length}{rows.length > 10 && ' (apenas as 10 primeiras linhas estão sendo exibidas)'}</p>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -390,7 +399,7 @@ const ModalImportData = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rows.map((row) => (
+                    {rows.slice(0, 10).map((row) => (
                       <TableRow key={row[expectedColumns[0].key]}>
                         {expectedColumns.map((column) => {
                           const columnValue = expectedColumnsToRows[column.key] ? row[expectedColumnsToRows[column.key]] : ''
