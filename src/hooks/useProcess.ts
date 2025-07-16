@@ -109,6 +109,7 @@ export function useProcesses(initialPage: number = 1, initialLimit: number = 10)
 
     const invalidateProcessesQuery = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROCESSES] });
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROCESS] });
     }, []);
 
     const invalidateBatchesQuery = useCallback(() => {

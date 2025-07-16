@@ -82,16 +82,6 @@ export function ProcessTable({
       )
     },
     {
-      key: 'instance',
-      label: 'Instância',
-      className: 'font-semibold text-gray-700 w-[10%] py-3',
-      render: (process) => (
-        <span className="text-gray-600">
-          {process.instance}
-        </span>
-      )
-    },
-    {
       key: 'requester',
       label: 'Solicitante',
       className: 'font-semibold text-gray-700 py-3 w-[20%]',
@@ -108,6 +98,16 @@ export function ProcessTable({
       render: (process) => (
         <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
           {process.idBatch || "-"}
+        </span>
+      )
+    },
+    {
+      key: 'client',
+      label: 'Cliente',
+      className: 'font-semibold text-gray-700 w-[15%] py-3',
+      render: (process) => (
+        <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
+          {process.metadata?.cliente || "-"}
         </span>
       )
     },

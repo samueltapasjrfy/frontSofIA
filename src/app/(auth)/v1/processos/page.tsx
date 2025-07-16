@@ -73,9 +73,6 @@ export default function ProcessesPage() {
   const onRefresh = async () => {
     invalidateProcessesQuery();
     invalidateReport();
-    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROCESS] });
-    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROCESSES] });
-    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.REPORT] });
   }
 
 
