@@ -11,3 +11,8 @@
     max-width: 250px;
     margin: 20px 40px 20px;
 }
+
+.modal-import-data .select-column-box {
+    position: relative;
+    z-index: 9999999999;
+}
