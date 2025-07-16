@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import ModalImportData from "@/components/modalImportData/modalImportData";
 import { QUERY_KEYS } from "@/constants/cache";
 import { ProcessTable } from "@/components/process/ProcessTable";
-import { RegisterProcessModal } from "@/components/process/ImportProcessModal";
+import { ImportProcessData, RegisterProcessModal } from "@/components/process/ImportProcessModal";
 import { useProcesses } from "@/hooks/useProcess";
 import { ProcessApi } from "@/api/processApi";
 import { ProcessStats } from "@/components/process/ProcessStats";
@@ -18,7 +18,50 @@ const litigationColumns = {
   litigation: 'Processo',
   instance: 'Instância',
   idInternal: 'ID',
+  controlClient: 'Controle Cliente',
+  clientName: 'Cliente',
+  advLiderResponsavel: 'Líder | Advogado',
+  nucleo: 'Núcleo',
+  dataTerceirizacao: 'Data de Terceirização',
+  clienteAutorOuReu: 'Cliente Autor ou Reu',
 }
+
+const metadataColumns = [{
+  key: litigationColumns.controlClient,
+  example: '1234567890',
+  previewWidth: 200,
+  variant: ['CONTROLE CLIENTE', 'CONTROL CLIENT'],
+},
+{
+  key: litigationColumns.clientName,
+  example: 'Cliente 1',
+  previewWidth: 200,
+  variant: ['CLIENTE', 'CLIENT'],
+},
+{
+  key: litigationColumns.advLiderResponsavel,
+  example: 'Líder 1',
+  previewWidth: 200,
+  variant: ['LÍDER', 'LEADER', 'ADVOGADO', 'RESPONSÁVEL'],
+},
+{
+  key: litigationColumns.nucleo,
+  example: 'Núcleo 1',
+  previewWidth: 200,
+  variant: ['NÚCLEO', 'NUCLEUS'],
+},
+{
+  key: litigationColumns.dataTerceirizacao,
+  example: '01/01/2025',
+  previewWidth: 200,
+  variant: ['DATA DE TERCEIRIZAÇÃO', 'TERCEIRIZATION DATE', 'DATA'],
+},
+{
+  key: litigationColumns.clienteAutorOuReu,
+  example: 'Réu',
+  previewWidth: 200,
+  variant: ['CLIENTE AUTOR OU REU', 'AUTHOR OR DEFENDANT', 'AUTOR OU REU'],
+}]
 
 export default function ProcessesPage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -65,6 +108,12 @@ export default function ProcessesPage() {
         cnj: row[expectedColumnsToRows[litigationColumns.litigation]],
         metadata: {
           idInternal: row[expectedColumnsToRows[litigationColumns.idInternal]],
+          controleCliente: row[expectedColumnsToRows[litigationColumns.controlClient]] || undefined,
+          cliente: row[expectedColumnsToRows[litigationColumns.clientName]] || undefined,
+          advLiderResponsavel: row[expectedColumnsToRows[litigationColumns.advLiderResponsavel]] || undefined,
+          nucleo: row[expectedColumnsToRows[litigationColumns.nucleo]] || undefined,
+          dataTerceirizacao: row[expectedColumnsToRows[litigationColumns.dataTerceirizacao]] || undefined,
+          clienteAutorOuReu: row[expectedColumnsToRows[litigationColumns.clienteAutorOuReu]] || undefined,
         },
       })),
       monitoring: true,
@@ -88,6 +137,14 @@ export default function ProcessesPage() {
     const params: ProcessApi.Save.Params = {
       processes: rows.map((row: { [k: string]: string }) => ({
         cnj: row[expectedColumnsToRows[litigationColumns.litigation]],
+        metadata: {
+          controleCliente: row[expectedColumnsToRows[litigationColumns.controlClient]] || undefined,
+          cliente: row[expectedColumnsToRows[litigationColumns.clientName]] || undefined,
+          advLiderResponsavel: row[expectedColumnsToRows[litigationColumns.advLiderResponsavel]] || undefined,
+          nucleo: row[expectedColumnsToRows[litigationColumns.nucleo]] || undefined,
+          dataTerceirizacao: row[expectedColumnsToRows[litigationColumns.dataTerceirizacao]] || undefined,
+          clienteAutorOuReu: row[expectedColumnsToRows[litigationColumns.clienteAutorOuReu]] || undefined,
+        },
       })),
       monitoring: true,
       registration: false,
@@ -103,12 +160,18 @@ export default function ProcessesPage() {
     return true;
   };
 
-  const handleSaveProtocol = async (data: { litigationNumber: string; instance?: number; idInternal?: string }): Promise<boolean> => {
+  const handleSaveProtocol = async (data: ImportProcessData): Promise<boolean> => {
     const response = await saveProcesses({
       processes: [{
         cnj: data.litigationNumber,
         metadata: {
           idInternal: data.idInternal,
+          controleCliente: data.controlClient,
+          cliente: data.clientName,
+          advLiderResponsavel: data.advLiderResponsavel,
+          nucleo: data.nucleo,
+          dataTerceirizacao: data.dataTerceirizacao,
+          clienteAutorOuReu: data.clienteAutorOuReu,
         },
       }],
       monitoring: true,
@@ -191,7 +254,7 @@ export default function ProcessesPage() {
         setIsModalOpen={setIsImportModalOpen}
         title="Importar Processos"
         finish={handleFinishImport}
-        docExampleUrl={``}
+        docExampleUrl={`${process.env.NEXT_PUBLIC_FILES}/exemplos/importar_processos_exemplo.xlsx`}
         expectedColumns={[
           {
             key: litigationColumns.litigation,
@@ -204,7 +267,8 @@ export default function ProcessesPage() {
             example: '1234567890',
             previewWidth: 200,
             variant: ['ID INTERNO', 'ID DA PUBLICAÇÃO'],
-          }
+          },
+          ...metadataColumns,
         ]}
       />
       <ModalImportData
@@ -212,14 +276,15 @@ export default function ProcessesPage() {
         setIsModalOpen={setIsActivateMonitoringBulkModalOpen}
         title="Ativar Monitoramento"
         finish={handleFinishActivateMonitoringBulk}
-        docExampleUrl={``}
+        docExampleUrl={`${process.env.NEXT_PUBLIC_FILES}/exemplos/ativar_monitoramento_exemplo.xlsx`}
         expectedColumns={[
           {
             key: litigationColumns.litigation,
             example: '0001234-56.2024.8.26.0001',
             previewWidth: 200,
             variant: ['NÚMERO DO PROCESSO', 'PROCESSO', 'LITIGATION', 'NUMBER'],
-          }
+          },
+          ...metadataColumns,
         ]}
       />
       <ModalImportData
