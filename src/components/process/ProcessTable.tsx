@@ -474,8 +474,19 @@ export function ProcessTable({
   };
 
   const handleExport = async () => {
+    let initialDate = undefined;
+    let finalDate = undefined;
+    const d = date as DateRange;
+    if (d && d.from && d.to) {
+      initialDate = dayjs(d.from).format("YYYY-MM-DD");
+      finalDate = dayjs(d.to).format("YYYY-MM-DD");
+    }
     try {
-      await ProcessApi.exportToXLSX();
+      await ProcessApi.exportToXLSX({
+        ...filters,
+        initialDate,
+        finalDate
+      });
       toast.success('Arquivo exportado com sucesso!');
     } catch {
       toast.error('Erro ao exportar arquivo');
@@ -761,6 +772,18 @@ export function ProcessTable({
                   }
                   setDate(newDate as DateRange);
                 }}
+              />
+            </div>
+            <div>
+              <label htmlFor="client" className="block text-sm font-medium text-gray-700 mb-1">
+                Cliente
+              </label>
+              <Input
+                id="client"
+                value={filters?.client}
+                onChange={(e) => handleFilterChange("client" as never, e.target.value)}
+                placeholder="Filtrar por cliente"
+                className="w-full"
               />
             </div>
             <div className="col-span-full">

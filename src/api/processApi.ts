@@ -88,17 +88,25 @@ export const ProcessApi = {
         };
     },
 
-    exportToXLSX: async (): Promise<void> => {
+    exportToXLSX: async (params: ProcessApi.FindAll.Params["filter"]): Promise<void> => {
         try {
             // Buscar todas as publicações sem paginação
-            const response = await http.get<ProcessApi.FindAll.Response>('/Process', {
-                noPagination: true
-            });
+            const queryParams = new URLSearchParams();
+            queryParams.set('noPagination', 'true');
+            console.log(params);
+            if (params) {
+                Object.entries(params).forEach(([key, value]) => {
+                    if (value) queryParams.set(key, value.toString());
+                });
+            }
+
+            const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
+
             // Preparar dados para exportação
             const data = response.data.processes.map(pub => ({
                 'Nº Processo': pub.cnj || '-',
                 'Instância': pub.instance || '-',
-                'Status': pub.status?.value || '-',
+                'Status': pub.imported ? 'Importado' : pub.status?.value || '-',
                 'Data Inserção': pub.createdAt
                     ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm')
                     : '-',
@@ -106,13 +114,20 @@ export const ProcessApi = {
                 'Data da Citação': pub.citedAt
                     ? dayjs(pub.citedAt).format('DD/MM/YYYY')
                     : '-',
+                'Núcleo': pub.metadata?.nucleo || '-',
+                'Cliente': pub.metadata?.cliente || '-',
+                'Controle Cliente': pub.metadata?.controleCliente || '-',
+                'Autor ou Réu': pub.metadata?.clienteAutorOuReu || '-',
+                'Data Terceirização': pub.metadata?.dataTerceirizacao || '-',
+                'Adv Líder / Responsável': pub.metadata?.advLiderResponsavel || '-',
+                'Data Distribuição': pub.dateDistribution ? dayjs(pub.dateDistribution).format('DD/MM/YYYY') : '-',
                 'Segredo de Justiça': pub.secret ? 'Sim' : 'Não',
                 'Tribunal': pub.jurisdiction || '-',
                 'Juiz': pub.judge || '-',
                 'Valor': pub.value ? Number(pub.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-',
                 'Comarca': pub.judicialDistrict || '-',
                 'Liminar': pub.preliminaryInjunction ? 'Sim' : 'Não',
-                'Foro': pub.court || '-',
+                'Foro': pub.foro || '-',
                 'Vara': pub.vara || '-',
                 'UF': pub.uf || '-',
                 'Classes': pub.classes ? pub.classes.join(', ') : '-',
@@ -165,7 +180,7 @@ export const ProcessApi = {
             const mainWs = XLSX.utils.json_to_sheet(data);
             const mainColWidths = [
                 { wch: 25 }, // Nº Processo
-                { wch: 50 }, // Instância
+                { wch: 10 }, // Instância
                 { wch: 15 }, // Status
                 { wch: 15 }, // Data Inserção
                 { wch: 15 }, // Citado
@@ -216,7 +231,7 @@ export const ProcessApi = {
                     { wch: 15 }, // Tipo
                 ];
                 partiesWs['!cols'] = partiesColWidths;
-                XLSX.utils.book_append_sheet(wb, partiesWs, 'Partes Contrárias');
+                XLSX.utils.book_append_sheet(wb, partiesWs, 'Partes');
             }
 
             // Gerar arquivo e fazer download
@@ -253,6 +268,7 @@ export namespace ProcessApi {
                 requester?: string;
                 initialDate?: string;
                 finalDate?: string;
+                client?: string;
             }
         };
 
@@ -292,6 +308,8 @@ export namespace ProcessApi {
             nature: string;
             judge: string;
             classes: string[];
+            foro: string;
+            dateDistribution: string;
             audiences: {
                 date: string;
                 text: string;
