@@ -66,6 +66,7 @@ export default function ProcessesPage() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isRemoveMonitoringModalOpen, setIsRemoveMonitoringModalOpen] = useState(false);
   const [isActivateMonitoringBulkModalOpen, setIsActivateMonitoringBulkModalOpen] = useState(false);
+  const [isUpdateStatusBulkModalOpen, setIsUpdateStatusBulkModalOpen] = useState(false);
   const { invalidateProcessesQuery, invalidateReport, saveProcesses } = useProcesses();
 
   const onRefresh = async () => {
@@ -92,6 +93,10 @@ export default function ProcessesPage() {
 
   const handleOpenActivateMonitoringBulkModal = () => {
     setIsActivateMonitoringBulkModalOpen(true);
+  };
+
+  const handleOpenUpdateStatusBulkModal = () => {
+    setIsUpdateStatusBulkModalOpen(true);
   };
 
   const handleFinishImport = async (
@@ -199,6 +204,25 @@ export default function ProcessesPage() {
     return true;
   };
 
+  const handleFinishUpdateStatusBulk = async (
+    rows: Array<{ [k: string]: string }>,
+    expectedColumnsToRows: { [k: string]: string },
+  ): Promise<boolean> => {
+    const params: ProcessApi.SetImported.Params = {
+      cnjs: rows.map((row: { [k: string]: string }) => row[expectedColumnsToRows[litigationColumns.litigation]]),
+      ids: [],
+    };
+    const response = await ProcessApi.setImported(params);
+    if (response.error) {
+      toast.error(response.message || "Erro ao atualizar status");
+      return false;
+    }
+    toast.success("Status atualizado com sucesso");
+    setIsUpdateStatusBulkModalOpen(false);
+    setTimeout(onRefresh, 1000);
+    return true;
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -226,6 +250,14 @@ export default function ProcessesPage() {
               >
                 <Trash className="h-4 w-4 mr-2" />
                 Remover Monitoramento
+              </Button>
+              <Button
+                onClick={handleOpenUpdateStatusBulkModal}
+                variant="outline"
+                className="bg-primary-white hover:bg-primary-white text-primary-blue border border-primary-blue"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Atualizar Status para Importado
               </Button>
             </>
           }
@@ -280,6 +312,21 @@ export default function ProcessesPage() {
             variant: ['NÚMERO DO PROCESSO', 'PROCESSO', 'LITIGATION', 'NUMBER'],
           },
           ...metadataColumns,
+        ]}
+      />
+      <ModalImportData
+        isModalOpen={isUpdateStatusBulkModalOpen}
+        setIsModalOpen={setIsUpdateStatusBulkModalOpen}
+        title="Atualizar Status para Importado"
+        finish={handleFinishUpdateStatusBulk}
+        docExampleUrl={`${process.env.NEXT_PUBLIC_FILES}/exemplos/atualizar_status_exemplo.xlsx`}
+        expectedColumns={[
+          {
+            key: litigationColumns.litigation,
+            example: '0001234-56.2024.8.26.0001',
+            previewWidth: 200,
+            variant: ['NÚMERO DO PROCESSO', 'PROCESSO', 'LITIGATION', 'NUMBER'],
+          },
         ]}
       />
       <ModalImportData

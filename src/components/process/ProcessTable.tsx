@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import {
   RefreshCw,
   Search,
@@ -20,6 +21,8 @@ import {
   Trash2,
   MonitorOff,
   Monitor,
+  ChevronDown,
+  MoreVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
@@ -37,6 +40,16 @@ import { TableButtons } from "../tableButtons";
 import { CompanyApi } from "@/api/companyApi";
 import { DatePickerWithRange } from "../dateRangePicker";
 import { DateRange } from "react-day-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ProcessTableProps {
   onRefresh: () => Promise<void>;
@@ -64,17 +77,167 @@ export function ProcessTable({
   const [isLoadingRequesters, setIsLoadingRequesters] = useState(false);
   const [selectedRequester, setSelectedRequester] = useState<{ label: string, value: string } | null>(null);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [selectedProcesses, setSelectedProcesses] = useState<Map<string, { id: string; cnj: string }>>(new Map());
+  const [isPerformingAction, setIsPerformingAction] = useState(false);
 
   const getProcessStatusColor = (status: number) => {
     return processStatusColors[status] || processStatusColors.default;
   };
 
+  // Funções para gerenciar a seleção de processos
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const currentPageProcesses = getProcessesQuery.data?.processes || [];
+      setSelectedProcesses(prev => {
+        const newMap = new Map(prev);
+        currentPageProcesses.forEach(p => {
+          newMap.set(p.id, { id: p.id, cnj: p.cnj });
+        });
+        return newMap;
+      });
+    } else {
+      const currentPageIds = getProcessesQuery.data?.processes.map(p => p.id) || [];
+      setSelectedProcesses(prev => {
+        const newMap = new Map(prev);
+        currentPageIds.forEach(id => newMap.delete(id));
+        return newMap;
+      });
+    }
+  };
+
+  const handleSelectProcess = (processId: string, checked: boolean) => {
+    const process = getProcessesQuery.data?.processes.find(p => p.id === processId);
+    if (!process) return;
+
+    setSelectedProcesses(prev => {
+      const newMap = new Map(prev);
+      if (checked) {
+        newMap.set(processId, { id: process.id, cnj: process.cnj });
+      } else {
+        newMap.delete(processId);
+      }
+      return newMap;
+    });
+  };
+
+  // Verificar se todos os itens da página atual estão selecionados
+  const currentPageIds = getProcessesQuery.data?.processes.map(p => p.id) || [];
+  const isAllCurrentPageSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedProcesses.has(id));
+  const isSomeSelected = currentPageIds.some(id => selectedProcesses.has(id));
+
+  // Funções para ações em lote
+  const handleBulkDelete = async () => {
+    try {
+      setIsPerformingAction(true);
+      const selectedProcessesArray = Array.from(selectedProcesses.values());
+      const processesData = selectedProcessesArray.map(p => ({ cnj: p.cnj }));
+
+      await ProcessApi.deleteBulkProcess({ processes: processesData });
+
+      setTimeout(() => {
+        toast.success(`${selectedProcessesArray.length} processo(s) removido(s) com sucesso!`);
+        setSelectedProcesses(new Map());
+        onRefresh();
+        setIsPerformingAction(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Erro ao remover processos:', error);
+      toast.error('Erro ao remover processos');
+      setIsPerformingAction(false);
+    }
+  };
+
+  const handleBulkActivateMonitoring = async () => {
+    try {
+      setIsPerformingAction(true);
+      const selectedProcessesArray = Array.from(selectedProcesses.values());
+      const processesData = selectedProcessesArray.map(p => ({ cnj: p.cnj }));
+
+      await ProcessApi.save({
+        processes: processesData,
+        monitoring: true,
+        registration: false
+      });
+
+      setTimeout(() => {
+        toast.success(`Monitoramento ativado para ${selectedProcessesArray.length} processo(s)!`);
+        setSelectedProcesses(new Map());
+
+        onRefresh();
+        setIsPerformingAction(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Erro ao ativar monitoramento:', error);
+      toast.error('Erro ao ativar monitoramento');
+      setIsPerformingAction(false);
+    }
+  };
+
+  const handleBulkDeactivateMonitoring = async () => {
+    try {
+      setIsPerformingAction(true);
+      const selectedProcessesArray = Array.from(selectedProcesses.values());
+      const cnjs = selectedProcessesArray.map(p => p.cnj);
+
+      await ProcessApi.deactivateMonitoringBulk({ cnjs });
+
+      setTimeout(() => {
+        toast.success(`Monitoramento desativado para ${selectedProcessesArray.length} processo(s)!`);
+        setSelectedProcesses(new Map());
+
+        onRefresh();
+        setIsPerformingAction(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Erro ao desativar monitoramento:', error);
+      toast.error('Erro ao desativar monitoramento');
+      setIsPerformingAction(false);
+    }
+  };
+
+  const handleBulkStatusChange = async () => {
+    try {
+      setIsPerformingAction(true);
+      const selectedProcessesArray = Array.from(selectedProcesses.values());
+      const ids = selectedProcessesArray.map(p => p.id);
+
+      await ProcessApi.setImported({
+        cnjs: [],
+        ids
+      });
+
+      setTimeout(() => {
+        toast.success(`${selectedProcessesArray.length} processo(s) marcado(s) como importado(s)!`);
+        setSelectedProcesses(new Map());
+        onRefresh();
+        setIsPerformingAction(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Erro ao marcar como importado:', error);
+      toast.error('Erro ao marcar processos como importados');
+      setIsPerformingAction(false);
+    }
+  };
+
   // Definição das colunas da tabela
   const columns: Column[] = [
     {
+      key: 'select',
+      label: '',
+      className: 'font-semibold text-gray-700 py-3 w-[5%]',
+      render: (process) => (
+        <input
+          type="checkbox"
+          checked={selectedProcesses.has(process.id)}
+          onChange={(e) => handleSelectProcess(process.id, e.target.checked)}
+          className="h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+        />
+      )
+    },
+    {
       key: 'cnj',
       label: 'Nº Processo',
-      className: 'font-semibold text-gray-700 py-3 w-[30%]',
+      className: 'font-semibold text-gray-700 py-3 w-[25%]',
       render: (process) => (
         <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
           {process.cnj}
@@ -161,11 +324,21 @@ export function ProcessTable({
       label: 'Status',
       className: 'font-semibold text-gray-700 text-center w-[10%] py-3',
       render: (process) => {
+        // Se o processo tem metadata.imported = true, mostrar "Importado"
+        if (process.imported === true) {
+          return (
+            <div className="flex items-center justify-center">
+              <Badge className={cn("bg-blue-500 text-white", "font-medium")}>
+                Importado
+              </Badge>
+            </div>
+          );
+        }
+
         if (!process.status) return "-";
 
         return (
           <div className="flex items-center justify-center">
-
             <Badge className={cn(getProcessStatusColor(process.status.id), "font-medium")}>
               {process.status.value || "-"}
             </Badge>
@@ -313,7 +486,73 @@ export function ProcessTable({
     <div className={cn("bg-white border rounded-lg shadow-sm overflow-hidden", className)}>
       <div className="p-4 border-b">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Processos</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-gray-800">Processos</h2>
+            {selectedProcesses.size > 0 && (
+              <>
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  {selectedProcesses.size} selecionado{selectedProcesses.size > 1 ? 's' : ''}
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedProcesses(new Map())}
+                  className="h-6 px-2 text-xs"
+                >
+                  Limpar seleção
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-6 px-2 text-xs" loading={isPerformingAction}>
+                      Ações
+                      <ChevronDown className="ml-1 h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={handleBulkDelete}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Remover
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <Monitor className="mr-2 h-4 w-4" />
+                        Monitoramento
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onClick={handleBulkActivateMonitoring}>
+                          <Monitor className="mr-2 h-4 w-4 text-green-600" />
+                          Ativar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleBulkDeactivateMonitoring}>
+                          <MonitorOff className="mr-2 h-4 w-4 text-yellow-600" />
+                          Desativar
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <Info className="mr-2 h-4 w-4" />
+                        Status
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onClick={handleBulkStatusChange}>
+                          <Info className="mr-2 h-4 w-4 text-blue-600" />
+                          Importado
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
+          </div>
           <TableButtons
             onRefresh={onRefresh}
             onExport={handleExport}
@@ -545,7 +784,19 @@ export function ProcessTable({
             <TableRow className="bg-gray-50 border-b">
               {columns.map((column) => (
                 <TableHead key={column.key} className={column.className}>
-                  {column.label}
+                  {column.key === 'select' ? (
+                    <input
+                      type="checkbox"
+                      checked={isAllCurrentPageSelected}
+                      ref={(input) => {
+                        if (input) input.indeterminate = isSomeSelected && !isAllCurrentPageSelected;
+                      }}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    />
+                  ) : (
+                    column.label
+                  )}
                 </TableHead>
               ))}
             </TableRow>

@@ -64,7 +64,7 @@ export function RecentPublications({
     {
       key: 'litigationNumber',
       label: 'Nº Processo',
-      className: 'font-semibold text-gray-700 w-[220px] py-3 whitespace-nowrap',
+      className: 'font-semibold text-gray-700 py-3 whitespace-nowrap',
       render: (publication) => (
         <span className="font-medium text-gray-700">{publication.litigationNumber}</span>
       )
@@ -72,7 +72,7 @@ export function RecentPublications({
     {
       key: 'text',
       label: 'Texto',
-      className: 'font-semibold text-gray-700 w-[40%] py-3',
+      className: 'font-semibold text-gray-700 py-3',
       render: (publication) => (
         <span className="text-gray-600">{truncateText(publication.text || "", 120)}</span>
       )
@@ -80,7 +80,7 @@ export function RecentPublications({
     {
       key: 'caseType',
       label: 'Tipo',
-      className: 'font-semibold text-gray-700 w-[100px] py-3',
+      className: 'font-semibold text-gray-700 py-3',
       render: (publication) => (
         <span className="text-gray-600">{publication.caseType?.value}</span>
       )
@@ -88,7 +88,7 @@ export function RecentPublications({
     {
       key: 'confidence',
       label: 'Confiança',
-      className: 'font-semibold text-gray-700 text-center w-[100px] py-3',
+      className: 'font-semibold text-gray-700 text-center py-3',
       render: (publication) => {
         const confidence = publication.classifications?.[0]?.confidence || 0;
         const confidencePercentage = toPercent(confidence);
@@ -107,7 +107,7 @@ export function RecentPublications({
     {
       key: 'status',
       label: 'Status',
-      className: 'font-semibold text-gray-700 text-center w-[140px] py-3',
+      className: 'font-semibold text-gray-700 text-center py-3',
       render: (publication) => {
         const status = publication.classifications?.[0]?.status;
         return (
@@ -116,6 +116,26 @@ export function RecentPublications({
           </Badge>
         );
       }
+    },
+    {
+      key: 'actions',
+      label: 'Ações',
+      className: 'font-semibold text-gray-700 text-center py-3 sticky right-0 bg-white z-10',
+      render: (publication) => (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-primary-blue hover:bg-blue-50 p-1 h-8 w-8"
+            onClick={() => {
+              // Adicione aqui a ação desejada
+              console.log('Ação para publicação:', publication.id);
+            }}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
+      )
     }
   ];
 
@@ -141,11 +161,34 @@ export function RecentPublications({
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table style={{ minWidth: '1200px' }}>
               <TableHeader>
                 <TableRow className="bg-gray-50 border-b">
                   {columns.map((column) => (
-                    <TableHead key={column.key} className={column.className}>
+                    <TableHead
+                      key={column.key}
+                      className={column.className}
+                      style={{
+                        width: column.key === 'litigationNumber' ? '220px' :
+                          column.key === 'text' ? '400px' :
+                            column.key === 'caseType' ? '120px' :
+                              column.key === 'confidence' ? '120px' :
+                                column.key === 'status' ? '140px' :
+                                  column.key === 'actions' ? '100px' : 'auto',
+                        minWidth: column.key === 'litigationNumber' ? '220px' :
+                          column.key === 'text' ? '400px' :
+                            column.key === 'caseType' ? '120px' :
+                              column.key === 'confidence' ? '120px' :
+                                column.key === 'status' ? '140px' :
+                                  column.key === 'actions' ? '100px' : 'auto',
+                        maxWidth: column.key === 'litigationNumber' ? '220px' :
+                          column.key === 'text' ? '400px' :
+                            column.key === 'caseType' ? '120px' :
+                              column.key === 'confidence' ? '120px' :
+                                column.key === 'status' ? '140px' :
+                                  column.key === 'actions' ? '100px' : 'auto'
+                      }}
+                    >
                       {column.label}
                     </TableHead>
                   ))}
@@ -162,7 +205,33 @@ export function RecentPublications({
                       )}
                     >
                       {columns.map((column) => (
-                        <TableCell key={`${publication.id}-${column.key}`} className="py-3">
+                        <TableCell
+                          key={`${publication.id}-${column.key}`}
+                          className={cn(
+                            "py-3",
+                            column.key === 'actions' && "sticky right-0 bg-inherit z-10"
+                          )}
+                          style={{
+                            width: column.key === 'litigationNumber' ? '220px' :
+                              column.key === 'text' ? '400px' :
+                                column.key === 'caseType' ? '120px' :
+                                  column.key === 'confidence' ? '120px' :
+                                    column.key === 'status' ? '140px' :
+                                      column.key === 'actions' ? '100px' : 'auto',
+                            minWidth: column.key === 'litigationNumber' ? '220px' :
+                              column.key === 'text' ? '400px' :
+                                column.key === 'caseType' ? '120px' :
+                                  column.key === 'confidence' ? '120px' :
+                                    column.key === 'status' ? '140px' :
+                                      column.key === 'actions' ? '100px' : 'auto',
+                            maxWidth: column.key === 'litigationNumber' ? '220px' :
+                              column.key === 'text' ? '400px' :
+                                column.key === 'caseType' ? '120px' :
+                                  column.key === 'confidence' ? '120px' :
+                                    column.key === 'status' ? '140px' :
+                                      column.key === 'actions' ? '100px' : 'auto'
+                          }}
+                        >
                           {column.render(publication)}
                         </TableCell>
                       ))}

@@ -53,6 +53,9 @@ export const ProcessApi = {
         await http.delete(`/Process/${id}`);
     },
 
+    deleteBulkProcess: async (processes: ProcessApi.DeleteBulkProcess.Params): Promise<void> => {
+        await http.post(`/Process/deleteBulk`, processes);
+    },
     save: async (data: ProcessApi.Save.Params): Promise<APIResponse<ProcessApi.Save.Response>> => {
         const response = await http.post<ProcessApi.Save.Response>('/Process', data);
         return {
@@ -74,6 +77,15 @@ export const ProcessApi = {
     report: async (): Promise<ProcessApi.Report.Response> => {
         const response = await http.get<ProcessApi.Report.Response>('/Process/report');
         return response.data;
+    },
+
+    setImported: async (params: ProcessApi.SetImported.Params): Promise<APIResponse<void>> => {
+        const response = await http.post<void>('/Process/setImported', params);
+        return {
+            data: undefined,
+            message: response.message,
+            error: response.error
+        };
     },
 
     exportToXLSX: async (): Promise<void> => {
@@ -256,6 +268,7 @@ export namespace ProcessApi {
                 id: string;
                 name: string;
             } | null;
+            imported: boolean;
             idBatch: string
             instance: number;
             processCreatedAt: string;
@@ -390,6 +403,19 @@ export namespace ProcessApi {
     export namespace DeactivateMonitoringBulk {
         export type Params = {
             cnjs: string[];
+        };
+    }
+
+    export namespace DeleteBulkProcess {
+        export type Params = {
+            processes: { cnj: string }[];
+        };
+    }
+
+    export namespace SetImported {
+        export type Params = {
+            cnjs: string[];
+            ids: string[];
         };
     }
 }
