@@ -27,7 +27,7 @@ export const Pagination = ({ total, pagination: { page, limit }, setPagination }
                     value={limit}
                     onChange={(e) => {
                         setPagination({
-                            page,
+                            page: 1,
                             limit: Number(e.target.value)
                         });
                     }}
@@ -36,7 +36,6 @@ export const Pagination = ({ total, pagination: { page, limit }, setPagination }
                     <option value={10}>10 por página</option>
                     <option value={25}>25 por página</option>
                     <option value={50}>50 por página</option>
-                    <option value={100}>100 por página</option>
                 </select>
                 <div className="flex gap-1">
                     <Button

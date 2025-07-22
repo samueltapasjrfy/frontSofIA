@@ -262,6 +262,7 @@ export namespace ProcessApi {
             limit?: number;
             filter?: {
                 cnj?: string;
+                imported?: boolean;
                 status?: number;
                 monitoring?: boolean;
                 batch?: string;

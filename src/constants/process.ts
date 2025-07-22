@@ -1,4 +1,5 @@
 export const PROCESS_STATUS = {
+    IMPORTED: 0,
     PENDING: 1,
     PROCESSING: 2,
     COMPLETED: 3,
@@ -6,6 +7,7 @@ export const PROCESS_STATUS = {
 }
 
 export const processStatusColors = {
+    [PROCESS_STATUS.IMPORTED]: "bg-primary-green text-white",
     [PROCESS_STATUS.COMPLETED]: "bg-primary-green text-white",
     [PROCESS_STATUS.PENDING]: "bg-yellow-400 text-black",
     [PROCESS_STATUS.PROCESSING]: "bg-primary-blue text-white",

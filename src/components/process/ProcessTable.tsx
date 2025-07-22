@@ -443,11 +443,22 @@ export function ProcessTable({
       clearTimeout(changeProcessTimeout.current);
     }
     changeProcessTimeout.current = setTimeout(() => {
+      const newFilters = { ...filters };
+
+      if (key === "status" && value === PROCESS_STATUS.IMPORTED.toString()) {
+        newFilters.status = undefined;
+        key = "imported" as never;
+        value = true as never;
+      }
+      else if (key === "status" && value != PROCESS_STATUS.IMPORTED.toString()) {
+        newFilters.imported = undefined;
+      }
+
       changeProcessFilter({
         page: 1,
         limit: processParams.limit,
         filter: {
-          ...filters,
+          ...newFilters,
           [key]: value
         }
       });
@@ -592,7 +603,7 @@ export function ProcessTable({
               </label>
               <select
                 id="status"
-                value={filters?.status}
+                value={filters?.imported ? PROCESS_STATUS.IMPORTED : filters?.status}
                 onChange={(e) => {
                   handleFilterChange(
                     "status" as never,
@@ -607,6 +618,7 @@ export function ProcessTable({
                   <option value={PROCESS_STATUS.PROCESSING}>Em Processamento</option>
                   <option value={PROCESS_STATUS.COMPLETED}>Concluído</option>
                   <option value={PROCESS_STATUS.ERROR}>Erro</option>
+                  <option value={PROCESS_STATUS.IMPORTED}>Importado</option>
                 </optgroup>
               </select>
             </div>
