@@ -352,7 +352,7 @@ export function PublicationsTable({
   return (
     <div className={cn("bg-white border rounded-lg shadow-sm overflow-hidden", className)}>
       <div className="p-4 border-b">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-800">Publicações</h2>
           <TableButtons
             onRefresh={onRefresh}
@@ -363,7 +363,7 @@ export function PublicationsTable({
         </div>
 
         {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-lg mt-4">
             <div>
               <label htmlFor="processNumber" className="block text-sm font-medium text-gray-700 mb-1">
                 Nº Processo

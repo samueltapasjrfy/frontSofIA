@@ -34,8 +34,6 @@ export default function PublicationsPage() {
     invalidatePublications();
     invalidatePublicationStats();
     refreshReport();
-    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATIONS] });
-    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PUBLICATION_STATS] });
   }
 
   const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
