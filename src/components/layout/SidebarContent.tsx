@@ -59,7 +59,7 @@ export function SidebarContent({
 }: SidebarContentProps) {
   const pathname = usePathname();
   const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
-  const version = getLocalStorage(LocalStorageKeys.VERSION)
+  const version = user?.companies?.[0]?.id !== '01JTNVAEYETZAJP0F4X7YQYQBR' ? getLocalStorage(LocalStorageKeys.VERSION) : '2';
   //temp
   const processCompanyHabilitados = ['01JDSEG2G5PQ1GCX86K3BV8EKR', '01JTNVAEYETZAJP0F4X7YQYQBR', '01J99YK3X66J2T2A7W9V533TM1'].includes(user?.companies?.[0]?.id)
 

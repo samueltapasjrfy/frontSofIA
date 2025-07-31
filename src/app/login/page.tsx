@@ -44,15 +44,14 @@ export default function LoginPage() {
     })
     // Salvar os dados da empresa se existirem
     const { token, ...localStorageData } = data
-    console.log({ token })
     setLocalStorage(LocalStorageKeys.USER, localStorageData)
-    let version = getLocalStorage<string>(LocalStorageKeys.VERSION)
+    let version = data.companies?.[0]?.id !== '01JTNVAEYETZAJP0F4X7YQYQBR' ? getLocalStorage<string>(LocalStorageKeys.VERSION) : '2';
     if (!version || typeof version !== 'string') {
       version = '1'
     }
     setLocalStorage(LocalStorageKeys.VERSION, version)
     // Redireciona para a página anterior ou dashboard
-    const from = searchParams.get('from') || `/v${version}/dashboard`
+    const from = searchParams.get('from') || version === '1' ? `/v1/dashboard` : `/v2/publicacoes`
     router.push(from)
     router.refresh() // Força a atualização do layout
   }

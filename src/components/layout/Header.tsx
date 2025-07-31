@@ -63,17 +63,21 @@ export function Header({ isCollapsed, toggleSidebar }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <span>
-          <Select value={version} onValueChange={handleVersionChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a versão" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">V1</SelectItem>
-              <SelectItem value="2">V2</SelectItem>
-            </SelectContent>
-          </Select>
-        </span>
+        {
+          userData.companies?.[0]?.id !== '01JTNVAEYETZAJP0F4X7YQYQBR' && (
+            <span>
+              <Select value={version} onValueChange={handleVersionChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a versão" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">V1</SelectItem>
+                  <SelectItem value="2">V2</SelectItem>
+                </SelectContent>
+              </Select>
+            </span>
+          )
+        }
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className={cn(

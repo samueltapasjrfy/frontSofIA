@@ -6,7 +6,9 @@ import { useEffect } from "react";
 
 export default function Home() {
   useEffect(() => {
-    let version = getLocalStorage<string>(LocalStorageKeys.VERSION);
+    const userData = getLocalStorage<LoginResponse>(LocalStorageKeys.USER);
+    let version = userData.companies?.[0]?.id !== '01JTNVAEYETZAJP0F4X7YQYQBR' ? getLocalStorage<string>(LocalStorageKeys.VERSION) : '2';
+
     if (!version || typeof version !== 'string') {
       version = '1';
       setLocalStorage(LocalStorageKeys.VERSION, version);

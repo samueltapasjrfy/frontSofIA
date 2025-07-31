@@ -18,14 +18,14 @@ function LoginLayout({
 
   useEffect(() => {
     const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
-    if (!user?.token) {
+    if (!user?.user?.id) {
       setIsReady(true)
       return
     }
 
     const isCompanyVerified = verifyCompany({ registerOrgPage: false })
     if (isCompanyVerified) {
-      return router.push('/dashboard')
+      return user?.companies?.[0]?.id === '01JTNVAEYETZAJP0F4X7YQYQBR' ? router.push('/v2/publicacoes') : router.push('/v1/dashboard')
     }
     router.push('/empresa/registrar')
   }, [])
