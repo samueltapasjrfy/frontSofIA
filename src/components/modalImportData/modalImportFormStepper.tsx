@@ -44,11 +44,10 @@ export function ModalImportFormStepper({ steps, currentStep }: ModalImportFormSt
           return (
             <div key={step.id} className="flex flex-col items-center gap-2">
               <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                  isCurrent || isCompleted ? STEP_STATUS_COLOR.finish : STEP_STATUS_COLOR.wait
-                }`}
+                className={`flex h-8 w-8 items-center justify-center rounded-full ${isCurrent || isCompleted ? STEP_STATUS_COLOR.finish : STEP_STATUS_COLOR.wait
+                  }`}
                 style={{
-                  border: `1px solid ${STEP_STATUS_BORDER_COLOR[step.status] }`,
+                  border: `1px solid ${STEP_STATUS_BORDER_COLOR[step.status]}`,
                 }}
               >
                 <span className={`text-sm font-medium ${STEP_STATUS_TEXT_COLOR[step.status]}`}>

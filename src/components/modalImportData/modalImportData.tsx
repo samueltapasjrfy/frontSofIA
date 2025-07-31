@@ -300,7 +300,14 @@ const ModalImportData = ({
                 <p className="text-sm text-gray-500 mb-4">
                   Você poderá renomear ou remover colunas no próximo passo
                 </p>
-                <FileDropzone onFileDrop={handleUpload} isUploading={isUploading} />
+                <FileDropzone
+                  onFileDrop={async (file) => {
+                    await handleUpload(file as File)
+                  }}
+                  accept=".xlsx,.xls"
+                  isUploading={isUploading}
+                  multiple={false}
+                />
               </>
             )}
 

@@ -20,10 +20,12 @@ export function ProcessingStatusCard({ total, processed, pending, processing, un
             <CardContent className="px-6 py-0">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Status de Processamento</h3>
-                    <Badge variant="outline"
-                        className="text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30">
-                        {progress.toFixed(1)}% Processadas
-                    </Badge>
+                    {progress > 0 && (
+                        <Badge variant="outline"
+                            className="text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30">
+                            {progress.toFixed(1)}% Processadas
+                        </Badge>
+                    )}
                 </div>
 
                 {/* Progress Bar */}

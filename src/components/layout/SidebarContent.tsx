@@ -10,7 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Scale,
-  Webhook
+  Webhook,
+  FileCheck2
 } from "lucide-react";
 import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { LoginResponse } from "@/api/authApi";
@@ -62,6 +63,7 @@ export function SidebarContent({
   const version = user?.companies?.[0]?.id !== '01JTNVAEYETZAJP0F4X7YQYQBR' ? getLocalStorage(LocalStorageKeys.VERSION) : '2';
   //temp
   const processCompanyHabilitados = ['01JDSEG2G5PQ1GCX86K3BV8EKR', '01JTNVAEYETZAJP0F4X7YQYQBR', '01J99YK3X66J2T2A7W9V533TM1'].includes(user?.companies?.[0]?.id)
+  const sentiusHabilitados = ['01JTNVAEYETZAJP0F4X7YQYQBR'].includes(user?.companies?.[0]?.id)
 
   const sidebarItemsV1 = [
     {
@@ -129,6 +131,19 @@ export function SidebarContent({
       icon: <Scale size={20} />,
       label: "Processos",
       href: "/v2/processos",
+    })
+  }
+
+  if (sentiusHabilitados) {
+    sidebarItemsV1.splice(1, 0, {
+      icon: <FileCheck2 size={20} />,
+      label: "Sentenças",
+      href: "/v1/sentencas",
+    })
+    sidebarItemsV2.splice(1, 0, {
+      icon: <FileCheck2 size={20} />,
+      label: "Sentenças",
+      href: "/v2/sentencas",
     })
   }
 

@@ -23,4 +23,5 @@ export const QUERY_KEYS = {
     BATCHES: 'batches',
     BATCH: 'batch',
     REPORT: 'report',
+    DOCUMENTS: 'documents',
 } as const;
