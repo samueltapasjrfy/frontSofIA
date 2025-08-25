@@ -5,6 +5,7 @@ export const PROCESS_STATUS = {
     COMPLETED: 3,
     ERROR: 4,
     NOT_FOUND: 5,
+    UPDATING_INFORMATION: 6,
 }
 
 export const processStatusColors = {
@@ -14,5 +15,6 @@ export const processStatusColors = {
     [PROCESS_STATUS.PROCESSING]: "bg-primary-blue text-white",
     [PROCESS_STATUS.ERROR]: "bg-red-500 text-white",
     [PROCESS_STATUS.NOT_FOUND]: "bg-red-500 text-white",
+    [PROCESS_STATUS.UPDATING_INFORMATION]: "bg-primary-blue text-white",
     default: "bg-gray-500 text-white"
 };

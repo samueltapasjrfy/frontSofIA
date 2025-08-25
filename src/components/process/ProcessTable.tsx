@@ -367,7 +367,7 @@ export function ProcessTable({
             size="icon"
             className="h-8 w-8 text-primary-blue hover:text-primary-blue hover:bg-primary-blue/10"
             title="Informações"
-            disabled={process.status.id !== PROCESS_STATUS.COMPLETED}
+            disabled={![PROCESS_STATUS.COMPLETED, PROCESS_STATUS.UPDATING_INFORMATION].includes(process.status.id)}
             onClick={() => setProcessInfoSelected(process)}
           >
             <Info className="h-4 w-4" />
