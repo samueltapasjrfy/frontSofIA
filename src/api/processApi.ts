@@ -325,6 +325,15 @@ export namespace ProcessApi {
             }[];
             metadata: Record<string, any>;
             monitoring: boolean;
+            dateSentence?: string;
+            relatedCases?: RelatedCase[];
+        };
+
+        export type RelatedCase = {
+            process: string;
+            instance: number;
+            court: string;
+            distributionDate: string;
         };
 
         export type Response = {

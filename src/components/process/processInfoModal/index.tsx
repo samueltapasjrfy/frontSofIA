@@ -12,6 +12,7 @@ import { ProcessInfoModalInfos } from "./ProcessInfoModalInfos";
 import { ProcessInfoModalAudiences } from "./ProcessInfoModalAudiences";
 import { ProcessInfoModalParties } from "./ProcessInfoModalParties";
 import { ProcessInfoModalClasses } from "./ProcessInfoModalClasses";
+import { ProcessInfoModalRelatedCases } from "./ProcessInfoModalRelatedCases";
 
 interface ProcessInfoModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export function ProcessInfoModal({ isOpen, onClose, processInfoSelected }: Proce
             <TabsTrigger value="audiences">Audiências</TabsTrigger>
             <TabsTrigger value="parties">Partes</TabsTrigger>
             <TabsTrigger value="classes">Classes</TabsTrigger>
+            <TabsTrigger value="relatedCases">Processos Relacionados</TabsTrigger>
           </TabsList>
           <div className="max-h-[500px] overflow-y-auto">
             <TabsContent value="info">
@@ -45,6 +47,9 @@ export function ProcessInfoModal({ isOpen, onClose, processInfoSelected }: Proce
             </TabsContent>
             <TabsContent value="classes">
               <ProcessInfoModalClasses classes={processInfoSelected?.classes || []} />
+            </TabsContent>
+            <TabsContent value="relatedCases">
+              <ProcessInfoModalRelatedCases relatedCases={processInfoSelected?.relatedCases || []} />
             </TabsContent>
           </div>
         </Tabs>

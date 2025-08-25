@@ -26,6 +26,7 @@ const labelMap = {
     "Observações": { key: "observations", type: "text" },
     "Arquivado": { key: "archived", type: "boolean" },
     "Extinto": { key: "extinct", type: "boolean" },
+    "Data da Sentença": { key: "dateSentence", type: "date" },
 };
 
 
