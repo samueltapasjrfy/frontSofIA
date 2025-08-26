@@ -620,6 +620,7 @@ export function ProcessTable({
                   <option value={PROCESS_STATUS.ERROR}>Erro</option>
                   <option value={PROCESS_STATUS.NOT_FOUND}>Processo não encontrado</option>
                   <option value={PROCESS_STATUS.IMPORTED}>Importado</option>
+                  <option value={PROCESS_STATUS.UPDATING_INFORMATION}>Atualizando informações</option>
                 </optgroup>
               </select>
             </div>
