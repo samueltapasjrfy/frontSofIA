@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 export const ProcessApi = {
     findAll: async (params: ProcessApi.FindAll.Params): Promise<ProcessApi.FindAll.Response> => {
         const queryParams = new URLSearchParams();
+        queryParams.set('adapter', 'false');
         if (params.page) queryParams.set('page', params.page.toString());
         if (params.limit) queryParams.set('limit', params.limit.toString());
         if (params.filter) {
@@ -20,7 +21,7 @@ export const ProcessApi = {
     },
 
     findOne: async (id: string): Promise<ProcessApi.FindOne.Response> => {
-        const response = await http.get<ProcessApi.FindOne.Response>(`/Process/${id}`);
+        const response = await http.get<ProcessApi.FindOne.Response>(`/Process/${id}?adapter=false`);
         return response.data;
     },
 
