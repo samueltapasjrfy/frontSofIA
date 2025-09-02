@@ -94,7 +94,7 @@ export const ProcessApi = {
             // Buscar todas as publicações sem paginação
             const queryParams = new URLSearchParams();
             queryParams.set('noPagination', 'true');
-            console.log(params);
+            queryParams.set('adapter', 'false');
             if (params) {
                 Object.entries(params).forEach(([key, value]) => {
                     if (value) queryParams.set(key, value.toString());
@@ -102,7 +102,6 @@ export const ProcessApi = {
             }
 
             const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
-
             // Preparar dados para exportação
             const data = response.data.processes.map(pub => ({
                 'Nº Processo': pub.cnj || '-',
