@@ -10,6 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessInfoModalInfos } from "./ProcessInfoModalInfos";
 import { ProcessInfoModalAudiences } from "./ProcessInfoModalAudiences";
+import { ProcessInfoModalCitations } from "./ProcessInfoModalCitations";
 import { ProcessInfoModalParties } from "./ProcessInfoModalParties";
 import { ProcessInfoModalClasses } from "./ProcessInfoModalClasses";
 import { ProcessInfoModalRelatedCases } from "./ProcessInfoModalRelatedCases";
@@ -32,6 +33,7 @@ export function ProcessInfoModal({ isOpen, onClose, processInfoSelected }: Proce
           <TabsList>
             <TabsTrigger value="info">Informações</TabsTrigger>
             <TabsTrigger value="audiences">Audiências <Badge variant="success">{processInfoSelected?.audiences.length || 0}</Badge></TabsTrigger>
+            <TabsTrigger value="citations">Citações <Badge variant="success">{processInfoSelected?.citations.length || 0}</Badge></TabsTrigger>
             <TabsTrigger value="parties">Partes</TabsTrigger>
             <TabsTrigger value="classes">Classes</TabsTrigger>
             <TabsTrigger value="relatedCases">Processos Relacionados</TabsTrigger>
@@ -42,6 +44,9 @@ export function ProcessInfoModal({ isOpen, onClose, processInfoSelected }: Proce
             </TabsContent>
             <TabsContent value="audiences">
               <ProcessInfoModalAudiences audiences={processInfoSelected?.audiences || []} />
+            </TabsContent>
+            <TabsContent value="citations">
+              <ProcessInfoModalCitations citations={processInfoSelected?.citations || []} />
             </TabsContent>
             <TabsContent value="parties">
               <ProcessInfoModalParties parties={processInfoSelected?.parties || []} />

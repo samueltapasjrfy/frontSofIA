@@ -326,6 +326,12 @@ export namespace ProcessApi {
                 document: string | null;
                 type: string;
             }[];
+            citations: {
+                id: number;
+                text: string;
+                createdAt: string;
+                approved: boolean | null;
+            }[];
             metadata: Record<string, any>;
             monitoring: boolean;
             dateSentence?: string;

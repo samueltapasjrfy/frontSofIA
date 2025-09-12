@@ -20,6 +20,7 @@ import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { LoginResponse } from "@/api/authApi";
 import { GetBgColor } from "./GetBgColor";
 import { useAudiences } from "@/hooks/useAudiences";
+import { useCitations } from "@/hooks/useCitations";
 
 interface SidebarSubItem {
   label: string;
@@ -160,7 +161,9 @@ export function SidebarContent({
 
   // Get pending audiences count
   const { getTotalPendingQuery } = useAudiences();
+  const { getTotalPendingQuery: getTotalPendingQueryCitations } = useCitations();
   const pendingAudiencesCount = getTotalPendingQuery.data?.total || 0;
+  const pendingCitationsCount = getTotalPendingQueryCitations.data?.total || 0;
 
   const sidebarItemsV1: SidebarItemData[] = [
     {
@@ -227,11 +230,11 @@ export function SidebarContent({
           label: "Cadastros",
           href: "/v1/processos/cadastros",
         },
-        // {
-        //   label: "Citações",
-        //   href: "/v1/processos/citacoes",
-        //   amount: 8 // Example: count for this subitem
-        // },
+        {
+          label: "Citações",
+          href: "/v1/processos/citacoes",
+          amount: pendingCitationsCount // Example: count for this subitem
+        },
         {
           label: "Audiências",
           href: "/v1/processos/audiencias",
