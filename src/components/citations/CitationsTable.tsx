@@ -302,8 +302,8 @@ export function CitationsTable({
         try {
             await CitationsApi.exportToXLSX({
                 ...filters,
-                initialDate,
-                finalDate
+                dateStart: initialDate,
+                dateEnd: finalDate,
             });
             toast.success('Arquivo exportado com sucesso!');
         } catch {
