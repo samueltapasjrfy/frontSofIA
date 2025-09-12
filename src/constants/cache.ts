@@ -24,4 +24,6 @@ export const QUERY_KEYS = {
     BATCH: 'batch',
     REPORT: 'report',
     DOCUMENTS: 'documents',
+    AUDIENCES: 'audiences',
+    AUDIENCES_TOTAL_PENDING: 'audiences_total_pending',
 } as const;

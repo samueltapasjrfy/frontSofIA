@@ -19,6 +19,7 @@ import {
 import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { LoginResponse } from "@/api/authApi";
 import { GetBgColor } from "./GetBgColor";
+import { useAudiences } from "@/hooks/useAudiences";
 
 interface SidebarSubItem {
   label: string;
@@ -157,6 +158,10 @@ export function SidebarContent({
   const processCompanyHabilitados = ['01JDSEG2G5PQ1GCX86K3BV8EKR', '01JTNVAEYETZAJP0F4X7YQYQBR', '01J99YK3X66J2T2A7W9V533TM1'].includes(user?.companies?.[0]?.id)
   const sentiusHabilitados = ['01JTNVAEYETZAJP0F4X7YQYQBR'].includes(user?.companies?.[0]?.id)
 
+  // Get pending audiences count
+  const { getTotalPendingQuery } = useAudiences();
+  const pendingAudiencesCount = getTotalPendingQuery.data?.total || 0;
+
   const sidebarItemsV1: SidebarItemData[] = [
     {
       icon: <LayoutDashboard size={20} />,
@@ -222,15 +227,15 @@ export function SidebarContent({
           label: "Cadastros",
           href: "/v1/processos/cadastros",
         },
-        {
-          label: "Citações",
-          href: "/v1/processos/citacoes",
-          amount: 8 // Example: count for this subitem
-        },
+        // {
+        //   label: "Citações",
+        //   href: "/v1/processos/citacoes",
+        //   amount: 8 // Example: count for this subitem
+        // },
         {
           label: "Audiências",
           href: "/v1/processos/audiencias",
-          amount: 2 // Example: count for this subitem
+          amount: pendingAudiencesCount
         }
       ]
     });

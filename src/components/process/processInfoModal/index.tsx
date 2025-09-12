@@ -13,6 +13,7 @@ import { ProcessInfoModalAudiences } from "./ProcessInfoModalAudiences";
 import { ProcessInfoModalParties } from "./ProcessInfoModalParties";
 import { ProcessInfoModalClasses } from "./ProcessInfoModalClasses";
 import { ProcessInfoModalRelatedCases } from "./ProcessInfoModalRelatedCases";
+import { Badge } from "@/components/ui/badge";
 
 interface ProcessInfoModalProps {
   isOpen: boolean;
@@ -23,14 +24,14 @@ interface ProcessInfoModalProps {
 export function ProcessInfoModal({ isOpen, onClose, processInfoSelected }: ProcessInfoModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent className="sm:max-w-[800px] lg:max-w-[1000px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gray-800">Processo - {processInfoSelected?.cnj}</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="info" className="w-full">
           <TabsList>
             <TabsTrigger value="info">Informações</TabsTrigger>
-            <TabsTrigger value="audiences">Audiências</TabsTrigger>
+            <TabsTrigger value="audiences">Audiências <Badge variant="success">{processInfoSelected?.audiences.length || 0}</Badge></TabsTrigger>
             <TabsTrigger value="parties">Partes</TabsTrigger>
             <TabsTrigger value="classes">Classes</TabsTrigger>
             <TabsTrigger value="relatedCases">Processos Relacionados</TabsTrigger>
