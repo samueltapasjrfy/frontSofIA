@@ -43,7 +43,7 @@ export const CitationsApi = {
             // Preparar dados para exportação
             const data = response.data.citations.map(citation => ({
                 'Nº Processo': citation.process?.cnj || '-',
-                'Data Criação': citation.createdAt ? dayjs(citation.createdAt).format('DD/MM/YYYY HH:mm') : '-',
+                'Data Consumo': citation.createdAt ? dayjs(citation.createdAt).format('DD/MM/YYYY HH:mm') : '-',
                 'Texto da Citação': citation.text || '-',
                 'Aprovação': citation.approved === null ? 'Pendente' : citation.approved ? 'Aprovada' : 'Reprovada'
             }));
@@ -55,7 +55,7 @@ export const CitationsApi = {
             // Definir larguras das colunas
             const colWidths = [
                 { wch: 25 }, // Nº Processo
-                { wch: 20 }, // Data Criação
+                { wch: 20 }, // Data Consumo
                 { wch: 80 }, // Texto da Citação
                 { wch: 15 }, // Aprovação
             ];

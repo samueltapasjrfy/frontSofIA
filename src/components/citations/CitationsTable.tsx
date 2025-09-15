@@ -169,7 +169,7 @@ export function CitationsTable({
         },
         {
             key: 'createdAt',
-            label: 'Data Criação',
+            label: 'Data Consumo',
             className: 'font-semibold text-gray-700 py-3 w-[15%]',
             render: (citation) => (
                 <span className="font-medium text-gray-700">
