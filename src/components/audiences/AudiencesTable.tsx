@@ -169,11 +169,21 @@ export function AudiencesTable({
             key: 'date',
             label: 'Data',
             className: 'font-semibold text-gray-700 py-3 w-[15%]',
-            render: (audience) => (
-                <span className="font-medium text-gray-700">
-                    {audience.date ? dayjs(audience.date).format("DD/MM/YYYY HH:mm") : "-"}
-                </span>
-            )
+            render: (audience) => {
+                let format = "DD/MM/YYYY HH:mm";
+                try {
+                    const hour = audience.date ? audience.date.split('T')[1] : null;
+                    if (hour && ["00:00", "03:00"].includes(hour.substring(0, 5))) {
+                        format = "DD/MM/YYYY";
+                    }
+                } catch {
+                }
+                return (
+                    <span className="font-medium text-gray-700">
+                        {audience.date ? dayjs(audience.date).format(format) : "-"}
+                    </span>
+                )
+            }
         },
         {
             key: 'location',
