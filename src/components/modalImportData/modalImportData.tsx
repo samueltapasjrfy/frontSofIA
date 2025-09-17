@@ -96,7 +96,7 @@ const ModalImportData = ({
       //gambiarra para ler as colunas com o formato de data
       const dateColumns = Object.keys(sheet).filter((key) => (+(String(key).replace(/[^0-9]/g, '').trim()) || 1) > 1);
       dateColumns.forEach((column) => {
-        const columnValue = sheet[column].w;
+        const columnValue = sheet[column].w || '';
         if (isNaN(new Date(columnValue).getTime()) && isNaN(new Date(columnValue.split('/').reverse().join('-')).getTime())) return
         sheet[column].t = 'd';
         sheet[column].v = columnValue;
