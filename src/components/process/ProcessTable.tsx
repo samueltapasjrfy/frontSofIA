@@ -71,7 +71,7 @@ export function ProcessTable({
   const [filters, setFilters] = useState<ProcessApi.FindAll.Params['filter']>({});
   const [showFilters, setShowFilters] = useState(false);
   const { getProcessesQuery, changeProcessFilter, processParams, setMonitoring, deleteProcess } = useProcesses();
-  const [processInfoSelected, setProcessInfoSelected] = useState<ProcessApi.FindAll.Process | null>(null);
+  const [processInfoSelected, setProcessInfoSelected] = useState<string | null>(null);
   const [isLoadingBatches, setIsLoadingBatches] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<{ label: string, value: string } | null>(null);
   const [isLoadingRequesters, setIsLoadingRequesters] = useState(false);
@@ -237,7 +237,7 @@ export function ProcessTable({
     {
       key: 'cnj',
       label: 'Nº Processo',
-      className: 'font-semibold text-gray-700 py-3 w-[25%]',
+      className: 'font-semibold text-gray-700 py-3 w-[28%]',
       render: (process) => (
         <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
           {process.cnj}
@@ -368,7 +368,7 @@ export function ProcessTable({
             className="h-8 w-8 text-primary-blue hover:text-primary-blue hover:bg-primary-blue/10"
             title="Informações"
             disabled={![PROCESS_STATUS.COMPLETED, PROCESS_STATUS.UPDATING_INFORMATION].includes(process.status.id)}
-            onClick={() => setProcessInfoSelected(process)}
+            onClick={() => setProcessInfoSelected(process.id)}
           >
             <Info className="h-4 w-4" />
           </Button>
@@ -903,7 +903,7 @@ export function ProcessTable({
       <ProcessInfoModal
         isOpen={!!processInfoSelected}
         onClose={() => setProcessInfoSelected(null)}
-        processInfoSelected={processInfoSelected}
+        processInfoSelected={processInfoSelected ? getProcessesQuery.data?.processes.find(p => p.id === processInfoSelected) || null : null}
       />
     </div>
   );

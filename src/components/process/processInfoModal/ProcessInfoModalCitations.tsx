@@ -12,15 +12,16 @@ import { ChevronLeft, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PopConfirm from "@/components/ui/popconfirm";
 import { Badge } from "@/components/ui/badge";
-import { AudiencesApi } from "@/api/audiencesApi";
+import { CitationsApi } from "@/api/citationsApi";
 import { toast } from "sonner";
 import { queryClient } from "@/lib/reactQuery";
 import { QUERY_KEYS } from "@/constants/cache";
 
-type ProcessInfoModalAudiencesProps = {
-    audiences: ProcessApi.FindAll.Process['audiences'];
+type ProcessInfoModalCitationsProps = {
+    citations: ProcessApi.FindAll.Process['citations'];
 }
-export const ProcessInfoModalAudiences = ({ audiences }: ProcessInfoModalAudiencesProps) => {
+
+export const ProcessInfoModalCitations = ({ citations }: ProcessInfoModalCitationsProps) => {
     const [selectedText, setSelectedText] = useState("");
 
     const getApprovalBadge = (approved: boolean | null) => {
@@ -33,20 +34,20 @@ export const ProcessInfoModalAudiences = ({ audiences }: ProcessInfoModalAudienc
         return <Badge variant="destructive">Reprovada</Badge>;
     };
 
-    const updateStatusBulk = async (data: AudiencesApi.UpdateStatusBulk.Params) => {
+    const updateStatusBulk = async (data: CitationsApi.UpdateStatusBulk.Params) => {
         try {
             console.log(data);
-            const response = await AudiencesApi.updateStatusBulk(data);
+            const response = await CitationsApi.updateStatusBulk(data);
 
             toast.success(response.data.message);
-            // Invalidate audiences queries to refresh data
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.AUDIENCES] });
-            queryClient.refetchQueries({ queryKey: [QUERY_KEYS.AUDIENCES_TOTAL_PENDING] });
+            // Invalidate citations queries to refresh data
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CITATIONS] });
+            queryClient.refetchQueries({ queryKey: [QUERY_KEYS.CITATIONS_TOTAL_PENDING] });
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROCESS] });
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROCESSES] });
             return response;
         } catch (e) {
-            toast.error('Erro ao atualizar status das audiências');
+            toast.error('Erro ao atualizar status das citações');
         }
     }
 
@@ -62,38 +63,32 @@ export const ProcessInfoModalAudiences = ({ audiences }: ProcessInfoModalAudienc
                     </div>
                 </div>
             ) : (
-                audiences.length > 0 ? (
+                citations.length > 0 ? (
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-50 border-b">
-                                <TableHead>Data</TableHead>
-                                <TableHead>Descrição</TableHead>
-                                <TableHead>Tipo</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Motivo de cancelamento</TableHead>
+                                <TableHead>Data de Criação</TableHead>
+                                <TableHead>Texto</TableHead>
                                 <TableHead>Aprovação</TableHead>
                                 <TableHead>Ação</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {audiences.map((audience) => (
+                            {citations.map((citation) => (
                                 <TableRow key={new Date().getTime() + Math.random()}>
-                                    <TableCell>{dayjs(audience.date).format("DD/MM/YYYY")}</TableCell>
+                                    <TableCell>{dayjs(citation.createdAt).format("DD/MM/YYYY HH:mm")}</TableCell>
                                     <TableCell>
                                         <TruncateText
-                                            text={audience.description || ""}
+                                            text={citation.text || ""}
                                             maxLength={50}
                                             onClick={() => {
-                                                setSelectedText(audience.description || "");
+                                                setSelectedText(citation.text || "");
                                             }}
                                         />
                                     </TableCell>
-                                    <TableCell>{audience.type?.name || "-"}</TableCell>
-                                    <TableCell>{audience.status?.name || "-"}</TableCell>
-                                    <TableCell>{audience.cancellationReason || "-"}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center justify-center">
-                                            {getApprovalBadge(audience.approved)}
+                                            {getApprovalBadge(citation.approved)}
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -102,7 +97,7 @@ export const ProcessInfoModalAudiences = ({ audiences }: ProcessInfoModalAudienc
                                                 modal
                                                 title="Aprovar"
                                                 onConfirm={async () => updateStatusBulk({
-                                                    ids: [audience.id],
+                                                    ids: [citation.id],
                                                     status: 'approve'
                                                 })}
                                             >
@@ -111,7 +106,7 @@ export const ProcessInfoModalAudiences = ({ audiences }: ProcessInfoModalAudienc
                                                     size="icon"
                                                     className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
                                                     title="Confirmar aprovação?"
-                                                    disabled={audience.approved === true}
+                                                    disabled={citation.approved === true}
 
                                                 >
                                                     <ThumbsUp className="h-4 w-4" />
@@ -121,7 +116,7 @@ export const ProcessInfoModalAudiences = ({ audiences }: ProcessInfoModalAudienc
                                                 modal
                                                 title="Reprovar"
                                                 onConfirm={async () => updateStatusBulk({
-                                                    ids: [audience.id],
+                                                    ids: [citation.id],
                                                     status: 'reprove'
                                                 })}
                                             >
@@ -130,7 +125,7 @@ export const ProcessInfoModalAudiences = ({ audiences }: ProcessInfoModalAudienc
                                                     size="icon"
                                                     className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     title="Reprovar"
-                                                    disabled={audience.approved === false}
+                                                    disabled={citation.approved === false}
                                                 >
                                                     <ThumbsDown className="h-4 w-4" />
                                                 </Button>
@@ -142,7 +137,7 @@ export const ProcessInfoModalAudiences = ({ audiences }: ProcessInfoModalAudienc
                         </TableBody>
                     </Table>
                 ) : (
-                    <div className="text-center text-sm text-gray-500">Nenhuma audiência encontrada</div>
+                    <div className="text-center text-sm text-gray-500">Nenhuma citação encontrada</div>
                 )
             )}
         </div>

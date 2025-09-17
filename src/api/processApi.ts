@@ -150,7 +150,7 @@ export const ProcessApi = {
                         audiencesData.push({
                             'Nº Processo': proc.cnj || '-',
                             'Data': aud.date ? dayjs(aud.date).format('DD/MM/YYYY HH:mm') : '-',
-                            'Descrição': aud.text || '-',
+                            'Descrição': aud.description || '-',
                             'Tipo': aud.type || '-',
                             'Status': aud.status || '-'
                         });
@@ -312,16 +312,25 @@ export namespace ProcessApi {
             foro: string;
             dateDistribution: string;
             audiences: {
+                id: string;
                 date: string;
-                text: string;
-                type: string;
-                status: string;
+                description: string;
+                type: { id: number; name: string };
+                status: { id: number; name: string };
+                cancellationReason: string
+                approved: boolean;
             }[];
             parties: {
                 id: string;
                 name: string;
                 document: string | null;
                 type: string;
+            }[];
+            citations: {
+                id: number;
+                text: string;
+                createdAt: string;
+                approved: boolean | null;
             }[];
             metadata: Record<string, any>;
             monitoring: boolean;
