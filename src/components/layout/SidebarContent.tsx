@@ -231,6 +231,10 @@ export function SidebarContent({
           href: "/v1/processos/cadastros",
         },
         {
+          label: "Monitoramento",
+          href: "/v1/processos/monitoramento",
+        },
+        {
           label: "Citações",
           href: "/v1/processos/citacoes",
           amount: pendingCitationsCount // Example: count for this subitem
@@ -239,7 +243,7 @@ export function SidebarContent({
           label: "Audiências",
           href: "/v1/processos/audiencias",
           amount: pendingAudiencesCount
-        }
+        },
       ]
     });
     sidebarItemsV2.splice(2, 0, {

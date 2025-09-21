@@ -94,6 +94,23 @@ export function useProcesses(initialPage: number = 1, initialLimit: number = 10)
         retryDelay: 1000,
     });
 
+    // Query for fetching monitoring processes list
+    const [monitoringParams, setMonitoringParams] = useState<ProcessApi.FindMonitoring.Params>({
+        page: initialPage,
+        limit: initialLimit,
+    });
+
+    const getMonitoringProcessesQuery = useQuery({
+        queryKey: [QUERY_KEYS.MONITORING_PROCESSES, monitoringParams],
+        queryFn: async () => {
+            const data = await ProcessApi.findMonitoring(monitoringParams);
+            return data;
+        },
+        staleTime: 1000 * 60 * 10, // 10 minutes
+        retry: 3,
+        retryDelay: 1000,
+    });
+
     const invalidateReport = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.REPORT] });
     }, []);
@@ -107,6 +124,10 @@ export function useProcesses(initialPage: number = 1, initialLimit: number = 10)
         setBatchParams(prev => ({ ...prev, ...params }));
     };
 
+    const changeMonitoringFilter = (params: Partial<ProcessApi.FindMonitoring.Params>): void => {
+        setMonitoringParams(prev => ({ ...prev, ...params }));
+    };
+
     const invalidateProcessesQuery = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROCESSES] });
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROCESS] });
@@ -116,12 +137,17 @@ export function useProcesses(initialPage: number = 1, initialLimit: number = 10)
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROCESS_BATCHES] });
     }, []);
 
+    const invalidateMonitoringQuery = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MONITORING_PROCESSES] });
+    }, []);
+
     const setMonitoring = useCallback(async (id: string, monitoring: boolean) => {
         monitoring ? await ProcessApi.activateMonitoring(id) : await ProcessApi.deactivateMonitoring(id);
 
         setTimeout(() => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROCESS, id] });
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROCESSES] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MONITORING_PROCESSES] });
         }, 1000);
     }, []);
 
@@ -144,6 +170,12 @@ export function useProcesses(initialPage: number = 1, initialLimit: number = 10)
         changeBatchFilter,
         invalidateBatchesQuery,
         getBatch,
+
+        // Monitoring queries and state
+        getMonitoringProcessesQuery,
+        monitoringParams,
+        changeMonitoringFilter,
+        invalidateMonitoringQuery,
 
         // Action functions
         handleCitation,

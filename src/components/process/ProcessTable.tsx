@@ -310,12 +310,12 @@ export function ProcessTable({
       }
     },
     {
-      key: 'monitoring',
-      label: 'Monitoramento',
+      key: 'addedToMonitoring',
+      label: 'Monitorado',
       className: 'font-semibold text-gray-700 w-[10%] py-3',
       render: (process) => (
-        <Badge className={cn(process.monitoring ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
-          {process.monitoring ? "Ativo" : "Inativo"}
+        <Badge className={cn(process.addedToMonitoring ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
+          {process.addedToMonitoring ? "Sim" : "Não"}
         </Badge>
       )
     },

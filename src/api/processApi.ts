@@ -35,6 +35,21 @@ export const ProcessApi = {
         return response.data;
     },
 
+    findMonitoring: async (params: ProcessApi.FindMonitoring.Params): Promise<ProcessApi.FindMonitoring.Response> => {
+        const queryParams = new URLSearchParams();
+        if (params.page) queryParams.set('page', params.page.toString());
+        if (params.limit) queryParams.set('limit', params.limit.toString());
+        if (params.noPagination) queryParams.set('noPagination', params.noPagination.toString());
+        if (params.filter) {
+            Object.entries(params.filter).forEach(([key, value]) => {
+                if (value) queryParams.set(key, value.toString());
+            });
+        }
+
+        const response = await http.get<ProcessApi.FindMonitoring.Response>(`/Process/monitoring?${queryParams.toString()}`);
+        return response.data;
+    },
+
     handleCitation: async (params: ProcessApi.HandleCitation.Params): Promise<ProcessApi.HandleCitation.Response> => {
         const response = await http.post<ProcessApi.HandleCitation.Response>(
             `/Process/${params.id}/Citation/${params.action}`
@@ -334,6 +349,7 @@ export namespace ProcessApi {
             }[];
             metadata: Record<string, any>;
             monitoring: boolean;
+            addedToMonitoring: boolean;
             dateSentence?: string;
             relatedCases?: RelatedCase[];
         };
@@ -453,6 +469,47 @@ export namespace ProcessApi {
         export type Params = {
             cnjs: string[];
             ids: string[];
+        };
+    }
+
+    export namespace FindMonitoring {
+        export type Params = {
+            page?: number;
+            limit?: number;
+            noPagination?: boolean;
+            filter?: {
+                cnj?: string;
+                initialDateAdd?: string;
+                finalDateAdd?: string;
+                initialDateRemove?: string;
+                finalDateRemove?: string;
+                client?: string;
+            }
+        };
+
+        export type Process = {
+            id: string;
+            requester: string;
+            client: string;
+            cnj: string;
+            createdAt: string;
+            addedAt: string;
+            removedAt: string | null;
+            citations: {
+                text: string;
+                createdAt: string;
+                approved: boolean | null;
+            }[];
+            audiences: {
+                description: string;
+                createdAt: string;
+                approved: boolean | null;
+            }[];
+        };
+
+        export type Response = {
+            processes: Process[];
+            total: number;
         };
     }
 }
