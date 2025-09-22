@@ -18,11 +18,13 @@ import { ptBR } from "date-fns/locale"
 type DatePickerWithRangeProps = {
     date: DateRange | undefined;
     onChange: (date: DateRange | undefined) => void;
+    id?: string;
 }
 export function DatePickerWithRange({
     className,
     date,
     onChange,
+    id = "date",
 }: React.HTMLAttributes<HTMLDivElement> & DatePickerWithRangeProps) {
     const locale = {
         ...ptBR,
@@ -35,7 +37,7 @@ export function DatePickerWithRange({
             <Popover>
                 <PopoverTrigger asChild>
                     <Button
-                        id="date"
+                        id={id}
                         variant={"outline"}
                         className={cn(
                             "w-full justify-start text-left font-normal",

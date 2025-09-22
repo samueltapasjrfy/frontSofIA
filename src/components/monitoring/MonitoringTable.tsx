@@ -15,12 +15,9 @@ import {
     RefreshCw,
     Search,
     X,
-    Info,
-    Trash2,
     MonitorOff,
     Monitor,
     ChevronDown,
-    MoreVertical,
     CheckCircle,
     XCircle,
     Clock,
@@ -32,18 +29,13 @@ import { Pagination } from "../pagination";
 import { ProcessApi } from "@/api/processApi";
 import { useProcesses } from "@/hooks/useProcess";
 import PopConfirm from "../ui/popconfirm";
-import { SelectInfinityScroll } from "../selectInfinityScroll";
-import { BatchApi } from "@/api/batchApi";
-import { BATCH_TYPES } from "@/constants/batch";
 import { TableButtons } from "../tableButtons";
-import { CompanyApi } from "@/api/companyApi";
 import { DatePickerWithRange } from "../dateRangePicker";
 import { DateRange } from "react-day-picker";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuSub,
     DropdownMenuSubContent,
     DropdownMenuSubTrigger,
@@ -71,9 +63,9 @@ export function MonitoringTable({ onRefresh, className }: MonitoringTableProps) 
         changeMonitoringFilter,
         monitoringParams,
         setMonitoring,
-        deleteProcess
     } = useProcesses();
     const [date, setDate] = useState<DateRange | undefined>(undefined);
+    const [dateRemove, setDateRemove] = useState<DateRange | undefined>(undefined);
     const [selectedProcesses, setSelectedProcesses] = useState<Map<string, { id: string; cnj: string }>>(new Map());
     const [isPerformingAction, setIsPerformingAction] = useState(false);
 
@@ -382,11 +374,6 @@ export function MonitoringTable({ onRefresh, className }: MonitoringTableProps) 
                 )
         },
     ];
-
-    const renderBatch = (batch: BatchApi.Batch) => {
-        return `${dayjs(batch.createdAt).format("DD/MM/YYYY HH:mm")} - ${batch.total} ${+batch.total === 1 ? "processo" : "processos"} - ${batch.status.value}`;
-    }
-
     const changeProcessTimeout = useRef<NodeJS.Timeout | null>(null);
     const handleFilterChange = (key: keyof ProcessApi.FindMonitoring.Params['filter'], value: string | number | null) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -410,8 +397,13 @@ export function MonitoringTable({ onRefresh, className }: MonitoringTableProps) 
         setFilters({
             cnj: "",
             client: "",
+            initialDateAdd: undefined,
+            finalDateAdd: undefined,
+            initialDateRemove: undefined,
+            finalDateRemove: undefined,
         });
         setDate(undefined);
+        setDateRemove(undefined);
         changeMonitoringFilter({
             page: 1,
             limit: monitoringParams.limit,
@@ -473,7 +465,15 @@ export function MonitoringTable({ onRefresh, className }: MonitoringTableProps) 
                     </div>
                     <TableButtons
                         onRefresh={onRefresh}
-                        onExport={async () => { }}
+                        onExport={async () => {
+                            try {
+                                await ProcessApi.exportMonitoringToXLSX(filters);
+                                toast.success("Exportação realizada com sucesso!");
+                            } catch (error) {
+                                console.error('Erro ao exportar monitoramento:', error);
+                                toast.error("Erro ao exportar dados de monitoramento");
+                            }
+                        }}
                         toggleFilters={toggleFilters}
                         totalFilters={Object.entries(filters || {}).filter(([key, value]) => !!value && key !== "initialDate").length}
                     />
@@ -535,6 +535,40 @@ export function MonitoringTable({ onRefresh, className }: MonitoringTableProps) 
                                         });
                                     }
                                     setDate(newDate as DateRange);
+                                }}
+                            />
+                        </div>
+                        <div className="hidden">
+                            <label htmlFor="dateRemove" className="block text-sm font-medium text-gray-700 mb-1"> Período de Inativação </label>
+                            <DatePickerWithRange
+                                id="dateRemove"
+                                date={dateRemove}
+                                onChange={(newDate) => {
+                                    const d = newDate as DateRange;
+                                    if (d && d.from && d.to) {
+                                        const initialDate = dayjs(d.from).format("YYYY-MM-DD");
+                                        const finalDate = dayjs(d.to).format("YYYY-MM-DD");
+                                        changeMonitoringFilter({
+                                            page: 1,
+                                            limit: monitoringParams.limit,
+                                            filter: {
+                                                ...filters,
+                                                initialDateRemove: initialDate,
+                                                finalDateRemove: finalDate
+                                            }
+                                        });
+                                    } else if (dateRemove?.from || dateRemove?.to) {
+                                        changeMonitoringFilter({
+                                            page: 1,
+                                            limit: monitoringParams.limit,
+                                            filter: {
+                                                ...filters,
+                                                initialDateRemove: undefined,
+                                                finalDateRemove: undefined
+                                            }
+                                        });
+                                    }
+                                    setDateRemove(newDate as DateRange);
                                 }}
                             />
                         </div>

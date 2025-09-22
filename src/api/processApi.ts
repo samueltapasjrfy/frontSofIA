@@ -267,6 +267,139 @@ export const ProcessApi = {
             console.error('Erro ao exportar processos:', error);
             throw error; // Propagar erro para ser tratado no componente
         }
+    },
+
+    exportMonitoringToXLSX: async (params: ProcessApi.FindMonitoring.Params["filter"]): Promise<void> => {
+        try {
+            // Buscar todos os processos de monitoramento sem paginação
+            const queryParams = new URLSearchParams();
+            queryParams.set('noPagination', 'true');
+            if (params) {
+                Object.entries(params).forEach(([key, value]) => {
+                    if (value) queryParams.set(key, value.toString());
+                });
+            }
+
+            const response = await http.get<ProcessApi.FindMonitoring.Response>(`/Process/monitoring?${queryParams.toString()}`);
+
+            // Preparar dados para exportação seguindo a lógica da tabela
+            const data = response.data.processes.map(process => ({
+                'ID': process.id,
+                'Nº Processo': process.cnj || '-',
+                'Solicitante': process.requester || '-',
+                'Cliente': process.client || '-',
+                'Indicativo Citação': process.citations && process.citations.length > 0 ? 'Sim' : 'Não',
+                'Indicativo Audiência': process.audiences && process.audiences.length > 0 ? 'Sim' : 'Não',
+                'Citações Aprovadas': process.citations ? process.citations.filter(c => c.approved === true).length : 0,
+                'Total Citações': process.citations ? process.citations.length : 0,
+                'Audiências Aprovadas': process.audiences ? process.audiences.filter(a => a.approved === true).length : 0,
+                'Total Audiências': process.audiences ? process.audiences.length : 0,
+                'Data Ativação': process.addedAt ? dayjs(process.addedAt).format('DD/MM/YYYY HH:mm') : '-',
+                'Data Inativação': process.removedAt ? dayjs(process.removedAt).format('DD/MM/YYYY HH:mm') : '-',
+                'Status': process.removedAt ? 'Inativo' : 'Ativo'
+            }));
+
+            // Preparar dados para a aba de citações
+            const citationsData: any[] = [];
+            response.data.processes.forEach(proc => {
+                if (proc.citations && proc.citations.length > 0) {
+                    proc.citations.forEach(citation => {
+                        citationsData.push({
+                            'Nº Processo': proc.cnj || '-',
+                            'Cliente': proc.client || '-',
+                            'Texto': citation.text || '-',
+                            'Data Criação': citation.createdAt ? dayjs(citation.createdAt).format('DD/MM/YYYY HH:mm') : '-',
+                            'Status': citation.approved === true ? 'Aprovada' : citation.approved === false ? 'Rejeitada' : 'Pendente'
+                        });
+                    });
+                }
+            });
+
+            // Preparar dados para a aba de audiências
+            const audiencesData: any[] = [];
+            response.data.processes.forEach(proc => {
+                if (proc.audiences && proc.audiences.length > 0) {
+                    proc.audiences.forEach(audience => {
+                        audiencesData.push({
+                            'Nº Processo': proc.cnj || '-',
+                            'Cliente': proc.client || '-',
+                            'Descrição': audience.description || '-',
+                            'Data Criação': audience.createdAt ? dayjs(audience.createdAt).format('DD/MM/YYYY HH:mm') : '-',
+                            'Status': audience.approved === true ? 'Aprovada' : audience.approved === false ? 'Rejeitada' : 'Pendente'
+                        });
+                    });
+                }
+            });
+
+            // Criar workbook e worksheets
+            const wb = XLSX.utils.book_new();
+
+            // Planilha principal de monitoramento
+            const mainWs = XLSX.utils.json_to_sheet(data);
+            const mainColWidths = [
+                { wch: 15 }, // ID
+                { wch: 25 }, // Nº Processo
+                { wch: 30 }, // Solicitante
+                { wch: 30 }, // Cliente
+                { wch: 15 }, // Indicativo Citação
+                { wch: 15 }, // Indicativo Audiência
+                { wch: 15 }, // Citações Aprovadas
+                { wch: 15 }, // Total Citações
+                { wch: 15 }, // Audiências Aprovadas
+                { wch: 15 }, // Total Audiências
+                { wch: 20 }, // Data Ativação
+                { wch: 20 }, // Data Inativação
+                { wch: 10 }, // Status
+            ];
+            mainWs['!cols'] = mainColWidths;
+            XLSX.utils.book_append_sheet(wb, mainWs, 'Monitoramento');
+
+            // Planilha de citações
+            if (citationsData.length > 0) {
+                const citationsWs = XLSX.utils.json_to_sheet(citationsData);
+                const citationsColWidths = [
+                    { wch: 25 }, // Nº Processo
+                    { wch: 30 }, // Cliente
+                    { wch: 50 }, // Texto
+                    { wch: 20 }, // Data Criação
+                    { wch: 15 }, // Status
+                ];
+                citationsWs['!cols'] = citationsColWidths;
+                XLSX.utils.book_append_sheet(wb, citationsWs, 'Citações');
+            }
+
+            // Planilha de audiências
+            if (audiencesData.length > 0) {
+                const audiencesWs = XLSX.utils.json_to_sheet(audiencesData);
+                const audiencesColWidths = [
+                    { wch: 25 }, // Nº Processo
+                    { wch: 30 }, // Cliente
+                    { wch: 50 }, // Descrição
+                    { wch: 20 }, // Data Criação
+                    { wch: 15 }, // Status
+                ];
+                audiencesWs['!cols'] = audiencesColWidths;
+                XLSX.utils.book_append_sheet(wb, audiencesWs, 'Audiências');
+            }
+
+            // Gerar arquivo e fazer download
+            const excelBuffer = XLSX.write(wb, {
+                bookType: 'xlsx',
+                type: 'array'
+            });
+
+            const dataBlob = new Blob([excelBuffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            // Nome do arquivo com timestamp
+            const fileName = `monitoramento_${dayjs().format('YYYY-MM-DD_HH-mm')}.xlsx`;
+
+            saveAs(dataBlob, fileName);
+        } catch (error) {
+            console.error('Erro ao exportar monitoramento:', error);
+            throw error; // Propagar erro para ser tratado no componente
+        }
     }
 };
 

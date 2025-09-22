@@ -125,7 +125,9 @@ export function useProcesses(initialPage: number = 1, initialLimit: number = 10)
     };
 
     const changeMonitoringFilter = (params: Partial<ProcessApi.FindMonitoring.Params>): void => {
-        setMonitoringParams(prev => ({ ...prev, ...params }));
+        const prevFilters = monitoringParams.filter;
+        const newFilters = { ...prevFilters, ...params.filter };
+        setMonitoringParams(prev => ({ ...prev, ...params, filter: newFilters }));
     };
 
     const invalidateProcessesQuery = useCallback(() => {
