@@ -626,7 +626,7 @@ export function ProcessTable({
             </div>
             <div>
               <label htmlFor="monitoring" className="block text-sm font-medium text-gray-700 mb-1">
-                Monitorando
+                Monitorado
               </label>
               <select
                 id="monitoring"
@@ -640,7 +640,7 @@ export function ProcessTable({
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value={''}>Todos</option>
-                <optgroup label="Status de Processamento">
+                <optgroup label="Monitorado">
                   <option value={'true'}>Sim</option>
                   <option value={'false'}>Não</option>
                 </optgroup>
