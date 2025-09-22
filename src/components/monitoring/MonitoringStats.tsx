@@ -15,13 +15,13 @@ export function MonitoringStats() {
     // Calcular estatísticas
     const activeProcesses = processes.filter(p => !p.removedAt).length;
     const inactiveProcesses = processes.filter(p => p.removedAt).length;
-    const withCitations = processes.filter(p => p.citacoes && p.citacoes.length > 0).length;
-    const withAudiences = processes.filter(p => p.audiencias && p.audiencias.length > 0).length;
+    const withCitations = processes.filter(p => p.citations && p.citations.length > 0).length;
+    const withAudiences = processes.filter(p => p.audiences && p.audiences.length > 0).length;
     const validatedCitations = processes.filter(p =>
-        p.citacoes && p.citacoes.some(c => c.aprovada === true)
+        p.citations && p.citations.some(c => c.approved === true)
     ).length;
     const validatedAudiences = processes.filter(p =>
-        p.audiencias && p.audiencias.some(a => a.status === 'aprovada')
+        p.audiences && p.audiences.some(a => a.approved === true)
     ).length;
 
     const stats = [
