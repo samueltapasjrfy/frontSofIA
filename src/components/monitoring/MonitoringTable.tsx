@@ -41,6 +41,7 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Select } from "../ui/select";
 
 interface MonitoringTableProps {
     onRefresh: () => Promise<void>;
@@ -506,6 +507,48 @@ export function MonitoringTable({ onRefresh, className }: MonitoringTableProps) 
                             />
                         </div>
                         <div>
+                            <label htmlFor="citationIndicator" className="block text-sm font-medium text-gray-700 mb-1">
+                                Indicativo de citação
+                            </label>
+                            <select
+                                id="monitoring"
+                                value={filters?.citationIndicator === undefined ? '' : filters?.citationIndicator as unknown as string}
+                                onChange={(e) => {
+                                    handleFilterChange(
+                                        "citationIndicator" as never,
+                                        e.target.value
+                                    );
+                                }}
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                                <option value={''}>Todos</option>
+                                <optgroup label="Indicativo de citação">
+                                    <option value={'true'}>Sim</option>
+                                    <option value={'false'}>Não</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="audienceIndicator" className="block text-sm font-medium text-gray-700 mb-1">
+                                Indicativo de audiência
+                            </label>
+                            <select
+                                id="audienceIndicator"
+                                value={filters?.audienceIndicator === undefined ? '' : filters?.audienceIndicator as unknown as string}
+                                onChange={(e) => {
+                                    handleFilterChange("audienceIndicator" as never, e.target.value);
+                                }}
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                                <option value={''}>Todos</option>
+                                <optgroup label="Indicativo de audiência">
+                                    <option value={'true'}>Sim</option>
+                                    <option value={'false'}>Não</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div>
                             <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1"> Período de Ativação </label>
                             <DatePickerWithRange
                                 date={date}
@@ -538,40 +581,7 @@ export function MonitoringTable({ onRefresh, className }: MonitoringTableProps) 
                                 }}
                             />
                         </div>
-                        <div className="hidden">
-                            <label htmlFor="dateRemove" className="block text-sm font-medium text-gray-700 mb-1"> Período de Inativação </label>
-                            <DatePickerWithRange
-                                id="dateRemove"
-                                date={dateRemove}
-                                onChange={(newDate) => {
-                                    const d = newDate as DateRange;
-                                    if (d && d.from && d.to) {
-                                        const initialDate = dayjs(d.from).format("YYYY-MM-DD");
-                                        const finalDate = dayjs(d.to).format("YYYY-MM-DD");
-                                        changeMonitoringFilter({
-                                            page: 1,
-                                            limit: monitoringParams.limit,
-                                            filter: {
-                                                ...filters,
-                                                initialDateRemove: initialDate,
-                                                finalDateRemove: finalDate
-                                            }
-                                        });
-                                    } else if (dateRemove?.from || dateRemove?.to) {
-                                        changeMonitoringFilter({
-                                            page: 1,
-                                            limit: monitoringParams.limit,
-                                            filter: {
-                                                ...filters,
-                                                initialDateRemove: undefined,
-                                                finalDateRemove: undefined
-                                            }
-                                        });
-                                    }
-                                    setDateRemove(newDate as DateRange);
-                                }}
-                            />
-                        </div>
+
                         <div className="col-span-full">
                             <Button
                                 variant="outline"

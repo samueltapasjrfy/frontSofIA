@@ -40,6 +40,7 @@ export const ProcessApi = {
         if (params.page) queryParams.set('page', params.page.toString());
         if (params.limit) queryParams.set('limit', params.limit.toString());
         if (params.noPagination) queryParams.set('noPagination', params.noPagination.toString());
+
         if (params.filter) {
             Object.entries(params.filter).forEach(([key, value]) => {
                 if (value) queryParams.set(key, value.toString());
@@ -617,6 +618,8 @@ export namespace ProcessApi {
                 initialDateRemove?: string;
                 finalDateRemove?: string;
                 client?: string;
+                citationIndicator?: boolean;
+                audienceIndicator?: boolean;
             }
         };
 
