@@ -156,7 +156,12 @@ export function SidebarContent({
   const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
   const version = user?.companies?.[0]?.id !== '01JTNVAEYETZAJP0F4X7YQYQBR' ? getLocalStorage(LocalStorageKeys.VERSION) : '2';
   //temp
-  const processCompanyHabilitados = ['01JDSEG2G5PQ1GCX86K3BV8EKR', '01JTNVAEYETZAJP0F4X7YQYQBR', '01J99YK3X66J2T2A7W9V533TM1'].includes(user?.companies?.[0]?.id)
+  const processCompanyHabilitados = [
+    '01JDSEG2G5PQ1GCX86K3BV8EKR',
+    '01JTNVAEYETZAJP0F4X7YQYQBR',
+    '01J99YK3X66J2T2A7W9V533TM1',
+    '01K5YH62H49JKX4S18Z9B4AZKB'
+  ].includes(user?.companies?.[0]?.id)
   const sentiusHabilitados = ['01JTNVAEYETZAJP0F4X7YQYQBR'].includes(user?.companies?.[0]?.id)
 
   // Get pending audiences count
