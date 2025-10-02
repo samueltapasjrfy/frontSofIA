@@ -425,6 +425,7 @@ export namespace ProcessApi {
         export type Process = {
             id: string;
             cnj: string;
+            client: string;
             createdAt: string;
             status: {
                 id: number;

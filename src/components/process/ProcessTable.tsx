@@ -270,7 +270,7 @@ export function ProcessTable({
       className: 'font-semibold text-gray-700 w-[15%] py-3',
       render: (process) => (
         <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
-          {process.metadata?.cliente || "-"}
+          {process.client || process.metadata?.cliente || "-"}
         </span>
       )
     },

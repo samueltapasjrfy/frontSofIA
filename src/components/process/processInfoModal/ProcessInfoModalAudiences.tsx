@@ -78,7 +78,7 @@ export const ProcessInfoModalAudiences = ({ audiences }: ProcessInfoModalAudienc
                         <TableBody>
                             {audiences.map((audience) => (
                                 <TableRow key={new Date().getTime() + Math.random()}>
-                                    <TableCell>{dayjs(audience.date).format("DD/MM/YYYY")}</TableCell>
+                                    <TableCell>{audience.date ? dayjs(audience.date).format("DD/MM/YYYY") : "-"}</TableCell>
                                     <TableCell>
                                         <TruncateText
                                             text={audience.description || ""}
