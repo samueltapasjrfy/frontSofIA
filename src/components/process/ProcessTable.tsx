@@ -50,6 +50,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TruncateText } from "../truncateText";
+import ModalViewText from "../modalViewText";
 
 interface ProcessTableProps {
   onRefresh: () => Promise<void>;
@@ -79,6 +81,7 @@ export function ProcessTable({
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [selectedProcesses, setSelectedProcesses] = useState<Map<string, { id: string; cnj: string }>>(new Map());
   const [isPerformingAction, setIsPerformingAction] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
 
   const getProcessStatusColor = (status: number) => {
     return processStatusColors[status] || processStatusColors.default;
@@ -270,7 +273,13 @@ export function ProcessTable({
       className: 'font-semibold text-gray-700 w-[15%] py-3',
       render: (process) => (
         <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
-          {process.client || process.metadata?.cliente || "-"}
+          <TruncateText
+            text={process.client || process.metadata?.cliente || "-"}
+            maxLength={20}
+            onClick={() => {
+              setSelectedClient(process.client || process.metadata?.cliente || "-");
+            }}
+          />
         </span>
       )
     },
@@ -904,6 +913,11 @@ export function ProcessTable({
         isOpen={!!processInfoSelected}
         onClose={() => setProcessInfoSelected(null)}
         processInfoSelected={processInfoSelected ? getProcessesQuery.data?.processes.find(p => p.id === processInfoSelected) || null : null}
+      />
+      <ModalViewText
+        isOpen={!!selectedClient}
+        onClose={() => setSelectedClient(null)}
+        text={selectedClient || ""}
       />
     </div>
   );
