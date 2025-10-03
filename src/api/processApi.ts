@@ -74,7 +74,10 @@ export const ProcessApi = {
         await http.post(`/Process/deleteBulk`, processes);
     },
     save: async (data: ProcessApi.Save.Params): Promise<APIResponse<ProcessApi.Save.Response>> => {
-        const response = await http.post<ProcessApi.Save.Response>('/Process', data);
+        const response = await http.post<ProcessApi.Save.Response>('/Process', {
+            ...data,
+            background: true,
+        });
         return {
             data: response.data,
             message: response.message,
