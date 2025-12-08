@@ -22,9 +22,10 @@ function generateNonce(): string {
 
 export function middleware(request: NextRequest) {
   // Usando Web Crypto API (funciona no Edge Runtime)
-  const nonce = generateNonce()
-
+  
   const response = NextResponse.next()
+  return response
+  const nonce = generateNonce()
 
   // 👇 Aqui definimos a CSP segura com o nonce dinâmico
   response.headers.set(
