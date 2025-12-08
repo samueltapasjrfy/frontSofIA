@@ -169,7 +169,7 @@ export const ProcessApi = {
                         audiencesData.push({
                             'Nº Processo': proc.cnj || '-',
                             'Data': aud.date ? dayjs(aud.date).format('DD/MM/YYYY HH:mm') : '-',
-                            'Descrição': aud.description || '-',
+                            'Descrição': aud.description ? String(aud.description).slice(0, 32760) : '-',
                             'Tipo': aud.type || '-',
                             'Status': aud.status || '-'
                         });

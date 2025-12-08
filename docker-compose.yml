@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  sophia-front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        # Variáveis de build (opcional, pode usar variáveis de ambiente do .env)
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+        NEXT_PUBLIC_API_URL_V2: ${NEXT_PUBLIC_API_URL_V2:-http://localhost:3000}
+        NEXT_PUBLIC_NEXA_API_URL: ${NEXT_PUBLIC_NEXA_API_URL:-}
+        NEXT_PUBLIC_FILES: ${NEXT_PUBLIC_FILES:-}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+    container_name: sophia-frontend
+    restart: unless-stopped
+    environment:
+      # Variáveis de runtime (podem sobrescrever as de build)
+      PORT: ${PORT:-3000}
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+      NEXT_PUBLIC_API_URL_V2: ${NEXT_PUBLIC_API_URL_V2:-http://localhost:3000}
+      NEXT_PUBLIC_NEXA_API_URL: ${NEXT_PUBLIC_NEXA_API_URL:-}
+      NEXT_PUBLIC_FILES: ${NEXT_PUBLIC_FILES:-}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+    ports:
+      - "${PORT:-3000}:3000"
+    networks:
+      - sophia-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health/live', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      replicas: ${FRONTEND_REPLICAS:-1}
+      resources:
+        limits:
+          cpus: '${FRONTEND_CPU_LIMIT:-1.0}'
+          memory: ${FRONTEND_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: '${FRONTEND_CPU_RESERVATION:-0.5}'
+          memory: ${FRONTEND_MEMORY_RESERVATION:-256M}
+      update_config:
+        parallelism: ${FRONTEND_UPDATE_PARALLELISM:-1}
+        delay: ${FRONTEND_UPDATE_DELAY:-10s}
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+networks:
+  sophia-network:
+    driver: bridge
+

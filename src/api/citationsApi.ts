@@ -44,7 +44,7 @@ export const CitationsApi = {
             const data = response.data.citations.map(citation => ({
                 'Nº Processo': citation.process?.cnj || '-',
                 'Data Consumo': citation.createdAt ? dayjs(citation.createdAt).format('DD/MM/YYYY HH:mm') : '-',
-                'Texto da Citação': citation.text || '-',
+                'Texto da Citação': citation.text ? String(citation.text).slice(0, 32760) : '-',
                 'Aprovação': citation.approved === null ? 'Pendente' : citation.approved ? 'Aprovada' : 'Reprovada'
             }));
 

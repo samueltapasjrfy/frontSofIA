@@ -45,7 +45,7 @@ export const AudiencesApi = {
                 'Nº Processo': audience.process?.cnj || '-',
                 'Data': audience.date ? dayjs(audience.date).format('DD/MM/YYYY HH:mm') : '-',
                 'Local': audience.location || '-',
-                'Descrição': audience.description || '-',
+                'Descrição': audience.description ? String(audience.description).slice(0, 32760) : '-',
                 'Tipo': audience.type?.type || '-',
                 'Status': audience.status?.status || '-',
                 'Aprovação': audience.approved === null ? 'Pendente' : audience.approved ? 'Aprovada' : 'Reprovada'
