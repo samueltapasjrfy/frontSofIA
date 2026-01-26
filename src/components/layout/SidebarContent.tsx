@@ -160,7 +160,8 @@ export function SidebarContent({
     '01JDSEG2G5PQ1GCX86K3BV8EKR',
     '01JTNVAEYETZAJP0F4X7YQYQBR',
     '01J99YK3X66J2T2A7W9V533TM1',
-    '01K5YH62H49JKX4S18Z9B4AZKB'
+    '01K5YH62H49JKX4S18Z9B4AZKB',
+    '01JQN7HDEEJJD5E4SRJ775E9AC'
   ].includes(user?.companies?.[0]?.id)
   const sentiusHabilitados = ['01JTNVAEYETZAJP0F4X7YQYQBR'].includes(user?.companies?.[0]?.id)
 
@@ -254,7 +255,26 @@ export function SidebarContent({
     sidebarItemsV2.splice(2, 0, {
       icon: <Scale size={20} />,
       label: "Processos",
-      href: "/v2/processos",
+      items: [
+        {
+          label: "Cadastros",
+          href: "/v2/processos/cadastros",
+        },
+        {
+          label: "Monitoramento",
+          href: "/v2/processos/monitoramento",
+        },
+        {
+          label: "Citações",
+          href: "/v2/processos/citacoes",
+          amount: pendingCitationsCount // Example: count for this subitem
+        },
+        {
+          label: "Audiências",
+          href: "/v2/processos/audiencias",
+          amount: pendingAudiencesCount
+        },
+      ]
     });
   }
 
