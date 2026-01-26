@@ -121,7 +121,7 @@ export function RegisterOabModal({ isOpen, onClose, onSave }: RegisterOabModalPr
     // Limpar erro do campo quando atualizado
     if (errors[index]) {
       const newErrors = { ...errors };
-      delete newErrors[index][field];
+      delete newErrors[index][field as keyof typeof newErrors[number]];
       if (Object.keys(newErrors[index]).length === 0) {
         delete newErrors[index];
       }
