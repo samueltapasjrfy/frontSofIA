@@ -29,4 +29,6 @@ export const QUERY_KEYS = {
     AUDIENCES_TOTAL_PENDING: 'audiences_total_pending',
     CITATIONS: 'citations',
     CITATIONS_TOTAL_PENDING: 'citations_total_pending',
+    OABS: 'oabs',
+    OABS_V2: 'oabs_v2',
 } as const;
