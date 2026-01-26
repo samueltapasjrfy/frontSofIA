@@ -2,7 +2,7 @@
 
 import { TablePublicationsV2 } from '@/components/publicationsV2/tablePublicationsv2'
 import { PublicationV2Api } from '@/api/publicationV2Api'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { usePublicationsV2 } from '@/hooks/usePublicationsV2'
 import { HandleEntitiesButtons } from '@/components/handleEntitiesButtons'
 import { ImportPublicationModal } from '@/components/publications/ImportPublicationModal'
@@ -12,6 +12,10 @@ import { Pagination } from '@/components/pagination'
 import { FilterComponent } from './filterComponent'
 import PublicationsV2Stats from '@/components/publicationsV2/stats'
 import { usePublicationsV2Stats } from '@/hooks/usePublicationsV2Stats'
+import { OabManager, OabData } from '@/components/oab/OabManager'
+import { RegisterOabModal } from '@/components/oab/RegisterOabModal'
+import { useOabs } from '@/hooks/useOabs'
+import { STATES } from '@/constants/states'
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -22,8 +26,10 @@ const litigationColumns = {
 export default function PublicationV2Page() {
   const { getPublicationsQuery, changePage, changeLimit, publicationParams, changeFilter, resetFilters, invalidateQuery: invalidateQueryPublications } = usePublicationsV2()
   const { getTotalQuery, getStatisticsQuery, getProcessingStatusQuery, invalidateQueries: invalidateQueriesPublicationsStatus } = usePublicationsV2Stats()
+  const { getOabsQuery, saveOabsMutation, deleteOabMutation, invalidateOabsQuery } = useOabs()
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [isRegisterOabModalOpen, setIsRegisterOabModalOpen] = useState(false)
 
   const resetPageCache = (time: number = 1000) => {
     setTimeout(() => {
@@ -117,8 +123,45 @@ export default function PublicationV2Page() {
     return true;
   }
 
+  const handleSaveOabs = async (oabs: Array<{ oab: string; state: number; name: string }>) => {
+    await saveOabsMutation.mutateAsync({ oabs });
+    invalidateOabsQuery();
+    setIsRegisterOabModalOpen(false);
+  }
+
+  const handleDeleteOab = async (id: string) => {
+    await deleteOabMutation.mutateAsync(id);
+  }
+
+  const handleReloadOabs = () => {
+    invalidateOabsQuery();
+    getOabsQuery.refetch();
+  }
+
+  // Mapear dados da API para formato do componente
+  const oabsData: OabData[] = useMemo(() => {
+    if (!getOabsQuery.data?.oabs) return [];
+
+    return getOabsQuery.data.oabs.map((oab) => ({
+      id: oab.id,
+      oabNumber: oab.oab,
+      state: oab.state,
+      lawyer: oab.lawyer,
+      registrationDate: new Date(oab.registrationDate),
+      publications: oab.totalPublications,
+      status: oab.status,
+    }));
+  }, [getOabsQuery.data]);
+
   return (
     <div className="container mx-auto space-y-6">
+      <OabManager
+        oabs={oabsData}
+        onAddOab={() => setIsRegisterOabModalOpen(true)}
+        onDeleteOab={handleDeleteOab}
+        onReload={handleReloadOabs}
+        loading={getOabsQuery.isLoading}
+      />
       <div className="flex justify-end items-end">
         <HandleEntitiesButtons
           entityName="Publicações"
@@ -218,6 +261,12 @@ export default function PublicationV2Page() {
             variant: ['ID INTERNO', 'ID DA PUBLICAÇÃO'],
           }
         ]}
+      />
+
+      <RegisterOabModal
+        isOpen={isRegisterOabModalOpen}
+        onClose={() => setIsRegisterOabModalOpen(false)}
+        onSave={handleSaveOabs}
       />
     </div>
   )
