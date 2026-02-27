@@ -122,44 +122,54 @@ export const ProcessApi = {
 
             const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
             // Preparar dados para exportação
-            const data = response.data.processes.map(pub => ({
-                'Nº Processo': pub.cnj || '-',
-                'Instância': pub.instance || '-',
-                'Status': pub.imported ? 'Importado' : pub.status?.value || '-',
-                'Data Inserção': pub.createdAt
-                    ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm')
-                    : '-',
-                'Citado': pub.cited ? 'Sim' : 'Não',
-                'Data da Citação': pub.citedAt
-                    ? dayjs(pub.citedAt).format('DD/MM/YYYY')
-                    : '-',
-                'Núcleo': pub.metadata?.nucleo || '-',
-                'Cliente': pub.metadata?.cliente || '-',
-                'Controle Cliente': pub.metadata?.controleCliente || '-',
-                'Autor ou Réu': pub.metadata?.clienteAutorOuReu || '-',
-                'Data Terceirização': pub.metadata?.dataTerceirizacao || '-',
-                'Adv Líder / Responsável': pub.metadata?.advLiderResponsavel || '-',
-                'Data Distribuição': pub.dateDistribution ? dayjs(pub.dateDistribution).format('DD/MM/YYYY') : '-',
-                'Segredo de Justiça': pub.secret ? 'Sim' : 'Não',
-                'Tribunal': pub.jurisdiction || '-',
-                'Juiz': pub.judge || '-',
-                'Valor': pub.value ? Number(pub.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-',
-                'Comarca': pub.judicialDistrict || '-',
-                'Liminar': pub.preliminaryInjunction ? 'Sim' : 'Não',
-                'Foro': pub.foro || '-',
-                'Vara': pub.vara || '-',
-                'UF': pub.uf || '-',
-                'Classes': pub.classes ? pub.classes.join(', ') : '-',
-                'Assunto Extra': pub.extraSubject || '-',
-                'Área': pub.area || '-',
-                'Arquivado': pub.archived ? 'Sim' : 'Não',
-                'Extinto': pub.extinct ? 'Sim' : 'Não',
-                'Justiça Gratuita': pub.legalAid ? 'Sim' : 'Não',
-                'Fonte do Sistema': pub.system || '-',
-                'Tribunal Original': pub.originalCourt || '-',
-                'Natureza': pub.nature || '-',
-                // 'Audiências': pub.audiences ? pub.audiences.map(aud => `${dayjs(aud.date).format('DD/MM/YYYY')}: ${aud.text} (${aud.type}, ${aud.status})`).join('; ') : '-'
-            }));
+            const data = response.data.processes.map(pub => {
+                const hasPartsFound = pub.partFound?.name;
+                let habilitado = '-';
+                if (hasPartsFound) {
+                    habilitado = "Sim";
+                } else if (pub.monitoringParts && !hasPartsFound) {
+                    habilitado = "Não";
+                }
+                return {
+                    'Nº Processo': pub.cnj || '-',
+                    'Instância': pub.instance || '-',
+                    'Status': pub.imported ? 'Importado' : pub.status?.value || '-',
+                    'Data Inserção': pub.createdAt
+                        ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm')
+                        : '-',
+                    'Citado': pub.cited ? 'Sim' : 'Não',
+                    'Data da Citação': pub.citedAt
+                        ? dayjs(pub.citedAt).format('DD/MM/YYYY')
+                        : '-',
+                    'Habilitado': habilitado,
+                    'Núcleo': pub.metadata?.nucleo || '-',
+                    'Cliente': pub.metadata?.cliente || '-',
+                    'Controle Cliente': pub.metadata?.controleCliente || '-',
+                    'Autor ou Réu': pub.metadata?.clienteAutorOuReu || '-',
+                    'Data Terceirização': pub.metadata?.dataTerceirizacao || '-',
+                    'Adv Líder / Responsável': pub.metadata?.advLiderResponsavel || '-',
+                    'Data Distribuição': pub.dateDistribution ? dayjs(pub.dateDistribution).format('DD/MM/YYYY') : '-',
+                    'Segredo de Justiça': pub.secret ? 'Sim' : 'Não',
+                    'Tribunal': pub.jurisdiction || '-',
+                    'Juiz': pub.judge || '-',
+                    'Valor': pub.value ? Number(pub.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-',
+                    'Comarca': pub.judicialDistrict || '-',
+                    'Liminar': pub.preliminaryInjunction ? 'Sim' : 'Não',
+                    'Foro': pub.foro || '-',
+                    'Vara': pub.vara || '-',
+                    'UF': pub.uf || '-',
+                    'Classes': pub.classes ? pub.classes.join(', ') : '-',
+                    'Assunto Extra': pub.extraSubject || '-',
+                    'Área': pub.area || '-',
+                    'Arquivado': pub.archived ? 'Sim' : 'Não',
+                    'Extinto': pub.extinct ? 'Sim' : 'Não',
+                    'Justiça Gratuita': pub.legalAid ? 'Sim' : 'Não',
+                    'Fonte do Sistema': pub.system || '-',
+                    'Tribunal Original': pub.originalCourt || '-',
+                    'Natureza': pub.nature || '-',
+                    // 'Audiências': pub.audiences ? pub.audiences.map(aud => `${dayjs(aud.date).format('DD/MM/YYYY')}: ${aud.text} (${aud.type}, ${aud.status})`).join('; ') : '-'
+                };
+            });
 
             // Preparar dados para a aba de audiências
             const audiencesData: any[] = [];
