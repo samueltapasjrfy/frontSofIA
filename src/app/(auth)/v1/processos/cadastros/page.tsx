@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner"
 import ModalImportData from "@/components/modalImportData/modalImportData";
 import { ProcessTable } from "@/components/process/ProcessTable";
-import { ImportProcessData, RegisterProcessModal } from "@/components/process/ImportProcessModal";
+import { ImportProcessData, ImportProcessOptions, RegisterProcessModal } from "@/components/process/ImportProcessModal";
 import { useProcesses } from "@/hooks/useProcess";
 import { ProcessApi } from "@/api/processApi";
 import { ProcessStats } from "@/components/process/ProcessStats";
@@ -11,6 +11,90 @@ import { HandleEntitiesButtons } from "@/components/handleEntitiesButtons";
 import { cn } from "@/utils/cn";
 import { Check, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+
+function AcoesStepContent({
+  acoesMode,
+  setAcoesMode,
+  buscarDadosProcessos,
+  setBuscarDadosProcessos,
+  monitorarProcessos,
+  setMonitorarProcessos,
+  onContinue,
+}: {
+  acoesMode: 'padrao' | 'monitorarPartes';
+  setAcoesMode: (v: 'padrao' | 'monitorarPartes') => void;
+  buscarDadosProcessos: boolean;
+  setBuscarDadosProcessos: (v: boolean) => void;
+  monitorarProcessos: boolean;
+  setMonitorarProcessos: (v: boolean) => void;
+  onContinue: () => void;
+}) {
+  const canContinue =
+    acoesMode === 'monitorarPartes' ||
+    buscarDadosProcessos ||
+    monitorarProcessos;
+  const checkboxesDisabled = acoesMode === 'monitorarPartes';
+  return (
+    <div className="space-y-6">
+      <div className="flex w-full">
+        <div className="flex flex-col gap-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="radio"
+              name="acoes-mode"
+              checked={acoesMode === 'padrao'}
+              onChange={() => setAcoesMode('padrao')}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span>Padrão</span>
+          </label>
+          {acoesMode === 'padrao' && (
+            <div className="flex flex-col gap-3 ml-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={buscarDadosProcessos}
+                  onCheckedChange={(v) => setBuscarDadosProcessos(v)}
+                  disabled={checkboxesDisabled}
+                />
+                <span>Buscar dados dos processos</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={monitorarProcessos}
+                  onCheckedChange={(v) => setMonitorarProcessos(v)}
+                  disabled={checkboxesDisabled}
+                />
+                <span>Monitorar Processos</span>
+              </label>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 flex justify-center items-start">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="radio"
+              name="acoes-mode"
+              checked={acoesMode === 'monitorarPartes'}
+              onChange={() => setAcoesMode('monitorarPartes')}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span>Monitorar Partes</span>
+          </label>
+        </div>
+      </div>
+      <div className="flex justify-end mt-6">
+        <Button
+          variant="default"
+          onClick={onContinue}
+          disabled={!canContinue}
+        >
+          Continuar
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -65,8 +149,10 @@ export default function ProcessesPage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isRemoveMonitoringModalOpen, setIsRemoveMonitoringModalOpen] = useState(false);
-  const [isActivateMonitoringBulkModalOpen, setIsActivateMonitoringBulkModalOpen] = useState(false);
   const [isUpdateStatusBulkModalOpen, setIsUpdateStatusBulkModalOpen] = useState(false);
+  const [acoesMode, setAcoesMode] = useState<'padrao' | 'monitorarPartes'>('padrao');
+  const [buscarDadosProcessos, setBuscarDadosProcessos] = useState(false);
+  const [monitorarProcessos, setMonitorarProcessos] = useState(false);
   const { invalidateProcessesQuery, invalidateReport, saveProcesses } = useProcesses();
 
   const onRefresh = async () => {
@@ -91,10 +177,6 @@ export default function ProcessesPage() {
     setIsRemoveMonitoringModalOpen(true);
   };
 
-  const handleOpenActivateMonitoringBulkModal = () => {
-    setIsActivateMonitoringBulkModalOpen(true);
-  };
-
   const handleOpenUpdateStatusBulkModal = () => {
     setIsUpdateStatusBulkModalOpen(true);
   };
@@ -107,7 +189,7 @@ export default function ProcessesPage() {
       processes: rows.map((row: { [k: string]: string }) => ({
         cnj: row[expectedColumnsToRows[litigationColumns.litigation]],
         metadata: {
-          idInternal: row[expectedColumnsToRows[litigationColumns.idInternal]],
+          idInternal: row[expectedColumnsToRows[litigationColumns.idInternal]] || undefined,
           controleCliente: row[expectedColumnsToRows[litigationColumns.controlClient]] || undefined,
           cliente: row[expectedColumnsToRows[litigationColumns.clientName]] || undefined,
           advLiderResponsavel: row[expectedColumnsToRows[litigationColumns.advLiderResponsavel]] || undefined,
@@ -116,8 +198,9 @@ export default function ProcessesPage() {
           clienteAutorOuReu: row[expectedColumnsToRows[litigationColumns.clienteAutorOuReu]] || undefined,
         },
       })),
-      monitoring: true,
-      registration: true,
+      monitoring: acoesMode === 'padrao' ? monitorarProcessos : false,
+      registration: acoesMode === 'padrao' ? buscarDadosProcessos : false,
+      monitoringParts: acoesMode === 'monitorarPartes',
     };
     const response = await ProcessApi.save(params);
     if (response.error) {
@@ -130,37 +213,7 @@ export default function ProcessesPage() {
     return true;
   };
 
-  const handleFinishActivateMonitoringBulk = async (
-    rows: Array<{ [k: string]: string }>,
-    expectedColumnsToRows: { [k: string]: string },
-  ): Promise<boolean> => {
-    const params: ProcessApi.Save.Params = {
-      processes: rows.map((row: { [k: string]: string }) => ({
-        cnj: row[expectedColumnsToRows[litigationColumns.litigation]],
-        metadata: {
-          controleCliente: row[expectedColumnsToRows[litigationColumns.controlClient]] || undefined,
-          cliente: row[expectedColumnsToRows[litigationColumns.clientName]] || undefined,
-          advLiderResponsavel: row[expectedColumnsToRows[litigationColumns.advLiderResponsavel]] || undefined,
-          nucleo: row[expectedColumnsToRows[litigationColumns.nucleo]] || undefined,
-          dataTerceirizacao: row[expectedColumnsToRows[litigationColumns.dataTerceirizacao]] || undefined,
-          clienteAutorOuReu: row[expectedColumnsToRows[litigationColumns.clienteAutorOuReu]] || undefined,
-        },
-      })),
-      monitoring: true,
-      registration: false,
-    };
-    const response = await ProcessApi.save(params);
-    if (response.error) {
-      toast.error(response.message || "Erro ao ativar monitoramento");
-      return false;
-    }
-    toast.success("Monitoramento ativado com sucesso");
-    setIsImportModalOpen(false);
-    setTimeout(onRefresh, 1000);
-    return true;
-  };
-
-  const handleSaveProtocol = async (data: ImportProcessData): Promise<boolean> => {
+  const handleSaveProtocol = async (data: ImportProcessData, options: ImportProcessOptions): Promise<boolean> => {
     const response = await saveProcesses({
       processes: [{
         cnj: data.litigationNumber,
@@ -174,8 +227,9 @@ export default function ProcessesPage() {
           clienteAutorOuReu: data.clienteAutorOuReu,
         },
       }],
-      monitoring: true,
-      registration: true,
+      monitoring: options.monitoring,
+      registration: options.registration,
+      monitoringParts: options.monitoringParts,
     });
     if (response.error) {
       toast.error(response.message || "Erro ao registrar processo");
@@ -234,14 +288,6 @@ export default function ProcessesPage() {
           otherButtons={
             <>
               <Button
-                onClick={handleOpenActivateMonitoringBulkModal}
-                variant="outline"
-                className="bg-primary-white hover:bg-primary-white text-primary-blue border border-primary-blue"
-              >
-                <Check className="h-4 w-4 mr-2" />
-                Ativar Monitoramento
-              </Button>
-              <Button
                 onClick={handleOpenRemoveModal}
                 variant="outline"
                 className={cn(
@@ -281,6 +327,20 @@ export default function ProcessesPage() {
         setIsModalOpen={setIsImportModalOpen}
         title="Importar Processos"
         finish={handleFinishImport}
+        firstStep={{
+          label: "Ações",
+          render: ({ onContinue }) => (
+            <AcoesStepContent
+              acoesMode={acoesMode}
+              setAcoesMode={setAcoesMode}
+              buscarDadosProcessos={buscarDadosProcessos}
+              setBuscarDadosProcessos={setBuscarDadosProcessos}
+              monitorarProcessos={monitorarProcessos}
+              setMonitorarProcessos={setMonitorarProcessos}
+              onContinue={onContinue}
+            />
+          ),
+        }}
         docExampleUrl={`${process.env.NEXT_PUBLIC_FILES}/exemplos/importar_processos_exemplo.xlsx`}
         expectedColumns={[
           {
@@ -294,22 +354,6 @@ export default function ProcessesPage() {
             example: '1234567890',
             previewWidth: 200,
             variant: ['ID INTERNO', 'ID DA PUBLICAÇÃO'],
-          },
-          ...metadataColumns,
-        ]}
-      />
-      <ModalImportData
-        isModalOpen={isActivateMonitoringBulkModalOpen}
-        setIsModalOpen={setIsActivateMonitoringBulkModalOpen}
-        title="Ativar Monitoramento"
-        finish={handleFinishActivateMonitoringBulk}
-        docExampleUrl={`${process.env.NEXT_PUBLIC_FILES}/exemplos/ativar_monitoramento_exemplo.xlsx`}
-        expectedColumns={[
-          {
-            key: litigationColumns.litigation,
-            example: '0001234-56.2024.8.26.0001',
-            previewWidth: 200,
-            variant: ['NÚMERO DO PROCESSO', 'PROCESSO', 'LITIGATION', 'NUMBER'],
           },
           ...metadataColumns,
         ]}

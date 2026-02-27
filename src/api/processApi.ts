@@ -438,6 +438,12 @@ export namespace ProcessApi {
                 id: string;
                 name: string;
             } | null;
+            monitoringParts: boolean,
+            monitoredParts: boolean,
+            partFound?: {
+                name: string,
+                document: string
+            },
             imported: boolean;
             idBatch: string
             instance: number;
@@ -577,6 +583,7 @@ export namespace ProcessApi {
             }[];
             monitoring: boolean;
             registration: boolean;
+            monitoringParts?: boolean;
         };
 
         export type Response = {
