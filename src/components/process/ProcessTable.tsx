@@ -329,6 +329,24 @@ export function ProcessTable({
       )
     },
     {
+      key: 'monitoringParts',
+      label: 'Habilitado',
+      className: 'font-semibold text-gray-700 w-[10%] py-3',
+      render: (process) => {
+        const hasPartsFound = process.partFound?.name;
+        if (!process.monitoredParts || (!process.monitoringParts && !hasPartsFound)) {
+          return <Badge className={cn("bg-gray-500", "font-medium")}>
+            -
+          </Badge>;
+        }
+        return (
+          <Badge className={cn(hasPartsFound ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
+            {hasPartsFound ? "Sim" : "Não"}
+          </Badge>
+        )
+      }
+    },
+    {
       key: 'status',
       label: 'Status',
       className: 'font-semibold text-gray-700 text-center w-[10%] py-3',
@@ -381,7 +399,7 @@ export function ProcessTable({
           >
             <Info className="h-4 w-4" />
           </Button>
-          {process.monitoring ? (
+          {(process.monitoring || process.monitoringParts) ? (
             <PopConfirm
               title="Desativar monitoramento"
               description="Tem certeza que deseja desativar o monitoramento deste processo?"
