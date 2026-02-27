@@ -17,11 +17,12 @@ import { DialogTitle } from "@radix-ui/react-dialog";
 import { ModalImportFormStepper } from "./modalImportFormStepper";
 import { toast } from "sonner";
 
-enum STEPS {
-  UPLOAD_FILE = 1,
-  VALIDATE_COLUMNS = 2,
-  VALIDATE_DATE = 3,
-}
+const STEPS = {
+  FIRST_STEP: 0,
+  UPLOAD_FILE: 1,
+  VALIDATE_COLUMNS: 2,
+  VALIDATE_DATE: 3,
+} as const;
 
 interface VerifyColumnsResponse {
   columns: { [k: string]: string };
@@ -43,6 +44,10 @@ interface ModalImportDataProps {
     previewWidth?: number;
     variant?: string[];
   }[];
+  firstStep?: {
+    label: string;
+    render: (props: { onContinue: () => void }) => React.ReactNode;
+  };
 }
 
 const ModalImportData = ({
@@ -52,18 +57,22 @@ const ModalImportData = ({
   expectedColumns,
   finish,
   docExampleUrl,
+  firstStep,
 }: ModalImportDataProps) => {
+  const hasFirstStep = !!firstStep;
+  const initialStep = hasFirstStep ? STEPS.FIRST_STEP : STEPS.UPLOAD_FILE;
+
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [btnDisabled, setBtnDisabled] = useState(true);
-  const [currentStep, setCurrentStep] = useState(STEPS.UPLOAD_FILE);
+  const [currentStep, setCurrentStep] = useState<number>(initialStep);
   const [errorStep, setErrorStep] = useState<number | undefined>(undefined);
   const [rows, setRows] = useState<Array<{ [k: string]: string }>>([]);
   const [expectedColumnsToRows, setExpectedColumnsToRows] = useState<{ [k: string]: string }>({});
 
   const handleCancel = () => {
-    setCurrentStep(STEPS.UPLOAD_FILE);
+    setCurrentStep(initialStep);
     setErrorStep(undefined);
     setErrorMessage('');
     setIsModalOpen(false);
@@ -154,6 +163,8 @@ const ModalImportData = ({
       setCurrentStep(STEPS.VALIDATE_COLUMNS);
     } else if (currentStep === STEPS.VALIDATE_COLUMNS) {
       setCurrentStep(STEPS.UPLOAD_FILE);
+    } else if (currentStep === STEPS.UPLOAD_FILE && hasFirstStep) {
+      setCurrentStep(STEPS.FIRST_STEP);
     }
   };
 
@@ -208,7 +219,7 @@ const ModalImportData = ({
   }, [rows]);
 
 
-  const itemsSteps: {
+  const baseSteps: {
     title: string;
     status: "wait" | "process" | "finish" | "error";
   }[] = [
@@ -247,6 +258,22 @@ const ModalImportData = ({
       },
     ];
 
+  const firstStepItem = firstStep ? [{
+    title: firstStep.label,
+    status: (
+      errorStep === STEPS.FIRST_STEP
+        ? 'error'
+        : currentStep === STEPS.FIRST_STEP
+          ? 'process'
+          : currentStep > STEPS.FIRST_STEP
+            ? 'finish'
+            : 'wait'
+    ) as "wait" | "process" | "finish" | "error",
+  }] : [];
+
+  const itemsSteps = [...firstStepItem, ...baseSteps];
+  const currentStepTitle = itemsSteps[hasFirstStep ? currentStep : currentStep - 1]?.title ?? itemsSteps[0].title;
+
   return (
     <Dialog
       open={isModalOpen}
@@ -260,7 +287,7 @@ const ModalImportData = ({
         </DialogHeader>
         <div className="p-6">
           <ModalImportFormStepper
-            currentStep={String(currentStep)}
+            currentStep={currentStepTitle}
             steps={itemsSteps.map((step) => ({
               id: step.title,
               name: step.title,
@@ -269,6 +296,12 @@ const ModalImportData = ({
           />
 
           <div className="mt-6  max-w-[1100px] overflow-x-auto">
+            {currentStep === STEPS.FIRST_STEP && firstStep && (
+              firstStep.render({
+                onContinue: () => setCurrentStep(STEPS.UPLOAD_FILE),
+              })
+            )}
+
             {currentStep === STEPS.UPLOAD_FILE && (
               <>
                 <div className="flex items-center justify-between mb-4">
@@ -421,13 +454,15 @@ const ModalImportData = ({
 
             {errorMessage && <p className="text-red-600 my-4">{errorMessage}</p>}
 
+            {currentStep !== STEPS.FIRST_STEP && (
             <div className="flex justify-between mt-6">
               <Button
                 variant="default"
                 onClick={handleBack}
                 disabled={loading}
                 className={
-                  [STEPS.VALIDATE_DATE, STEPS.VALIDATE_COLUMNS].includes(currentStep)
+                  (currentStep === STEPS.VALIDATE_DATE || currentStep === STEPS.VALIDATE_COLUMNS) ||
+                  (currentStep === STEPS.UPLOAD_FILE && hasFirstStep)
                     ? 'flex'
                     : 'hidden'
                 }
@@ -463,6 +498,7 @@ const ModalImportData = ({
                 Importar
               </Button>
             </div>
+            )}
           </div>
         </div>
       </DialogContent>

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Upload, AlertCircle } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { GetBgColor } from "../layout/GetBgColor";
@@ -28,10 +29,16 @@ export type ImportProcessData = {
   clienteAutorOuReu?: string;
 }
 
+export type ImportProcessOptions = {
+  monitoring: boolean;
+  registration: boolean;
+  monitoringParts: boolean;
+};
+
 interface RegisterProcessModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (data: ImportProcessData) => Promise<boolean>;
+  onImport: (data: ImportProcessData, options: ImportProcessOptions) => Promise<boolean>;
 }
 
 export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProcessModalProps) {
@@ -43,14 +50,21 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
   const [nucleo, setNucleo] = useState("");
   const [dataTerceirizacao, setDataTerceirizacao] = useState("");
   const [clienteAutorOuReu, setClienteAutorOuReu] = useState("");
-  const [errors, setErrors] = useState<{ litigationNumber?: string }>({});
+  const [acoesMode, setAcoesMode] = useState<'padrao' | 'monitorarPartes'>('padrao');
+  const [buscarDadosProcessos, setBuscarDadosProcessos] = useState(false);
+  const [monitorarProcessos, setMonitorarProcessos] = useState(false);
+  const [errors, setErrors] = useState<{ litigationNumber?: string; acoes?: string }>({});
   const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
   const validateForm = () => {
-    const newErrors: { litigationNumber?: string } = {};
+    const newErrors: { litigationNumber?: string; acoes?: string } = {};
 
     if (!litigationNumber.trim()) {
       newErrors.litigationNumber = "Número do processo é obrigatório";
+    }
+
+    if (acoesMode === 'padrao' && !buscarDadosProcessos && !monitorarProcessos) {
+      newErrors.acoes = "Selecione ao menos uma opção (Buscar dados dos processos ou Monitorar Processos)";
     }
 
     setErrors(newErrors);
@@ -59,6 +73,11 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+    const options: ImportProcessOptions = {
+      monitoring: acoesMode === 'padrao' ? monitorarProcessos : false,
+      registration: acoesMode === 'padrao' ? buscarDadosProcessos : false,
+      monitoringParts: acoesMode === 'monitorarPartes',
+    };
     const success = await onImport({
       litigationNumber,
       idInternal: idInternal || undefined,
@@ -68,7 +87,7 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
       nucleo: nucleo || undefined,
       dataTerceirizacao: dataTerceirizacao || undefined,
       clienteAutorOuReu: clienteAutorOuReu || undefined
-    });
+    }, options);
     if (!success) return;
     resetForm();
   };
@@ -82,8 +101,16 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
     setNucleo("");
     setDataTerceirizacao("");
     setClienteAutorOuReu("");
+    setAcoesMode('padrao');
+    setBuscarDadosProcessos(false);
+    setMonitorarProcessos(false);
     setErrors({});
   };
+
+  const canSubmit =
+    acoesMode === 'monitorarPartes' ||
+    buscarDadosProcessos ||
+    monitorarProcessos;
 
   const handleClose = () => {
     resetForm();
@@ -207,6 +234,60 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
             </div>
           </div>
 
+          <div className="border-t pt-4 mt-4">
+            <label className="text-sm font-medium text-gray-700 mb-3 block">Ações</label>
+            <div className="flex w-full gap-4">
+              <div className="flex flex-col gap-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="acoes-mode-register"
+                    checked={acoesMode === 'padrao'}
+                    onChange={() => setAcoesMode('padrao')}
+                    className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Padrão</span>
+                </label>
+                {acoesMode === 'padrao' && (
+                  <div className="flex flex-col gap-3 ml-6">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={buscarDadosProcessos}
+                        onCheckedChange={(v) => setBuscarDadosProcessos(v)}
+                      />
+                      <span>Buscar dados dos processos</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={monitorarProcessos}
+                        onCheckedChange={(v) => setMonitorarProcessos(v)}
+                      />
+                      <span>Monitorar Processos</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 flex justify-center items-start">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="acoes-mode-register"
+                    checked={acoesMode === 'monitorarPartes'}
+                    onChange={() => setAcoesMode('monitorarPartes')}
+                    className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Monitorar Partes</span>
+                </label>
+              </div>
+            </div>
+            {errors.acoes && (
+              <div className="flex items-center text-red-500 text-sm mt-2">
+                <AlertCircle className="h-4 w-4 mr-1 shrink-0" />
+                {errors.acoes}
+              </div>
+            )}
+          </div>
+
         </div>
 
         <DialogFooter>
@@ -215,6 +296,7 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
           </Button>
           <Button
             onClick={handleSubmit}
+            disabled={!canSubmit}
             className={cn(
               "text-white",
               GetBgColor(user?.companies?.[0]?.id, true)
