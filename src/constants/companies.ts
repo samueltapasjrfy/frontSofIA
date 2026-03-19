@@ -1,0 +1,3 @@
+export const COMPANIES = {
+    FC: '01JDSEG2G5PQ1GCX86K3BV8EKR',
+}
