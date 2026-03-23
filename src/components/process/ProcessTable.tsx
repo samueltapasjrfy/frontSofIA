@@ -22,7 +22,6 @@ import {
   MonitorOff,
   Monitor,
   ChevronDown,
-  MoreVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
@@ -52,6 +51,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TruncateText } from "../truncateText";
 import ModalViewText from "../modalViewText";
+import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
+import { LoginResponse } from "@/api/authApi";
 
 interface ProcessTableProps {
   onRefresh: () => Promise<void>;
@@ -82,6 +83,8 @@ export function ProcessTable({
   const [selectedProcesses, setSelectedProcesses] = useState<Map<string, { id: string; cnj: string }>>(new Map());
   const [isPerformingAction, setIsPerformingAction] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
+
+  const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
   const getProcessStatusColor = (status: number) => {
     return processStatusColors[status] || processStatusColors.default;
@@ -519,12 +522,13 @@ export function ProcessTable({
       initialDate = dayjs(d.from).format("YYYY-MM-DD");
       finalDate = dayjs(d.to).format("YYYY-MM-DD");
     }
+
     try {
       await ProcessApi.exportToXLSX({
         ...filters,
         initialDate,
-        finalDate
-      });
+        finalDate,
+      }, user);
       toast.success('Arquivo exportado com sucesso!');
     } catch {
       toast.error('Erro ao exportar arquivo');
