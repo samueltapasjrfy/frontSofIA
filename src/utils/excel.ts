@@ -157,35 +157,48 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
         const autorPart = parties.find(party => ['autor', 'parte ativa'].includes(normalizeString(party.type || ''))) ?? null;
         const reuPart = parties.find(party => ['reu', 'parte passiva'].includes(normalizeString(party.type || ''))) ?? null;
 
+        console.log({
+            area: process.area, 
+            areaInfo: process.metadata?.areasFC, 
+            nature: process.nature,
+            natureInfo: process.metadata?.naturesFC, 
+            client: process.metadata?.cliente,
+            advLider: process.metadata?.advLiderResponsavel,
+            advLiderInfo: process.metadata?.advogadosFC, 
+            nucleo: process.metadata?.nucleo,
+            nucleoInfo: process.metadata?.nucleosFC, 
+            comarca: process.judicialDistrict,
+            comarcaInfo: process.metadata?.judicialDistrictsFC, 
+        })
         return {
             'Dt_cadastro_pasta': new Date().toLocaleDateString(),
-            'User_cadastro_pasta': user.user.name,
+            'User_cadastro_pasta': "Cadastro automatizado Jurify",
             'NumProcessoCNJ': process.cnj || '',
             'PROCESSO': process.cnj || '',
             'Controle cliente': process.metadata?.controleCliente || '',
             'PROCESSO_NOVO': process.cnj || '',
             'Status': !process.archived && !process.extinct ? 1 : 0,
             'VARA': process.vara || '',
-            'Cod_Competencia': '', //tbjurisdicao
-            'Competência': '', //tbjurisdicao
+            'Cod_Competencia': process.metadata?.areasFC?.id ?? '', //tbjurisdicao
+            'Competência': process.area, //tbjurisdicao
             'Cod_Segmento': '',
-            'CodTipoAcao': '', //tbtipoprocesso
-            'Tipo Ação': '', //tbtipoprocesso
-            'Cód_Cliente': '', //tbcliente -> Informado no import
-            'Nome_cliente': '', //tbcliente -> Informado no import
-            'Cod_Adv/Líder_responsável': '', //tbadvogados - coluna "tipo" tudo que tipo = lider so posso ter o nucleo "massificado" -> Informado no import
-            'Adv/Líder_responsável': '', //tbadvogados - coluna "tipo" tudo que tipo = lider so posso ter o nucleo "massificado" -> Informado no import
-            'Cod_Nucleo_Pasta': '', //tbtiponucleo - coluna tipo m = massificado / p = personalizado
+            'CodTipoAcao': process.metadata?.naturesFC?.id ?? '', //tbtipoprocesso
+            'Tipo Ação': process.nature, //tbtipoprocesso
+            'Cód_Cliente': process.metadata?.controleCliente ?? '', //tbcliente -> Informado no import
+            'Nome_cliente': process.metadata?.cliente ?? '', //tbcliente -> Informado no import
+            'Cod_Adv/Líder_responsável': process.metadata?.advogadosFC?.id ?? '', //tbadvogados - coluna "tipo" tudo que tipo = lider so posso ter o nucleo "massificado" -> Informado no import
+            'Adv/Líder_responsável': process.metadata?.advLiderResponsavel ?? '', //tbadvogados - coluna "tipo" tudo que tipo = lider so posso ter o nucleo "massificado" -> Informado no import
+            'Cod_Nucleo_Pasta': process.metadata?.nucleosFC?.id ?? '', //tbtiponucleo - coluna tipo m = massificado / p = personalizado
             'COMARCA': process.judicialDistrict, //tbcomarcas,
-            'Cód_Comarca': '', //tbcomarcas,
+            'Cód_Comarca': process.metadata?.judicialDistrictsFC?.id ?? '', //tbcomarcas,
             'DtTerceirização': !isNaN(new Date(process.metadata?.dataTerceirizacao).getTime()) ? process.metadata?.dataTerceirizacao : '',
-            'Cod_Autor': '', //tbpartes ?
+            'Cod_Autor': autorPart ? autorPart.parteFC?.id : '', //tbpartes ?
             'Autor': autorPart ? autorPart.name : '', //tbpartes 
-            'tipo_parte': '', //tbpartes (ajustar para o Max receber como "AUTOR" ou "RÉU") -> Autor,né?,
+            'tipo_parte': '1', //1 = Autor
             'CPF-CNPJ_PARTE_CONTRARIA': reuPart ? reuPart.document : '',
             'Nome_ Reu': reuPart ? reuPart.name : '', //filtrar por data.subjects.part.subjectType "Parte Passiva"
-            'Cod_Reu': '',  //tbpartes ?
-            'tipo_parte ': '', //tbpartesprocesso (tipo_parte anterior está tbpartes) (ajustar para o Max receber como "AUTOR" ou "RÉU"). Réu, né?
+            'Cod_Reu': reuPart ? reuPart.parteFC?.id : '',  //tbpartes ?
+            'tipo_parte ': '7', //7 = Réu
             'cliente? Se o cliente é o Autor ou Réu': process.metadata?.clienteAutorOuReu, //Adaptar para tbpartesprocesso ?
             'Data_andamento': process.lastMovement,
             'Cobrável':'',
@@ -211,9 +224,9 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
             'Valor_causa': process.value,
             'Data_distribuição': isNaN(new Date(process.distribuited).getTime()) ? dayjs(process.distribuited).format('DD/MM/YYYY') : '-',
             'observação': '',
-            'Cod_filial': '', //tbcomarcas
-            'COD_CORRESP': '', //tbcomarcas
-            'CORRESPONDENTE': '', //tbcomarcas
+            'Cod_filial': process.metadata?.judicialDistrictsFC?.idFilial ?? '', //tbcomarcas
+            'COD_CORRESP': process.metadata?.judicialDistrictsFC?.idCorrespondente ?? '', //tbcomarcas
+            'CORRESPONDENTE': process.metadata?.judicialDistrictsFC?.nameCorrespondente ?? '', //tbcomarcas
             'Num_contrato': '',
             'Cod_Rating': '',
             'RATING': '',
@@ -222,6 +235,8 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
 
     // Preparar dados para a aba de audiências
     const movements: any[] = [];
+    const partiesData: any[] = [];
+
     response.processes.forEach(proc => {
         if (proc.audiences && proc.audiences.length > 0) {
             proc.audiences.forEach(aud => {
@@ -241,18 +256,13 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
                 });
             });
         }
-    });
-
-    // Preparar dados para a aba de partes contrárias
-    const partiesData: any[] = [];
-    response.processes.forEach(proc => {
         if (proc.parties && proc.parties.length > 0) {
             proc.parties.forEach(party => {
                 partiesData.push({
                     'CNJ': proc.cnj || '-',
                     'Nome da Parte': party.name || '-',
                     'Polo': party.type,
-                    'Indicador de Cliente': 'Não', //Implementar,
+                    'Indicador de Cliente': party.name.toLowerCase() === proc.metadata?.cliente?.toLowerCase() ? 'Sim' : 'Não',
                     'Documentos': party.document || '-',
                 });
             });
@@ -277,20 +287,22 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
     XLSX.utils.book_append_sheet(wb, mainWs, 'Processos');
 
     // Planilha de audiências
+    let movementsWs: XLSX.WorkSheet = XLSX.utils.json_to_sheet([]);
     if (movements.length > 0) {
-        const audiencesWs = XLSX.utils.json_to_sheet(movements);
+        movementsWs = XLSX.utils.json_to_sheet(movements);
         const audiencesColWidths = [
             { wch: 25 }, // CNJ
             { wch: 20 }, // ID Andamento MAX
             { wch: 40 }, // Texto do Andamento
         ];
-        audiencesWs['!cols'] = audiencesColWidths;
-        XLSX.utils.book_append_sheet(wb, audiencesWs, 'Andamentos');
+        movementsWs['!cols'] = audiencesColWidths;
     }
+    XLSX.utils.book_append_sheet(wb, movementsWs, 'Andamentos');
 
     // Planilha de partes contrárias
+    let partiesWs: XLSX.WorkSheet = XLSX.utils.json_to_sheet([]);
     if (partiesData.length > 0) {
-        const partiesWs = XLSX.utils.json_to_sheet(partiesData);
+        partiesWs = XLSX.utils.json_to_sheet(partiesData);
         const partiesColWidths = [
             { wch: 25 }, // CNJ
             { wch: 40 }, // Nome da Parte
@@ -299,8 +311,8 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
             { wch: 20 }, // Documentos
         ];
         partiesWs['!cols'] = partiesColWidths;
-        XLSX.utils.book_append_sheet(wb, partiesWs, 'Partes');
     }
+    XLSX.utils.book_append_sheet(wb, partiesWs, 'Partes');
 
     return wb;
 }

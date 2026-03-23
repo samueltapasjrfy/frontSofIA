@@ -138,7 +138,7 @@ export const ProcessApi = {
             });
 
             // Nome do arquivo com timestamp
-            const fileName = `processos_${dayjs().format('YYYY-MM-DD_HH-mm')}.xlsx`;
+            const fileName = `exportacao_painel_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
 
             saveAs(dataBlob, fileName);
         } catch (error) {
@@ -362,6 +362,11 @@ export namespace ProcessApi {
                 name: string;
                 document: string | null;
                 type: string;
+                parteFC?: {
+                    id: number;
+                    name: string;
+                    document: string;
+                };
             }[];
             citations: {
                 id: number;
