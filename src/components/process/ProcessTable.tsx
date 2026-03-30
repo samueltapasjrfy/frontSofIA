@@ -323,8 +323,8 @@ export function ProcessTable({
       label: 'Monitorado',
       className: 'font-semibold text-gray-700 w-[10%] py-3',
       render: (process) => (
-        <Badge className={cn(process.addedToMonitoring ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
-          {process.addedToMonitoring ? "Sim" : "Não"}
+        <Badge className={cn((process.addedToMonitoring || process.monitored) ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
+          {(process.addedToMonitoring || process.monitored) ? "Sim" : "Não"}
         </Badge>
       )
     },
@@ -334,7 +334,7 @@ export function ProcessTable({
       className: 'font-semibold text-gray-700 w-[10%] py-3',
       render: (process) => {
         const hasPartsFound = process.partFound?.name;
-        if (!process.monitoredParts || (!process.monitoringParts && !hasPartsFound)) {
+        if (!hasPartsFound && !process.monitoringParts && !process.monitoredParts && !process.registrationParts) {
           return <Badge className={cn("bg-gray-500", "font-medium")}>
             -
           </Badge>;
