@@ -177,7 +177,7 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
             'PROCESSO': process.cnj || '',
             'Controle cliente': process.metadata?.controleCliente || '',
             'PROCESSO_NOVO': process.cnj || '',
-            'Status': !process.archived && !process.extinct ? 1 : 0,
+            'Status': 1,
             'VARA': process.vara || '',
             'Cod_Competencia': process.metadata?.areasFC?.id ?? '', //tbjurisdicao
             'Competência': process.area, //tbjurisdicao
