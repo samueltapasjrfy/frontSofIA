@@ -222,7 +222,7 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
             'Data_cad_prazo': '',
             'Hora_cad_prazo': '',
             'Valor_causa': process.value,
-            'Data_distribuição': isNaN(new Date(process.distribuited).getTime()) ? dayjs(process.distribuited).format('DD/MM/YYYY') : '-',
+            'Data_distribuição': process.dateDistribution && !isNaN(new Date(process.dateDistribution).getTime()) ? dayjs(process.dateDistribution).format('DD/MM/YYYY') : '',
             'observação': '',
             'Cod_filial': process.metadata?.judicialDistrictsFC?.idFilial ?? '', //tbcomarcas
             'COD_CORRESP': process.metadata?.judicialDistrictsFC?.idCorrespondente ?? '', //tbcomarcas
