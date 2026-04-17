@@ -21,6 +21,7 @@ import { LoginResponse } from "@/api/authApi";
 export type ImportProcessData = {
   litigationNumber: string;
   idInternal?: string;
+  clientCode?: string;
   controlClient?: string;
   clientName?: string;
   advLiderResponsavel?: string;
@@ -33,6 +34,7 @@ export type ImportProcessOptions = {
   monitoring: boolean;
   registration: boolean;
   monitoringParts: boolean;
+  registrationParts: boolean;
 };
 
 interface RegisterProcessModalProps {
@@ -44,15 +46,17 @@ interface RegisterProcessModalProps {
 export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProcessModalProps) {
   const [litigationNumber, setLitigationNumber] = useState("");
   const [idInternal, setIdInternal] = useState("");
+  const [clientCode, setClientCode] = useState("");
   const [controlClient, setControlClient] = useState("");
   const [clientName, setClientName] = useState("");
   const [advLiderResponsavel, setAdvLiderResponsavel] = useState("");
   const [nucleo, setNucleo] = useState("");
   const [dataTerceirizacao, setDataTerceirizacao] = useState("");
   const [clienteAutorOuReu, setClienteAutorOuReu] = useState("");
-  const [acoesMode, setAcoesMode] = useState<'padrao' | 'monitorarPartes'>('padrao');
   const [buscarDadosProcessos, setBuscarDadosProcessos] = useState(false);
   const [monitorarProcessos, setMonitorarProcessos] = useState(false);
+  const [monitorarPartes, setMonitorarPartes] = useState(false);
+  const [verificarHabilitacao, setVerificarHabilitacao] = useState(false);
   const [errors, setErrors] = useState<{ litigationNumber?: string; acoes?: string }>({});
   const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
@@ -63,8 +67,8 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
       newErrors.litigationNumber = "Número do processo é obrigatório";
     }
 
-    if (acoesMode === 'padrao' && !buscarDadosProcessos && !monitorarProcessos) {
-      newErrors.acoes = "Selecione ao menos uma opção (Buscar dados dos processos ou Monitorar Processos)";
+    if (!buscarDadosProcessos && !monitorarProcessos && !monitorarPartes && !verificarHabilitacao) {
+      newErrors.acoes = "Selecione ao menos uma ação";
     }
 
     setErrors(newErrors);
@@ -74,13 +78,15 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
   const handleSubmit = async () => {
     if (!validateForm()) return;
     const options: ImportProcessOptions = {
-      monitoring: acoesMode === 'padrao' ? monitorarProcessos : false,
-      registration: acoesMode === 'padrao' ? buscarDadosProcessos : false,
-      monitoringParts: acoesMode === 'monitorarPartes',
+      monitoring: monitorarProcessos,
+      registration: buscarDadosProcessos,
+      monitoringParts: monitorarPartes,
+      registrationParts: verificarHabilitacao,
     };
     const success = await onImport({
       litigationNumber,
       idInternal: idInternal || undefined,
+      clientCode: clientCode || undefined,
       controlClient: controlClient || undefined,
       clientName: clientName || undefined,
       advLiderResponsavel: advLiderResponsavel || undefined,
@@ -95,22 +101,25 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
   const resetForm = () => {
     setLitigationNumber("");
     setIdInternal("");
+    setClientCode("");
     setControlClient("");
     setClientName("");
     setAdvLiderResponsavel("");
     setNucleo("");
     setDataTerceirizacao("");
     setClienteAutorOuReu("");
-    setAcoesMode('padrao');
     setBuscarDadosProcessos(false);
     setMonitorarProcessos(false);
+    setMonitorarPartes(false);
+    setVerificarHabilitacao(false);
     setErrors({});
   };
 
   const canSubmit =
-    acoesMode === 'monitorarPartes' ||
     buscarDadosProcessos ||
-    monitorarProcessos;
+    monitorarProcessos ||
+    monitorarPartes ||
+    verificarHabilitacao;
 
   const handleClose = () => {
     resetForm();
@@ -162,6 +171,17 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
           </div>
 
           <div className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
+            <div>
+              <label htmlFor="clientCode" className="text-sm font-medium text-gray-700">
+                Código Cliente
+              </label>
+              <Input
+                id="clientCode"
+                value={clientCode}
+                onChange={(e) => setClientCode(e.target.value)}
+                placeholder="Código do cliente"
+              />
+            </div>
             <div>
               <label htmlFor="controlClient" className="text-sm font-medium text-gray-700">
                 Controle Cliente
@@ -236,49 +256,35 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
 
           <div className="border-t pt-4 mt-4">
             <label className="text-sm font-medium text-gray-700 mb-3 block">Ações</label>
-            <div className="flex w-full gap-4">
-              <div className="flex flex-col gap-4">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="acoes-mode-register"
-                    checked={acoesMode === 'padrao'}
-                    onChange={() => setAcoesMode('padrao')}
-                    className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span>Padrão</span>
-                </label>
-                {acoesMode === 'padrao' && (
-                  <div className="flex flex-col gap-3 ml-6">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <Checkbox
-                        checked={buscarDadosProcessos}
-                        onCheckedChange={(v) => setBuscarDadosProcessos(v)}
-                      />
-                      <span>Buscar dados dos processos</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <Checkbox
-                        checked={monitorarProcessos}
-                        onCheckedChange={(v) => setMonitorarProcessos(v)}
-                      />
-                      <span>Monitorar Processos</span>
-                    </label>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 flex justify-center items-start">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="acoes-mode-register"
-                    checked={acoesMode === 'monitorarPartes'}
-                    onChange={() => setAcoesMode('monitorarPartes')}
-                    className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span>Monitorar Partes</span>
-                </label>
-              </div>
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={buscarDadosProcessos}
+                  onCheckedChange={(v) => setBuscarDadosProcessos(v === true)}
+                />
+                <span>Buscar dados do processo</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={monitorarProcessos}
+                  onCheckedChange={(v) => setMonitorarProcessos(v === true)}
+                />
+                <span>Monitorar Processo</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={monitorarPartes}
+                  onCheckedChange={(v) => setMonitorarPartes(v === true)}
+                />
+                <span>Monitorar Partes</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={verificarHabilitacao}
+                  onCheckedChange={(v) => setVerificarHabilitacao(v === true)}
+                />
+                <span>Verificar habilitação</span>
+              </label>
             </div>
             {errors.acoes && (
               <div className="flex items-center text-red-500 text-sm mt-2">

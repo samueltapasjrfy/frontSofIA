@@ -314,6 +314,8 @@ export namespace ProcessApi {
             } | null;
             monitoringParts: boolean,
             monitoredParts: boolean,
+            registrationParts: boolean,
+            monitored: boolean,
             partFound?: {
                 name: string,
                 document: string
@@ -467,6 +469,7 @@ export namespace ProcessApi {
             monitoring: boolean;
             registration: boolean;
             monitoringParts?: boolean;
+            registrationParts?: boolean;
         };
 
         export type Response = {

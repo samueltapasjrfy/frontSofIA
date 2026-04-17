@@ -177,14 +177,14 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
             'PROCESSO': process.cnj || '',
             'Controle cliente': process.metadata?.controleCliente || '',
             'PROCESSO_NOVO': process.cnj || '',
-            'Status': !process.archived && !process.extinct ? 1 : 0,
+            'Status': 1,
             'VARA': process.vara || '',
             'Cod_Competencia': process.metadata?.areasFC?.id ?? '', //tbjurisdicao
             'Competência': process.area, //tbjurisdicao
             'Cod_Segmento': '',
             'CodTipoAcao': process.metadata?.naturesFC?.id ?? '', //tbtipoprocesso
             'Tipo Ação': process.nature, //tbtipoprocesso
-            'Cód_Cliente': process.metadata?.controleCliente ?? '', //tbcliente -> Informado no import
+            'Cód_Cliente': process.metadata?.codigoCliente ?? '', //tbcliente -> Informado no import
             'Nome_cliente': process.metadata?.cliente ?? '', //tbcliente -> Informado no import
             'Cod_Adv/Líder_responsável': process.metadata?.advogadosFC?.id ?? '', //tbadvogados - coluna "tipo" tudo que tipo = lider so posso ter o nucleo "massificado" -> Informado no import
             'Adv/Líder_responsável': process.metadata?.advLiderResponsavel ?? '', //tbadvogados - coluna "tipo" tudo que tipo = lider so posso ter o nucleo "massificado" -> Informado no import
@@ -222,7 +222,7 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
             'Data_cad_prazo': '',
             'Hora_cad_prazo': '',
             'Valor_causa': process.value,
-            'Data_distribuição': isNaN(new Date(process.distribuited).getTime()) ? dayjs(process.distribuited).format('DD/MM/YYYY') : '-',
+            'Data_distribuição': process.dateDistribution && !isNaN(new Date(process.dateDistribution).getTime()) ? dayjs(process.dateDistribution).format('DD/MM/YYYY') : '',
             'observação': '',
             'Cod_filial': process.metadata?.judicialDistrictsFC?.idFilial ?? '', //tbcomarcas
             'COD_CORRESP': process.metadata?.judicialDistrictsFC?.idCorrespondente ?? '', //tbcomarcas

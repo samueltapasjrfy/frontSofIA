@@ -13,73 +13,67 @@ import { Check, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
+type SaveProcessParams = ProcessApi.Save.Params & {
+  registrationParts?: boolean;
+};
+
 function AcoesStepContent({
-  acoesMode,
-  setAcoesMode,
   buscarDadosProcessos,
   setBuscarDadosProcessos,
   monitorarProcessos,
   setMonitorarProcessos,
+  monitorarPartes,
+  setMonitorarPartes,
+  verificarHabilitacao,
+  setVerificarHabilitacao,
   onContinue,
 }: {
-  acoesMode: 'padrao' | 'monitorarPartes';
-  setAcoesMode: (v: 'padrao' | 'monitorarPartes') => void;
   buscarDadosProcessos: boolean;
   setBuscarDadosProcessos: (v: boolean) => void;
   monitorarProcessos: boolean;
   setMonitorarProcessos: (v: boolean) => void;
+  monitorarPartes: boolean;
+  setMonitorarPartes: (v: boolean) => void;
+  verificarHabilitacao: boolean;
+  setVerificarHabilitacao: (v: boolean) => void;
   onContinue: () => void;
 }) {
   const canContinue =
-    acoesMode === 'monitorarPartes' ||
     buscarDadosProcessos ||
-    monitorarProcessos;
-  const checkboxesDisabled = acoesMode === 'monitorarPartes';
+    monitorarProcessos ||
+    monitorarPartes ||
+    verificarHabilitacao;
   return (
     <div className="space-y-6">
       <div className="flex w-full">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="radio"
-              name="acoes-mode"
-              checked={acoesMode === 'padrao'}
-              onChange={() => setAcoesMode('padrao')}
-              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+            <Checkbox
+              checked={buscarDadosProcessos}
+              onCheckedChange={(v) => setBuscarDadosProcessos(v === true)}
             />
-            <span>Padrão</span>
+            <span>Buscar dados dos processos</span>
           </label>
-          {acoesMode === 'padrao' && (
-            <div className="flex flex-col gap-3 ml-6">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <Checkbox
-                  checked={buscarDadosProcessos}
-                  onCheckedChange={(v) => setBuscarDadosProcessos(v)}
-                  disabled={checkboxesDisabled}
-                />
-                <span>Buscar dados dos processos</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <Checkbox
-                  checked={monitorarProcessos}
-                  onCheckedChange={(v) => setMonitorarProcessos(v)}
-                  disabled={checkboxesDisabled}
-                />
-                <span>Monitorar Processos</span>
-              </label>
-            </div>
-          )}
-        </div>
-        <div className="flex-1 flex justify-center items-start">
           <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="radio"
-              name="acoes-mode"
-              checked={acoesMode === 'monitorarPartes'}
-              onChange={() => setAcoesMode('monitorarPartes')}
-              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+            <Checkbox
+              checked={monitorarProcessos}
+              onCheckedChange={(v) => setMonitorarProcessos(v === true)}
+            />
+            <span>Monitorar Processos</span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <Checkbox
+              checked={monitorarPartes}
+              onCheckedChange={(v) => setMonitorarPartes(v === true)}
             />
             <span>Monitorar Partes</span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <Checkbox
+              checked={verificarHabilitacao}
+              onCheckedChange={(v) => setVerificarHabilitacao(v === true)}
+            />
+            <span>Verificar habilitação</span>
           </label>
         </div>
       </div>
@@ -100,6 +94,7 @@ const litigationColumns = {
   litigation: 'Processo',
   instance: 'Instância',
   idInternal: 'ID',
+  clientCode: 'Código Cliente',
   controlClient: 'Controle Cliente',
   clientName: 'Cliente',
   advLiderResponsavel: 'Líder | Advogado',
@@ -109,6 +104,12 @@ const litigationColumns = {
 }
 
 const metadataColumns = [{
+  key: litigationColumns.clientCode,
+  example: '12345',
+  previewWidth: 200,
+  variant: ['CÓDIGO CLIENTE', 'CODIGO CLIENTE', 'CÓD_CLIENTE', 'COD_CLIENTE', 'CLIENT CODE'],
+},
+{
   key: litigationColumns.controlClient,
   example: '1234567890',
   previewWidth: 200,
@@ -150,9 +151,10 @@ export default function ProcessesPage() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isRemoveMonitoringModalOpen, setIsRemoveMonitoringModalOpen] = useState(false);
   const [isUpdateStatusBulkModalOpen, setIsUpdateStatusBulkModalOpen] = useState(false);
-  const [acoesMode, setAcoesMode] = useState<'padrao' | 'monitorarPartes'>('padrao');
   const [buscarDadosProcessos, setBuscarDadosProcessos] = useState(false);
   const [monitorarProcessos, setMonitorarProcessos] = useState(false);
+  const [monitorarPartes, setMonitorarPartes] = useState(false);
+  const [verificarHabilitacao, setVerificarHabilitacao] = useState(false);
   const { invalidateProcessesQuery, invalidateReport, saveProcesses } = useProcesses();
 
   const onRefresh = async () => {
@@ -185,11 +187,12 @@ export default function ProcessesPage() {
     rows: Array<{ [k: string]: string }>,
     expectedColumnsToRows: { [k: string]: string },
   ): Promise<boolean> => {
-    const params: ProcessApi.Save.Params = {
+    const params: SaveProcessParams = {
       processes: rows.map((row: { [k: string]: string }) => ({
         cnj: row[expectedColumnsToRows[litigationColumns.litigation]],
         metadata: {
           idInternal: row[expectedColumnsToRows[litigationColumns.idInternal]] || undefined,
+          codigoCliente: row[expectedColumnsToRows[litigationColumns.clientCode]] || undefined,
           controleCliente: row[expectedColumnsToRows[litigationColumns.controlClient]] || undefined,
           cliente: row[expectedColumnsToRows[litigationColumns.clientName]] || undefined,
           advLiderResponsavel: row[expectedColumnsToRows[litigationColumns.advLiderResponsavel]] || undefined,
@@ -198,9 +201,10 @@ export default function ProcessesPage() {
           clienteAutorOuReu: row[expectedColumnsToRows[litigationColumns.clienteAutorOuReu]] || undefined,
         },
       })),
-      monitoring: acoesMode === 'padrao' ? monitorarProcessos : false,
-      registration: acoesMode === 'padrao' ? buscarDadosProcessos : false,
-      monitoringParts: acoesMode === 'monitorarPartes',
+      monitoring: monitorarProcessos,
+      registration: buscarDadosProcessos,
+      monitoringParts: monitorarPartes,
+      registrationParts: verificarHabilitacao,
     };
     const response = await ProcessApi.save(params);
     if (response.error) {
@@ -214,11 +218,12 @@ export default function ProcessesPage() {
   };
 
   const handleSaveProtocol = async (data: ImportProcessData, options: ImportProcessOptions): Promise<boolean> => {
-    const response = await saveProcesses({
+    const params: SaveProcessParams = {
       processes: [{
         cnj: data.litigationNumber,
         metadata: {
           idInternal: data.idInternal,
+          codigoCliente: data.clientCode,
           controleCliente: data.controlClient,
           cliente: data.clientName,
           advLiderResponsavel: data.advLiderResponsavel,
@@ -230,7 +235,9 @@ export default function ProcessesPage() {
       monitoring: options.monitoring,
       registration: options.registration,
       monitoringParts: options.monitoringParts,
-    });
+      registrationParts: options.registrationParts,
+    };
+    const response = await saveProcesses(params);
     if (response.error) {
       toast.error(response.message || "Erro ao registrar processo");
       return false;
@@ -331,12 +338,14 @@ export default function ProcessesPage() {
           label: "Ações",
           render: ({ onContinue }) => (
             <AcoesStepContent
-              acoesMode={acoesMode}
-              setAcoesMode={setAcoesMode}
               buscarDadosProcessos={buscarDadosProcessos}
               setBuscarDadosProcessos={setBuscarDadosProcessos}
               monitorarProcessos={monitorarProcessos}
               setMonitorarProcessos={setMonitorarProcessos}
+              monitorarPartes={monitorarPartes}
+              setMonitorarPartes={setMonitorarPartes}
+              verificarHabilitacao={verificarHabilitacao}
+              setVerificarHabilitacao={setVerificarHabilitacao}
               onContinue={onContinue}
             />
           ),
