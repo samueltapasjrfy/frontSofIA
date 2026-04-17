@@ -184,7 +184,7 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
             'Cod_Segmento': '',
             'CodTipoAcao': process.metadata?.naturesFC?.id ?? '', //tbtipoprocesso
             'Tipo Ação': process.nature, //tbtipoprocesso
-            'Cód_Cliente': process.metadata?.controleCliente ?? '', //tbcliente -> Informado no import
+            'Cód_Cliente': process.metadata?.codigoCliente ?? '', //tbcliente -> Informado no import
             'Nome_cliente': process.metadata?.cliente ?? '', //tbcliente -> Informado no import
             'Cod_Adv/Líder_responsável': process.metadata?.advogadosFC?.id ?? '', //tbadvogados - coluna "tipo" tudo que tipo = lider so posso ter o nucleo "massificado" -> Informado no import
             'Adv/Líder_responsável': process.metadata?.advLiderResponsavel ?? '', //tbadvogados - coluna "tipo" tudo que tipo = lider so posso ter o nucleo "massificado" -> Informado no import

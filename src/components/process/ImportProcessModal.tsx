@@ -21,6 +21,7 @@ import { LoginResponse } from "@/api/authApi";
 export type ImportProcessData = {
   litigationNumber: string;
   idInternal?: string;
+  clientCode?: string;
   controlClient?: string;
   clientName?: string;
   advLiderResponsavel?: string;
@@ -45,6 +46,7 @@ interface RegisterProcessModalProps {
 export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProcessModalProps) {
   const [litigationNumber, setLitigationNumber] = useState("");
   const [idInternal, setIdInternal] = useState("");
+  const [clientCode, setClientCode] = useState("");
   const [controlClient, setControlClient] = useState("");
   const [clientName, setClientName] = useState("");
   const [advLiderResponsavel, setAdvLiderResponsavel] = useState("");
@@ -84,6 +86,7 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
     const success = await onImport({
       litigationNumber,
       idInternal: idInternal || undefined,
+      clientCode: clientCode || undefined,
       controlClient: controlClient || undefined,
       clientName: clientName || undefined,
       advLiderResponsavel: advLiderResponsavel || undefined,
@@ -98,6 +101,7 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
   const resetForm = () => {
     setLitigationNumber("");
     setIdInternal("");
+    setClientCode("");
     setControlClient("");
     setClientName("");
     setAdvLiderResponsavel("");
@@ -167,6 +171,17 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
           </div>
 
           <div className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
+            <div>
+              <label htmlFor="clientCode" className="text-sm font-medium text-gray-700">
+                Código Cliente
+              </label>
+              <Input
+                id="clientCode"
+                value={clientCode}
+                onChange={(e) => setClientCode(e.target.value)}
+                placeholder="Código do cliente"
+              />
+            </div>
             <div>
               <label htmlFor="controlClient" className="text-sm font-medium text-gray-700">
                 Controle Cliente
