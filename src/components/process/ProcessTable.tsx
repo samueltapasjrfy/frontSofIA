@@ -12,6 +12,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import {
   RefreshCw,
@@ -158,8 +164,8 @@ export function ProcessTable({
 
       await ProcessApi.save({
         processes: processesData,
-        monitoring: true,
-        registration: false
+        actions: { consult: false, monitoring: true },
+        search: { data: false, citations: true, audiences: true, habilitations: true },
       });
 
       setTimeout(() => {
@@ -329,21 +335,107 @@ export function ProcessTable({
       )
     },
     {
-      key: 'monitoringParts',
+      key: 'habilitado',
       label: 'Habilitado',
       className: 'font-semibold text-gray-700 w-[10%] py-3',
       render: (process) => {
-        const hasPartsFound = process.partFound?.name;
-        if (!hasPartsFound && !process.monitoringParts && !process.monitoredParts && !process.registrationParts) {
-          return <Badge className={cn("bg-gray-500", "font-medium")}>
-            -
-          </Badge>;
+        const hasPartsFound = !!process.partFound?.name;
+        if (!process.search?.habilitations) {
+          return <Badge className={cn("bg-gray-500", "font-medium")}>-</Badge>;
         }
         return (
           <Badge className={cn(hasPartsFound ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
             {hasPartsFound ? "Sim" : "Não"}
           </Badge>
-        )
+        );
+      }
+    },
+    {
+      key: 'mode',
+      label: 'Modo',
+      className: 'font-semibold text-gray-700 w-[10%] py-3',
+      render: (process) => {
+        const actions = process.actions;
+        if (!actions || (!actions.consult && !actions.monitoring)) {
+          return <span className="text-gray-400">-</span>;
+        }
+
+        let label = "";
+        let color = "";
+        if (actions.consult && actions.monitoring) {
+          label = "Consulta + Mon";
+          color = "border-blue-500 text-blue-600 bg-blue-50";
+        } else if (actions.consult) {
+          label = "Consulta";
+          color = "border-gray-400 text-gray-600 bg-gray-50";
+        } else {
+          label = "Monitorar";
+          color = "border-emerald-500 text-emerald-600 bg-emerald-50";
+        }
+
+        return (
+          <Badge
+            variant="outline"
+            className={cn(color, "font-medium whitespace-nowrap")}
+          >
+            {label}
+          </Badge>
+        );
+      }
+    },
+    {
+      key: 'indicativos',
+      label: 'Indicativos',
+      className: 'font-semibold text-gray-700 w-[14%] py-3',
+      render: (process) => {
+        const search = process.search;
+        if (!search) {
+          return <span className="text-gray-400">-</span>;
+        }
+
+        const statusId = process.status?.id;
+        const hasData = statusId === PROCESS_STATUS.COMPLETED;
+        const hasCitations = Array.isArray(process.citations) && process.citations.length > 0;
+        const hasAudiences = Array.isArray(process.audiences) && process.audiences.length > 0;
+        const hasHabilitations = !!process.partFound?.name;
+
+        const indicators: { active: boolean; hasValue: boolean; label: string; short: string; color: string }[] = [
+          { active: !!search.data, hasValue: hasData, label: "Dados de Capa", short: "CAPA", color: "bg-blue-500 text-white" },
+          { active: !!search.citations, hasValue: hasCitations, label: "Citação", short: "CIT", color: "bg-purple-500 text-white" },
+          { active: !!search.audiences, hasValue: hasAudiences, label: "Audiência", short: "AUD", color: "bg-emerald-500 text-white" },
+          { active: !!search.habilitations, hasValue: hasHabilitations, label: "Habilitação", short: "HAB", color: "bg-amber-500 text-white" },
+        ].filter((i) => i.active);
+
+        if (indicators.length === 0) {
+          return <span className="text-gray-400">-</span>;
+        }
+
+        return (
+          <TooltipProvider delayDuration={150}>
+            <div className="flex flex-row gap-1 ">
+              {indicators.map((ind) => (
+                <Tooltip key={ind.label}>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      className={cn(
+                        ind.color,
+                        "font-medium cursor-default transition-opacity",
+                        !ind.hasValue && "opacity-20"
+                      )}
+                    >
+                      {ind.short}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span>
+                      {ind.label}: {ind.hasValue ? "com dados" : "sem dados"}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
+        );
       }
     },
     {
@@ -399,7 +491,7 @@ export function ProcessTable({
           >
             <Info className="h-4 w-4" />
           </Button>
-          {(process.monitoring || process.monitoringParts) ? (
+          {(process.actions?.monitoring) ? (
             <PopConfirm
               title="Desativar monitoramento"
               description="Tem certeza que deseja desativar o monitoramento deste processo?"

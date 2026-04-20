@@ -139,8 +139,8 @@ export function MonitoringTable({ onRefresh, className }: MonitoringTableProps) 
             setIsPerformingAction(true);
             await ProcessApi.save({
                 processes: processesData,
-                monitoring: true,
-                registration: false
+                actions: { consult: false, monitoring: true },
+                search: { data: false, citations: true, audiences: true, habilitations: true },
             });
 
             setTimeout(() => {
