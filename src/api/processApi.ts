@@ -593,10 +593,16 @@ export namespace ProcessApi {
                 cnj: string;
                 metadata?: Record<string, any>;
             }[];
-            monitoring: boolean;
-            registration: boolean;
-            monitoringParts?: boolean;
-            registrationParts?: boolean;
+            actions: {
+                consult: boolean;
+                monitoring: boolean;
+            };
+            search: {
+                data: boolean;
+                citations: boolean;
+                audiences: boolean;
+                habilitations: boolean;
+            };
         };
 
         export type Response = {

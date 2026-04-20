@@ -11,84 +11,11 @@ import { HandleEntitiesButtons } from "@/components/handleEntitiesButtons";
 import { cn } from "@/utils/cn";
 import { Check, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-
-type SaveProcessParams = ProcessApi.Save.Params & {
-  registrationParts?: boolean;
-};
-
-function AcoesStepContent({
-  buscarDadosProcessos,
-  setBuscarDadosProcessos,
-  monitorarProcessos,
-  setMonitorarProcessos,
-  monitorarPartes,
-  setMonitorarPartes,
-  verificarHabilitacao,
-  setVerificarHabilitacao,
-  onContinue,
-}: {
-  buscarDadosProcessos: boolean;
-  setBuscarDadosProcessos: (v: boolean) => void;
-  monitorarProcessos: boolean;
-  setMonitorarProcessos: (v: boolean) => void;
-  monitorarPartes: boolean;
-  setMonitorarPartes: (v: boolean) => void;
-  verificarHabilitacao: boolean;
-  setVerificarHabilitacao: (v: boolean) => void;
-  onContinue: () => void;
-}) {
-  const canContinue =
-    buscarDadosProcessos ||
-    monitorarProcessos ||
-    monitorarPartes ||
-    verificarHabilitacao;
-  return (
-    <div className="space-y-6">
-      <div className="flex w-full">
-        <div className="flex flex-col gap-3">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <Checkbox
-              checked={buscarDadosProcessos}
-              onCheckedChange={(v) => setBuscarDadosProcessos(v === true)}
-            />
-            <span>Buscar dados dos processos</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <Checkbox
-              checked={monitorarProcessos}
-              onCheckedChange={(v) => setMonitorarProcessos(v === true)}
-            />
-            <span>Monitorar Processos</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <Checkbox
-              checked={monitorarPartes}
-              onCheckedChange={(v) => setMonitorarPartes(v === true)}
-            />
-            <span>Monitorar Partes</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <Checkbox
-              checked={verificarHabilitacao}
-              onCheckedChange={(v) => setVerificarHabilitacao(v === true)}
-            />
-            <span>Verificar habilitação</span>
-          </label>
-        </div>
-      </div>
-      <div className="flex justify-end mt-6">
-        <Button
-          variant="default"
-          onClick={onContinue}
-          disabled={!canContinue}
-        >
-          Continuar
-        </Button>
-      </div>
-    </div>
-  );
-}
+import {
+  AcoesStepContent,
+  AcoesValue,
+  defaultAcoesValue,
+} from "@/components/process/AcoesStepContent";
 
 const litigationColumns = {
   litigation: 'Processo',
@@ -144,10 +71,7 @@ export default function ProcessesPage() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isRemoveMonitoringModalOpen, setIsRemoveMonitoringModalOpen] = useState(false);
   const [isUpdateStatusBulkModalOpen, setIsUpdateStatusBulkModalOpen] = useState(false);
-  const [buscarDadosProcessos, setBuscarDadosProcessos] = useState(false);
-  const [monitorarProcessos, setMonitorarProcessos] = useState(false);
-  const [monitorarPartes, setMonitorarPartes] = useState(false);
-  const [verificarHabilitacao, setVerificarHabilitacao] = useState(false);
+  const [acoes, setAcoes] = useState<AcoesValue>(defaultAcoesValue);
   const { invalidateProcessesQuery, invalidateReport, saveProcesses } = useProcesses();
 
   const onRefresh = async () => {
@@ -180,7 +104,7 @@ export default function ProcessesPage() {
     rows: Array<{ [k: string]: string }>,
     expectedColumnsToRows: { [k: string]: string },
   ): Promise<boolean> => {
-    const params: SaveProcessParams = {
+    const params: ProcessApi.Save.Params = {
       processes: rows.map((row: { [k: string]: string }) => ({
         cnj: row[expectedColumnsToRows[litigationColumns.litigation]],
         metadata: {
@@ -193,10 +117,8 @@ export default function ProcessesPage() {
           clienteAutorOuReu: row[expectedColumnsToRows[litigationColumns.clienteAutorOuReu]] || undefined,
         },
       })),
-      monitoring: monitorarProcessos,
-      registration: buscarDadosProcessos,
-      monitoringParts: monitorarPartes,
-      registrationParts: verificarHabilitacao,
+      actions: acoes.actions,
+      search: acoes.search,
     };
     const response = await ProcessApi.save(params);
     if (response.error) {
@@ -210,7 +132,7 @@ export default function ProcessesPage() {
   };
 
   const handleSaveProtocol = async (data: ImportProcessData, options: ImportProcessOptions): Promise<boolean> => {
-    const params: SaveProcessParams = {
+    const params: ProcessApi.Save.Params = {
       processes: [{
         cnj: data.litigationNumber,
         metadata: {
@@ -223,10 +145,8 @@ export default function ProcessesPage() {
           clienteAutorOuReu: data.clienteAutorOuReu,
         },
       }],
-      monitoring: options.monitoring,
-      registration: options.registration,
-      monitoringParts: options.monitoringParts,
-      registrationParts: options.registrationParts,
+      actions: options.actions,
+      search: options.search,
     };
     const response = await saveProcesses(params);
     if (response.error) {
@@ -326,18 +246,13 @@ export default function ProcessesPage() {
         title="Importar Processos"
         finish={handleFinishImport}
         firstStep={{
-          label: "Ações",
+          label: "Configurar",
           render: ({ onContinue }) => (
             <AcoesStepContent
-              buscarDadosProcessos={buscarDadosProcessos}
-              setBuscarDadosProcessos={setBuscarDadosProcessos}
-              monitorarProcessos={monitorarProcessos}
-              setMonitorarProcessos={setMonitorarProcessos}
-              monitorarPartes={monitorarPartes}
-              setMonitorarPartes={setMonitorarPartes}
-              verificarHabilitacao={verificarHabilitacao}
-              setVerificarHabilitacao={setVerificarHabilitacao}
+              value={acoes}
+              onChange={setAcoes}
               onContinue={onContinue}
+              onCancel={() => setIsImportModalOpen(false)}
             />
           ),
         }}
