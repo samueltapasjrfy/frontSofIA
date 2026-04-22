@@ -11,7 +11,7 @@ export const  exportProcessNormal = async (response: ProcessApi.FindAll.Response
         let habilitado = '-';
         if (hasPartsFound) {
             habilitado = "Sim";
-        } else if (pub.monitoringParts && !hasPartsFound) {
+        } else if (pub.actions?.monitoring && pub.search?.habilitations && !hasPartsFound) {
             habilitado = "Não";
         }
         return {
