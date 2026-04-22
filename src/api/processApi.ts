@@ -12,10 +12,9 @@ export const ProcessApi = {
         if (params.limit) queryParams.set('limit', params.limit.toString());
         if (params.filter) {
             Object.entries(params.filter).forEach(([key, value]) => {
-                if (value) queryParams.set(key, value.toString());
+                if (value !== undefined && value !== null && value !== '') queryParams.set(key, value.toString());
             });
         }
-
         const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
         return response.data;
     },
@@ -425,6 +424,8 @@ export namespace ProcessApi {
                 imported?: boolean;
                 status?: number;
                 monitoring?: boolean;
+                consult?: boolean;
+                indicators?: string;
                 batch?: string;
                 requester?: string;
                 initialDate?: string;

@@ -84,6 +84,8 @@ export function ProcessTable({
   const [selectedBatch, setSelectedBatch] = useState<{ label: string, value: string } | null>(null);
   const [isLoadingRequesters, setIsLoadingRequesters] = useState(false);
   const [selectedRequester, setSelectedRequester] = useState<{ label: string, value: string } | null>(null);
+  const [selectedMode, setSelectedMode] = useState<{ label: string; value: string; group?: string }[]>([]);
+  const [selectedIndicators, setSelectedIndicators] = useState<{ label: string; value: string }[]>([]);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [selectedProcesses, setSelectedProcesses] = useState<Map<string, { id: string; cnj: string }>>(new Map());
   const [isPerformingAction, setIsPerformingAction] = useState(false);
@@ -326,11 +328,11 @@ export function ProcessTable({
     },
     {
       key: 'addedToMonitoring',
-      label: 'Monitorado',
+      label: 'Monitorando',
       className: 'font-semibold text-gray-700 w-[10%] py-3',
       render: (process) => (
-        <Badge className={cn((process.addedToMonitoring || process.monitored) ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
-          {(process.addedToMonitoring || process.monitored) ? "Sim" : "Não"}
+        <Badge className={cn((process.actions?.monitoring) ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
+          {(process.actions?.monitoring) ? "Sim" : "Não"}
         </Badge>
       )
     },
@@ -589,9 +591,14 @@ export function ProcessTable({
       cnj: "",
       status: undefined,
       monitoring: undefined,
+      consult: undefined,
+      indicators: undefined,
     });
     setDate(undefined);
     setSelectedBatch(null);
+    setSelectedRequester(null);
+    setSelectedMode([]);
+    setSelectedIndicators([]);
     changeProcessFilter({
       page: 1,
       limit: processParams.limit,
@@ -744,26 +751,101 @@ export function ProcessTable({
               </select>
             </div>
             <div>
-              <label htmlFor="monitoring" className="block text-sm font-medium text-gray-700 mb-1">
-                Monitorado
+              <label htmlFor="mode" className="block text-sm font-medium text-gray-700 mb-1">
+                Modo
               </label>
-              <select
-                id="monitoring"
-                value={filters?.monitoring === undefined ? '' : filters?.monitoring as unknown as string}
-                onChange={(e) => {
-                  handleFilterChange(
-                    "monitoring" as never,
-                    e.target.value
-                  );
+              <SelectInfinityScroll
+                instanceId="mode"
+                placeholder="Selecione"
+                isSearchable={false}
+                multiple
+                loadOptions={async () => ({
+                  options: [
+                    {
+                      label: "Consulta",
+                      options: [
+                        { label: "Sim", value: "consult=true", group: "Consulta" },
+                        { label: "Não", value: "consult=false", group: "Consulta" },
+                      ],
+                    },
+                    {
+                      label: "Monitorando",
+                      options: [
+                        { label: "Sim", value: "monitoring=true", group: "Monitorando" },
+                        { label: "Não", value: "monitoring=false", group: "Monitorando" },
+                      ],
+                    },
+                  ],
+                  hasMore: false,
+                  additional: {},
+                })}
+                onChange={(value) => {
+                  const selected = (value as { label: string; value: string; group?: string }[]) || [];
+                  setSelectedMode(selected);
+
+                  const hasConsultTrue = selected.some(s => s.value === "consult=true");
+                  const hasConsultFalse = selected.some(s => s.value === "consult=false");
+                  const hasMonitoringTrue = selected.some(s => s.value === "monitoring=true");
+                  const hasMonitoringFalse = selected.some(s => s.value === "monitoring=false");
+
+                  let consultVal: boolean | undefined;
+                  if (hasConsultTrue && !hasConsultFalse) consultVal = true;
+                  else if (hasConsultFalse && !hasConsultTrue) consultVal = false;
+                  else consultVal = undefined;
+
+                  let monitoringVal: boolean | undefined;
+                  if (hasMonitoringTrue && !hasMonitoringFalse) monitoringVal = true;
+                  else if (hasMonitoringFalse && !hasMonitoringTrue) monitoringVal = false;
+                  else monitoringVal = undefined;
+
+                  const newFilters = {
+                    ...filters,
+                    consult: consultVal,
+                    monitoring: monitoringVal,
+                  };
+                  setFilters(newFilters);
+                  changeProcessFilter({
+                    page: 1,
+                    limit: processParams.limit,
+                    filter: newFilters,
+                  });
                 }}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value={''}>Todos</option>
-                <optgroup label="Monitorado">
-                  <option value={'true'}>Sim</option>
-                  <option value={'false'}>Não</option>
-                </optgroup>
-              </select>
+                value={selectedMode}
+              />
+            </div>
+            <div>
+              <label htmlFor="indicators" className="block text-sm font-medium text-gray-700 mb-1">
+                Indicativos
+              </label>
+              <SelectInfinityScroll
+                instanceId="indicators"
+                placeholder="Selecione"
+                isSearchable={false}
+                multiple
+                loadOptions={async () => ({
+                  options: [
+                    { label: "Capa", value: "data" },
+                    { label: "Citações", value: "citations" },
+                    { label: "Audiências", value: "audiences" },
+                    { label: "Habilitações", value: "habilitations" },
+                  ],
+                  hasMore: false,
+                  additional: {},
+                })}
+                onChange={(value) => {
+                  const selected = (value as { label: string; value: string }[]) || [];
+                  setSelectedIndicators(selected);
+                  const indicators = selected.map(s => s.value).join(",") || undefined;
+                  const newFilters = { ...filters, indicators };
+                  setFilters(newFilters);
+                  changeProcessFilter({
+                    page: 1,
+                    limit: processParams.limit,
+                    filter: newFilters,
+                  });
+                }}
+                value={selectedIndicators}
+              />
             </div>
             <div>
               <label htmlFor="batch" className="block text-sm font-medium text-gray-700 mb-1">
