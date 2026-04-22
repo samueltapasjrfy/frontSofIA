@@ -11,12 +11,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Upload, AlertCircle } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { GetBgColor } from "../layout/GetBgColor";
 import { getLocalStorage, LocalStorageKeys } from "@/utils/localStorage";
 import { LoginResponse } from "@/api/authApi";
+import {
+  AcoesFields,
+  AcoesValue,
+  canContinueAcoes,
+  defaultAcoesValue,
+} from "./AcoesStepContent";
 
 export type ImportProcessData = {
   litigationNumber: string;
@@ -31,10 +36,13 @@ export type ImportProcessData = {
 }
 
 export type ImportProcessOptions = {
-  monitoring: boolean;
-  registration: boolean;
-  monitoringParts: boolean;
-  registrationParts: boolean;
+  actions: { consult: boolean; monitoring: boolean };
+  search: {
+    data: boolean;
+    citations: boolean;
+    audiences: boolean;
+    habilitations: boolean;
+  };
 };
 
 interface RegisterProcessModalProps {
@@ -53,10 +61,7 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
   const [nucleo, setNucleo] = useState("");
   const [dataTerceirizacao, setDataTerceirizacao] = useState("");
   const [clienteAutorOuReu, setClienteAutorOuReu] = useState("");
-  const [buscarDadosProcessos, setBuscarDadosProcessos] = useState(false);
-  const [monitorarProcessos, setMonitorarProcessos] = useState(false);
-  const [monitorarPartes, setMonitorarPartes] = useState(false);
-  const [verificarHabilitacao, setVerificarHabilitacao] = useState(false);
+  const [acoes, setAcoes] = useState<AcoesValue>(defaultAcoesValue);
   const [errors, setErrors] = useState<{ litigationNumber?: string; acoes?: string }>({});
   const user = getLocalStorage<LoginResponse>(LocalStorageKeys.USER)
 
@@ -67,8 +72,8 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
       newErrors.litigationNumber = "Número do processo é obrigatório";
     }
 
-    if (!buscarDadosProcessos && !monitorarProcessos && !monitorarPartes && !verificarHabilitacao) {
-      newErrors.acoes = "Selecione ao menos uma ação";
+    if (!canContinueAcoes(acoes)) {
+      newErrors.acoes = "Selecione um modo de operação e ao menos um item de busca";
     }
 
     setErrors(newErrors);
@@ -78,10 +83,8 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
   const handleSubmit = async () => {
     if (!validateForm()) return;
     const options: ImportProcessOptions = {
-      monitoring: monitorarProcessos,
-      registration: buscarDadosProcessos,
-      monitoringParts: monitorarPartes,
-      registrationParts: verificarHabilitacao,
+      actions: acoes.actions,
+      search: acoes.search,
     };
     const success = await onImport({
       litigationNumber,
@@ -108,18 +111,11 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
     setNucleo("");
     setDataTerceirizacao("");
     setClienteAutorOuReu("");
-    setBuscarDadosProcessos(false);
-    setMonitorarProcessos(false);
-    setMonitorarPartes(false);
-    setVerificarHabilitacao(false);
+    setAcoes(defaultAcoesValue);
     setErrors({});
   };
 
-  const canSubmit =
-    buscarDadosProcessos ||
-    monitorarProcessos ||
-    monitorarPartes ||
-    verificarHabilitacao;
+  const canSubmit = canContinueAcoes(acoes);
 
   const handleClose = () => {
     resetForm();
@@ -128,7 +124,7 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gray-800">Registrar Processo</DialogTitle>
           <DialogDescription>
@@ -255,37 +251,7 @@ export function RegisterProcessModal({ isOpen, onClose, onImport }: RegisterProc
           </div>
 
           <div className="border-t pt-4 mt-4">
-            <label className="text-sm font-medium text-gray-700 mb-3 block">Ações</label>
-            <div className="flex flex-col gap-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <Checkbox
-                  checked={buscarDadosProcessos}
-                  onCheckedChange={(v) => setBuscarDadosProcessos(v === true)}
-                />
-                <span>Buscar dados do processo</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <Checkbox
-                  checked={monitorarProcessos}
-                  onCheckedChange={(v) => setMonitorarProcessos(v === true)}
-                />
-                <span>Monitorar Processo</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <Checkbox
-                  checked={monitorarPartes}
-                  onCheckedChange={(v) => setMonitorarPartes(v === true)}
-                />
-                <span>Monitorar Partes</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <Checkbox
-                  checked={verificarHabilitacao}
-                  onCheckedChange={(v) => setVerificarHabilitacao(v === true)}
-                />
-                <span>Verificar habilitação</span>
-              </label>
-            </div>
+            <AcoesFields value={acoes} onChange={setAcoes} />
             {errors.acoes && (
               <div className="flex items-center text-red-500 text-sm mt-2">
                 <AlertCircle className="h-4 w-4 mr-1 shrink-0" />

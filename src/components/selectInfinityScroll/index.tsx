@@ -7,8 +7,11 @@ type LoadOptionsParams = {
     additional: any;
 }
 
+type Option = { label: string; value: string; group?: string };
+type OptionGroup = { label: string; options: Option[] };
+
 type LoadOptionsResponse<T = any> = {
-    options: { label: string, value: string }[];
+    options: (Option | OptionGroup)[];
     hasMore: boolean;
     additional: T;
 }
@@ -18,7 +21,7 @@ type SelectInfinityScrollProps<T = any> = {
     placeholder: string;
     loadOptions: (params: LoadOptionsParams) => Promise<LoadOptionsResponse<T>>;
     onChange: (value: any) => void;
-    value: { label: string; value: string }[];
+    value: Option[];
     isLoading?: boolean;
     isSearchable?: boolean;
     multiple?: boolean;
@@ -112,6 +115,12 @@ export const SelectInfinityScroll = ({
                 isSearchable={isSearchable}
                 isMulti={multiple}
                 additional={additional}
+                formatOptionLabel={(data: any, { context }: { context: 'menu' | 'value' }) => {
+                    if (context === 'value' && data?.group) {
+                        return `${data.group}: ${data.label}`;
+                    }
+                    return data.label;
+                }}
                 noOptionsMessage={({ }) => 'Nenhum resultado encontrado'}
                 loadingMessage={() => 'Carregando...'}
             />
