@@ -396,7 +396,7 @@ export function ProcessTable({
         }
 
         const statusId = process.status?.id;
-        const hasData = statusId === PROCESS_STATUS.COMPLETED;
+        const hasData = [PROCESS_STATUS.COMPLETED, PROCESS_STATUS.UPDATING_INFORMATION].includes(statusId);
         const hasCitations = Array.isArray(process.citations) && process.citations.length > 0;
         const hasAudiences = Array.isArray(process.audiences) && process.audiences.length > 0;
         const hasHabilitations = !!process.partFound?.name;
