@@ -12,10 +12,9 @@ export const ProcessApi = {
         if (params.limit) queryParams.set('limit', params.limit.toString());
         if (params.filter) {
             Object.entries(params.filter).forEach(([key, value]) => {
-                if (value) queryParams.set(key, value.toString());
+                if (value !== undefined && value !== null && value !== '') queryParams.set(key, value.toString());
             });
         }
-
         const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
         return response.data;
     },
@@ -123,12 +122,10 @@ export const ProcessApi = {
             const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
             // Preparar dados para exportação
             const data = response.data.processes.map(pub => {
-                const hasPartsFound = pub.partFound?.name;
+                const hasPartsFound = !!pub.partFound?.name;
                 let habilitado = '-';
-                if (hasPartsFound) {
-                    habilitado = "Sim";
-                } else if (pub.monitoringParts && !hasPartsFound) {
-                    habilitado = "Não";
+                if (pub.search?.habilitations) {
+                    habilitado = hasPartsFound ? "Sim" : "Não";
                 }
                 return {
                     'Nº Processo': pub.cnj || '-',
@@ -427,6 +424,8 @@ export namespace ProcessApi {
                 imported?: boolean;
                 status?: number;
                 monitoring?: boolean;
+                consult?: boolean;
+                indicators?: string;
                 batch?: string;
                 requester?: string;
                 initialDate?: string;
@@ -448,14 +447,22 @@ export namespace ProcessApi {
                 id: string;
                 name: string;
             } | null;
-            monitoringParts: boolean,
-            monitoredParts: boolean,
-            registrationParts: boolean,
-            monitored: boolean,
+            actions: {
+                consult: boolean;
+                monitoring: boolean;
+            } | null;
+            search: {
+                data: boolean;
+                citations: boolean;
+                audiences: boolean;
+                habilitations: boolean;
+            } | null;
+            consulted: boolean;
+            monitored: boolean;
             partFound?: {
-                name: string,
-                document: string
-            },
+                name: string;
+                document: string;
+            };
             imported: boolean;
             idBatch: string
             instance: number;
@@ -504,7 +511,6 @@ export namespace ProcessApi {
                 approved: boolean | null;
             }[];
             metadata: Record<string, any>;
-            monitoring: boolean;
             addedToMonitoring: boolean;
             dateSentence?: string;
             relatedCases?: RelatedCase[];
@@ -593,10 +599,16 @@ export namespace ProcessApi {
                 cnj: string;
                 metadata?: Record<string, any>;
             }[];
-            monitoring: boolean;
-            registration: boolean;
-            monitoringParts?: boolean;
-            registrationParts?: boolean;
+            actions: {
+                consult: boolean;
+                monitoring: boolean;
+            };
+            search: {
+                data: boolean;
+                citations: boolean;
+                audiences: boolean;
+                habilitations: boolean;
+            };
         };
 
         export type Response = {
