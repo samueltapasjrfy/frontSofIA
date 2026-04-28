@@ -162,7 +162,8 @@ export function SidebarContent({
     '01J99YK3X66J2T2A7W9V533TM1',
     '01K5YH62H49JKX4S18Z9B4AZKB',
     '01JQN7HDEEJJD5E4SRJ775E9AC',
-    '01KFXZPRSBQGBA5QKB94NVNYB1'
+    '01KFXZPRSBQGBA5QKB94NVNYB1',
+    '01KQATN5B0B9MFF1W0QA2PS8WV'
   ].includes(user?.companies?.[0]?.id)
   const sentiusHabilitados = ['01JTNVAEYETZAJP0F4X7YQYQBR'].includes(user?.companies?.[0]?.id)
 
