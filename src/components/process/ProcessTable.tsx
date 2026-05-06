@@ -85,7 +85,7 @@ export function ProcessTable({
   const [isLoadingRequesters, setIsLoadingRequesters] = useState(false);
   const [selectedRequester, setSelectedRequester] = useState<{ label: string, value: string } | null>(null);
   const [selectedMode, setSelectedMode] = useState<{ label: string; value: string; group?: string }[]>([]);
-  const [selectedIndicators, setSelectedIndicators] = useState<{ label: string; value: string }[]>([]);
+  const [selectedIndicatorsFound, setSelectedIndicatorsFound] = useState<{ label: string; value: string; group?: string }[]>([]);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [selectedProcesses, setSelectedProcesses] = useState<Map<string, { id: string; cnj: string }>>(new Map());
   const [isPerformingAction, setIsPerformingAction] = useState(false);
@@ -396,10 +396,10 @@ export function ProcessTable({
         }
 
         const statusId = process.status?.id;
-        const hasData = [PROCESS_STATUS.COMPLETED, PROCESS_STATUS.UPDATING_INFORMATION].includes(statusId);
-        const hasCitations = Array.isArray(process.citations) && process.citations.length > 0;
-        const hasAudiences = Array.isArray(process.audiences) && process.audiences.length > 0;
-        const hasHabilitations = !!process.partFound?.name;
+        const hasData = [PROCESS_STATUS.COMPLETED, PROCESS_STATUS.UPDATING_INFORMATION].includes(statusId) && process.hasData;
+        const hasCitations = Array.isArray(process.citations) && process.citations.length > 0 && !!process.search?.citations;
+        const hasAudiences = Array.isArray(process.audiences) && process.audiences.length > 0 && !!process.search?.audiences;
+        const hasHabilitations = !!process.partFound?.name && !!process.search?.habilitations;
 
         const indicators: { active: boolean; hasValue: boolean; label: string; short: string; color: string }[] = [
           { active: !!search.data, hasValue: hasData, label: "Dados de Capa", short: "CAPA", color: "bg-blue-500 text-white" },
@@ -593,12 +593,13 @@ export function ProcessTable({
       monitoring: undefined,
       consult: undefined,
       indicators: undefined,
+      indicatorsFound: undefined,
     });
     setDate(undefined);
     setSelectedBatch(null);
     setSelectedRequester(null);
     setSelectedMode([]);
-    setSelectedIndicators([]);
+    setSelectedIndicatorsFound([]);
     changeProcessFilter({
       page: 1,
       limit: processParams.limit,
@@ -775,12 +776,43 @@ export function ProcessTable({
                         { label: "Não", value: "monitoring=false", group: "Monitorando" },
                       ],
                     },
+                    {
+                      label: "Indicativos",
+                      options: [
+                        { label: "Capa", value: "indicator=data", group: "Indicativos" },
+                        { label: "Citações", value: "indicator=citations", group: "Indicativos" },
+                        { label: "Audiências", value: "indicator=audiences", group: "Indicativos" },
+                        { label: "Habilitações", value: "indicator=habilitations", group: "Indicativos" },
+                      ],
+                    },
                   ],
                   hasMore: false,
                   additional: {},
                 })}
                 onChange={(value) => {
-                  const selected = (value as { label: string; value: string; group?: string }[]) || [];
+                  const rawSelected = (value as { label: string; value: string; group?: string }[]) || [];
+                  const normalizedByBooleanKey = new Map<string, { label: string; value: string; group?: string }>();
+                  const passthroughSelections: { label: string; value: string; group?: string }[] = [];
+
+                  rawSelected.forEach((item) => {
+                    const [key, boolFlag] = item.value.split("=");
+                    const isBooleanModeFilter =
+                      (key === "consult" || key === "monitoring") &&
+                      (boolFlag === "true" || boolFlag === "false");
+
+                    if (isBooleanModeFilter) {
+                      // Mantém apenas a última escolha por chave booleana (Sim x Não).
+                      normalizedByBooleanKey.set(key, item);
+                      return;
+                    }
+
+                    passthroughSelections.push(item);
+                  });
+
+                  const selected = [
+                    ...passthroughSelections,
+                    ...Array.from(normalizedByBooleanKey.values()),
+                  ];
                   setSelectedMode(selected);
 
                   const hasConsultTrue = selected.some(s => s.value === "consult=true");
@@ -798,10 +830,16 @@ export function ProcessTable({
                   else if (hasMonitoringFalse && !hasMonitoringTrue) monitoringVal = false;
                   else monitoringVal = undefined;
 
+                  const indicators = selected
+                    .filter((s) => s.value.startsWith("indicator="))
+                    .map((s) => s.value.replace("indicator=", ""))
+                    .join(",") || undefined;
+
                   const newFilters = {
                     ...filters,
                     consult: consultVal,
                     monitoring: monitoringVal,
+                    indicators,
                   };
                   setFilters(newFilters);
                   changeProcessFilter({
@@ -814,29 +852,87 @@ export function ProcessTable({
               />
             </div>
             <div>
-              <label htmlFor="indicators" className="block text-sm font-medium text-gray-700 mb-1">
-                Indicativos
+              <label htmlFor="indicatorsFound" className="block text-sm font-medium text-gray-700 mb-1">
+                Indicadores encontrados
               </label>
               <SelectInfinityScroll
-                instanceId="indicators"
+                instanceId="indicatorsFound"
                 placeholder="Selecione"
                 isSearchable={false}
                 multiple
                 loadOptions={async () => ({
                   options: [
-                    { label: "Capa", value: "data" },
-                    { label: "Citações", value: "citations" },
-                    { label: "Audiências", value: "audiences" },
-                    { label: "Habilitações", value: "habilitations" },
+                    {
+                      label: "Dados de capa",
+                      options: [
+                        { label: "Sim", value: "data=true", group: "Dados de capa" },
+                        { label: "Não", value: "data=false", group: "Dados de capa" },
+                      ],
+                    },
+                    {
+                      label: "Citação",
+                      options: [
+                        { label: "Sim", value: "citations=true", group: "Citação" },
+                        { label: "Não", value: "citations=false", group: "Citação" },
+                      ],
+                    },
+                    {
+                      label: "Audiência",
+                      options: [
+                        { label: "Sim", value: "audiences=true", group: "Audiência" },
+                        { label: "Não", value: "audiences=false", group: "Audiência" },
+                      ],
+                    },
+                    {
+                      label: "Habilitação",
+                      options: [
+                        { label: "Sim", value: "habilitations=true", group: "Habilitação" },
+                        { label: "Não", value: "habilitations=false", group: "Habilitação" },
+                      ],
+                    },
                   ],
                   hasMore: false,
                   additional: {},
                 })}
                 onChange={(value) => {
-                  const selected = (value as { label: string; value: string }[]) || [];
-                  setSelectedIndicators(selected);
-                  const indicators = selected.map(s => s.value).join(",") || undefined;
-                  const newFilters = { ...filters, indicators };
+                  const rawSelected = (value as { label: string; value: string; group?: string }[]) || [];
+                  const normalizedByKey = new Map<string, { label: string; value: string; group?: string }>();
+
+                  rawSelected.forEach((item) => {
+                    const [key] = item.value.split("=");
+                    if (!key) return;
+                    // Mantém apenas a última escolha por indicador (Sim x Não).
+                    normalizedByKey.set(key, item);
+                  });
+
+                  const selected = Array.from(normalizedByKey.values());
+                  setSelectedIndicatorsFound(selected);
+
+                  const parseIndicatorFlag = (key: "data" | "citations" | "audiences" | "habilitations") => {
+                    const hasTrue = selected.some((s) => s.value === `${key}=true`);
+                    const hasFalse = selected.some((s) => s.value === `${key}=false`);
+
+                    if (hasTrue && !hasFalse) return true;
+                    if (hasFalse && !hasTrue) return false;
+                    return undefined;
+                  };
+
+                  const indicatorsFound = {
+                    data: parseIndicatorFlag("data"),
+                    citations: parseIndicatorFlag("citations"),
+                    audiences: parseIndicatorFlag("audiences"),
+                    habilitations: parseIndicatorFlag("habilitations"),
+                  };
+
+                  const hasAnyIndicatorFoundFilter = Object.values(indicatorsFound).some(
+                    (item) => item !== undefined
+                  );
+
+                  const newFilters = {
+                    ...filters,
+                    indicatorsFound: hasAnyIndicatorFoundFilter ? indicatorsFound : undefined,
+                  };
+
                   setFilters(newFilters);
                   changeProcessFilter({
                     page: 1,
@@ -844,7 +940,7 @@ export function ProcessTable({
                     filter: newFilters,
                   });
                 }}
-                value={selectedIndicators}
+                value={selectedIndicatorsFound}
               />
             </div>
             <div>
