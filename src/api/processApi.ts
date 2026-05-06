@@ -4,6 +4,28 @@ import { APIResponse } from "./response";
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 
+const appendFilterToQueryParams = (
+    queryParams: URLSearchParams,
+    key: string,
+    value: unknown,
+) => {
+    if (value === undefined || value === null || value === '') return;
+
+    if (typeof value === 'object' && !Array.isArray(value)) {
+        const sanitizedObject = Object.fromEntries(
+            Object.entries(value as Record<string, unknown>).filter(
+                ([, nestedValue]) => nestedValue !== undefined && nestedValue !== null && nestedValue !== ''
+            )
+        );
+        if (Object.keys(sanitizedObject).length > 0) {
+            queryParams.set(key, JSON.stringify(sanitizedObject));
+        }
+        return;
+    }
+
+    queryParams.set(key, value.toString());
+};
+
 export const ProcessApi = {
     findAll: async (params: ProcessApi.FindAll.Params): Promise<ProcessApi.FindAll.Response> => {
         const queryParams = new URLSearchParams();
@@ -12,7 +34,7 @@ export const ProcessApi = {
         if (params.limit) queryParams.set('limit', params.limit.toString());
         if (params.filter) {
             Object.entries(params.filter).forEach(([key, value]) => {
-                if (value !== undefined && value !== null && value !== '') queryParams.set(key, value.toString());
+                appendFilterToQueryParams(queryParams, key, value);
             });
         }
         const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
@@ -115,7 +137,7 @@ export const ProcessApi = {
             queryParams.set('adapter', 'false');
             if (params) {
                 Object.entries(params).forEach(([key, value]) => {
-                    if (value) queryParams.set(key, value.toString());
+                    appendFilterToQueryParams(queryParams, key, value);
                 });
             }
 
@@ -426,6 +448,12 @@ export namespace ProcessApi {
                 monitoring?: boolean;
                 consult?: boolean;
                 indicators?: string;
+                indicatorsFound?: {
+                    data?: boolean;
+                    citations?: boolean;
+                    audiences?: boolean;
+                    habilitations?: boolean;
+                };
                 batch?: string;
                 requester?: string;
                 initialDate?: string;
@@ -489,6 +517,7 @@ export namespace ProcessApi {
             classes: string[];
             foro: string;
             dateDistribution: string;
+            hasData: boolean;
             audiences: {
                 id: string;
                 date: string;
