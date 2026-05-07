@@ -12,6 +12,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import {
   RefreshCw,
@@ -79,6 +85,8 @@ export function ProcessTable({
   const [selectedBatch, setSelectedBatch] = useState<{ label: string, value: string } | null>(null);
   const [isLoadingRequesters, setIsLoadingRequesters] = useState(false);
   const [selectedRequester, setSelectedRequester] = useState<{ label: string, value: string } | null>(null);
+  const [selectedMode, setSelectedMode] = useState<{ label: string; value: string; group?: string }[]>([]);
+  const [selectedIndicatorsFound, setSelectedIndicatorsFound] = useState<{ label: string; value: string; group?: string }[]>([]);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [selectedProcesses, setSelectedProcesses] = useState<Map<string, { id: string; cnj: string }>>(new Map());
   const [isPerformingAction, setIsPerformingAction] = useState(false);
@@ -161,8 +169,8 @@ export function ProcessTable({
 
       await ProcessApi.save({
         processes: processesData,
-        monitoring: true,
-        registration: false
+        actions: { consult: false, monitoring: true },
+        search: { data: false, citations: true, audiences: true, habilitations: true },
       });
 
       setTimeout(() => {
@@ -323,30 +331,116 @@ export function ProcessTable({
     },
     {
       key: 'addedToMonitoring',
-      label: 'Monitorado',
+      label: 'Monitorando',
       className: 'font-semibold text-gray-700 w-[10%] py-3',
       render: (process) => (
-        <Badge className={cn((process.addedToMonitoring || process.monitored) ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
-          {(process.addedToMonitoring || process.monitored) ? "Sim" : "Não"}
+        <Badge className={cn((process.actions?.monitoring) ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
+          {(process.actions?.monitoring) ? "Sim" : "Não"}
         </Badge>
       )
     },
     {
-      key: 'monitoringParts',
+      key: 'habilitado',
       label: 'Habilitado',
       className: 'font-semibold text-gray-700 w-[10%] py-3',
       render: (process) => {
-        const hasPartsFound = process.partFound?.name;
-        if (!hasPartsFound && !process.monitoringParts && !process.monitoredParts && !process.registrationParts) {
-          return <Badge className={cn("bg-gray-500", "font-medium")}>
-            -
-          </Badge>;
+        const hasPartsFound = !!process.partFound?.name;
+        if (!process.search?.habilitations) {
+          return <Badge className={cn("bg-gray-500", "font-medium")}>-</Badge>;
         }
         return (
           <Badge className={cn(hasPartsFound ? "bg-green-500" : "bg-yellow-500", "font-medium")}>
             {hasPartsFound ? "Sim" : "Não"}
           </Badge>
-        )
+        );
+      }
+    },
+    {
+      key: 'mode',
+      label: 'Modo',
+      className: 'font-semibold text-gray-700 w-[10%] py-3',
+      render: (process) => {
+        const actions = process.actions;
+        if (!actions || (!actions.consult && !actions.monitoring)) {
+          return <span className="text-gray-400">-</span>;
+        }
+
+        let label = "";
+        let color = "";
+        if (actions.consult && actions.monitoring) {
+          label = "Consulta + Mon";
+          color = "border-blue-500 text-blue-600 bg-blue-50";
+        } else if (actions.consult) {
+          label = "Consulta";
+          color = "border-gray-400 text-gray-600 bg-gray-50";
+        } else {
+          label = "Monitorar";
+          color = "border-emerald-500 text-emerald-600 bg-emerald-50";
+        }
+
+        return (
+          <Badge
+            variant="outline"
+            className={cn(color, "font-medium whitespace-nowrap")}
+          >
+            {label}
+          </Badge>
+        );
+      }
+    },
+    {
+      key: 'indicativos',
+      label: 'Indicativos',
+      className: 'font-semibold text-gray-700 w-[14%] py-3',
+      render: (process) => {
+        const search = process.search;
+        if (!search) {
+          return <span className="text-gray-400">-</span>;
+        }
+
+        const statusId = process.status?.id;
+        const hasData = [PROCESS_STATUS.COMPLETED, PROCESS_STATUS.UPDATING_INFORMATION].includes(statusId) && process.hasData;
+        const hasCitations = Array.isArray(process.citations) && process.citations.length > 0 && !!process.search?.citations;
+        const hasAudiences = Array.isArray(process.audiences) && process.audiences.length > 0 && !!process.search?.audiences;
+        const hasHabilitations = !!process.partFound?.name && !!process.search?.habilitations;
+
+        const indicators: { active: boolean; hasValue: boolean; label: string; short: string; color: string }[] = [
+          { active: !!search.data, hasValue: hasData, label: "Dados de Capa", short: "CAPA", color: "bg-blue-500 text-white" },
+          { active: !!search.citations, hasValue: hasCitations, label: "Citação", short: "CIT", color: "bg-purple-500 text-white" },
+          { active: !!search.audiences, hasValue: hasAudiences, label: "Audiência", short: "AUD", color: "bg-emerald-500 text-white" },
+          { active: !!search.habilitations, hasValue: hasHabilitations, label: "Habilitação", short: "HAB", color: "bg-amber-500 text-white" },
+        ].filter((i) => i.active);
+
+        if (indicators.length === 0) {
+          return <span className="text-gray-400">-</span>;
+        }
+
+        return (
+          <TooltipProvider delayDuration={150}>
+            <div className="flex flex-row gap-1 ">
+              {indicators.map((ind) => (
+                <Tooltip key={ind.label}>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      className={cn(
+                        ind.color,
+                        "font-medium cursor-default transition-opacity",
+                        !ind.hasValue && "opacity-20"
+                      )}
+                    >
+                      {ind.short}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span>
+                      {ind.label}: {ind.hasValue ? "com dados" : "sem dados"}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
+        );
       }
     },
     {
@@ -402,7 +496,7 @@ export function ProcessTable({
           >
             <Info className="h-4 w-4" />
           </Button>
-          {(process.monitoring || process.monitoringParts) ? (
+          {(process.actions?.monitoring) ? (
             <PopConfirm
               title="Desativar monitoramento"
               description="Tem certeza que deseja desativar o monitoramento deste processo?"
@@ -500,9 +594,15 @@ export function ProcessTable({
       cnj: "",
       status: undefined,
       monitoring: undefined,
+      consult: undefined,
+      indicators: undefined,
+      indicatorsFound: undefined,
     });
     setDate(undefined);
     setSelectedBatch(null);
+    setSelectedRequester(null);
+    setSelectedMode([]);
+    setSelectedIndicatorsFound([]);
     changeProcessFilter({
       page: 1,
       limit: processParams.limit,
@@ -656,26 +756,196 @@ export function ProcessTable({
               </select>
             </div>
             <div>
-              <label htmlFor="monitoring" className="block text-sm font-medium text-gray-700 mb-1">
-                Monitorado
+              <label htmlFor="mode" className="block text-sm font-medium text-gray-700 mb-1">
+                Modo
               </label>
-              <select
-                id="monitoring"
-                value={filters?.monitoring === undefined ? '' : filters?.monitoring as unknown as string}
-                onChange={(e) => {
-                  handleFilterChange(
-                    "monitoring" as never,
-                    e.target.value
-                  );
+              <SelectInfinityScroll
+                instanceId="mode"
+                placeholder="Selecione"
+                isSearchable={false}
+                multiple
+                loadOptions={async () => ({
+                  options: [
+                    {
+                      label: "Consulta",
+                      options: [
+                        { label: "Sim", value: "consult=true", group: "Consulta" },
+                        { label: "Não", value: "consult=false", group: "Consulta" },
+                      ],
+                    },
+                    {
+                      label: "Monitorando",
+                      options: [
+                        { label: "Sim", value: "monitoring=true", group: "Monitorando" },
+                        { label: "Não", value: "monitoring=false", group: "Monitorando" },
+                      ],
+                    },
+                    {
+                      label: "Indicativos",
+                      options: [
+                        { label: "Capa", value: "indicator=data", group: "Indicativos" },
+                        { label: "Citações", value: "indicator=citations", group: "Indicativos" },
+                        { label: "Audiências", value: "indicator=audiences", group: "Indicativos" },
+                        { label: "Habilitações", value: "indicator=habilitations", group: "Indicativos" },
+                      ],
+                    },
+                  ],
+                  hasMore: false,
+                  additional: {},
+                })}
+                onChange={(value) => {
+                  const rawSelected = (value as { label: string; value: string; group?: string }[]) || [];
+                  const normalizedByBooleanKey = new Map<string, { label: string; value: string; group?: string }>();
+                  const passthroughSelections: { label: string; value: string; group?: string }[] = [];
+
+                  rawSelected.forEach((item) => {
+                    const [key, boolFlag] = item.value.split("=");
+                    const isBooleanModeFilter =
+                      (key === "consult" || key === "monitoring") &&
+                      (boolFlag === "true" || boolFlag === "false");
+
+                    if (isBooleanModeFilter) {
+                      // Mantém apenas a última escolha por chave booleana (Sim x Não).
+                      normalizedByBooleanKey.set(key, item);
+                      return;
+                    }
+
+                    passthroughSelections.push(item);
+                  });
+
+                  const selected = [
+                    ...passthroughSelections,
+                    ...Array.from(normalizedByBooleanKey.values()),
+                  ];
+                  setSelectedMode(selected);
+
+                  const hasConsultTrue = selected.some(s => s.value === "consult=true");
+                  const hasConsultFalse = selected.some(s => s.value === "consult=false");
+                  const hasMonitoringTrue = selected.some(s => s.value === "monitoring=true");
+                  const hasMonitoringFalse = selected.some(s => s.value === "monitoring=false");
+
+                  let consultVal: boolean | undefined;
+                  if (hasConsultTrue && !hasConsultFalse) consultVal = true;
+                  else if (hasConsultFalse && !hasConsultTrue) consultVal = false;
+                  else consultVal = undefined;
+
+                  let monitoringVal: boolean | undefined;
+                  if (hasMonitoringTrue && !hasMonitoringFalse) monitoringVal = true;
+                  else if (hasMonitoringFalse && !hasMonitoringTrue) monitoringVal = false;
+                  else monitoringVal = undefined;
+
+                  const indicators = selected
+                    .filter((s) => s.value.startsWith("indicator="))
+                    .map((s) => s.value.replace("indicator=", ""))
+                    .join(",") || undefined;
+
+                  const newFilters = {
+                    ...filters,
+                    consult: consultVal,
+                    monitoring: monitoringVal,
+                    indicators,
+                  };
+                  setFilters(newFilters);
+                  changeProcessFilter({
+                    page: 1,
+                    limit: processParams.limit,
+                    filter: newFilters,
+                  });
                 }}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value={''}>Todos</option>
-                <optgroup label="Monitorado">
-                  <option value={'true'}>Sim</option>
-                  <option value={'false'}>Não</option>
-                </optgroup>
-              </select>
+                value={selectedMode}
+              />
+            </div>
+            <div>
+              <label htmlFor="indicatorsFound" className="block text-sm font-medium text-gray-700 mb-1">
+                Indicadores encontrados
+              </label>
+              <SelectInfinityScroll
+                instanceId="indicatorsFound"
+                placeholder="Selecione"
+                isSearchable={false}
+                multiple
+                loadOptions={async () => ({
+                  options: [
+                    {
+                      label: "Dados de capa",
+                      options: [
+                        { label: "Sim", value: "data=true", group: "Dados de capa" },
+                        { label: "Não", value: "data=false", group: "Dados de capa" },
+                      ],
+                    },
+                    {
+                      label: "Citação",
+                      options: [
+                        { label: "Sim", value: "citations=true", group: "Citação" },
+                        { label: "Não", value: "citations=false", group: "Citação" },
+                      ],
+                    },
+                    {
+                      label: "Audiência",
+                      options: [
+                        { label: "Sim", value: "audiences=true", group: "Audiência" },
+                        { label: "Não", value: "audiences=false", group: "Audiência" },
+                      ],
+                    },
+                    {
+                      label: "Habilitação",
+                      options: [
+                        { label: "Sim", value: "habilitations=true", group: "Habilitação" },
+                        { label: "Não", value: "habilitations=false", group: "Habilitação" },
+                      ],
+                    },
+                  ],
+                  hasMore: false,
+                  additional: {},
+                })}
+                onChange={(value) => {
+                  const rawSelected = (value as { label: string; value: string; group?: string }[]) || [];
+                  const normalizedByKey = new Map<string, { label: string; value: string; group?: string }>();
+
+                  rawSelected.forEach((item) => {
+                    const [key] = item.value.split("=");
+                    if (!key) return;
+                    // Mantém apenas a última escolha por indicador (Sim x Não).
+                    normalizedByKey.set(key, item);
+                  });
+
+                  const selected = Array.from(normalizedByKey.values());
+                  setSelectedIndicatorsFound(selected);
+
+                  const parseIndicatorFlag = (key: "data" | "citations" | "audiences" | "habilitations") => {
+                    const hasTrue = selected.some((s) => s.value === `${key}=true`);
+                    const hasFalse = selected.some((s) => s.value === `${key}=false`);
+
+                    if (hasTrue && !hasFalse) return true;
+                    if (hasFalse && !hasTrue) return false;
+                    return undefined;
+                  };
+
+                  const indicatorsFound = {
+                    data: parseIndicatorFlag("data"),
+                    citations: parseIndicatorFlag("citations"),
+                    audiences: parseIndicatorFlag("audiences"),
+                    habilitations: parseIndicatorFlag("habilitations"),
+                  };
+
+                  const hasAnyIndicatorFoundFilter = Object.values(indicatorsFound).some(
+                    (item) => item !== undefined
+                  );
+
+                  const newFilters = {
+                    ...filters,
+                    indicatorsFound: hasAnyIndicatorFoundFilter ? indicatorsFound : undefined,
+                  };
+
+                  setFilters(newFilters);
+                  changeProcessFilter({
+                    page: 1,
+                    limit: processParams.limit,
+                    filter: newFilters,
+                  });
+                }}
+                value={selectedIndicatorsFound}
+              />
             </div>
             <div>
               <label htmlFor="batch" className="block text-sm font-medium text-gray-700 mb-1">

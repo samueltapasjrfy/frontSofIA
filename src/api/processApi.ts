@@ -7,6 +7,28 @@ import { COMPANIES } from "@/constants/companies";
 import { exportProcessFC, exportProcessNormal } from "@/utils/excel";
 import { LoginResponse } from "./authApi";
 
+const appendFilterToQueryParams = (
+    queryParams: URLSearchParams,
+    key: string,
+    value: unknown,
+) => {
+    if (value === undefined || value === null || value === '') return;
+
+    if (typeof value === 'object' && !Array.isArray(value)) {
+        const sanitizedObject = Object.fromEntries(
+            Object.entries(value as Record<string, unknown>).filter(
+                ([, nestedValue]) => nestedValue !== undefined && nestedValue !== null && nestedValue !== ''
+            )
+        );
+        if (Object.keys(sanitizedObject).length > 0) {
+            queryParams.set(key, JSON.stringify(sanitizedObject));
+        }
+        return;
+    }
+
+    queryParams.set(key, value.toString());
+};
+
 export const ProcessApi = {
     findAll: async (params: ProcessApi.FindAll.Params): Promise<ProcessApi.FindAll.Response> => {
         const queryParams = new URLSearchParams();
@@ -15,10 +37,9 @@ export const ProcessApi = {
         if (params.limit) queryParams.set('limit', params.limit.toString());
         if (params.filter) {
             Object.entries(params.filter).forEach(([key, value]) => {
-                if (value) queryParams.set(key, value.toString());
+                appendFilterToQueryParams(queryParams, key, value);
             });
         }
-
         const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
         return response.data;
     },
@@ -119,7 +140,7 @@ export const ProcessApi = {
             queryParams.set('adapter', 'false');
             if (params) {
                 Object.entries(params).forEach(([key, value]) => {
-                    if (value) queryParams.set(key, value.toString());
+                    appendFilterToQueryParams(queryParams, key, value);
                 });
             }
 
@@ -291,6 +312,14 @@ export namespace ProcessApi {
                 imported?: boolean;
                 status?: number;
                 monitoring?: boolean;
+                consult?: boolean;
+                indicators?: string;
+                indicatorsFound?: {
+                    data?: boolean;
+                    citations?: boolean;
+                    audiences?: boolean;
+                    habilitations?: boolean;
+                };
                 batch?: string;
                 requester?: string;
                 initialDate?: string;
@@ -312,14 +341,22 @@ export namespace ProcessApi {
                 id: string;
                 name: string;
             } | null;
-            monitoringParts: boolean,
-            monitoredParts: boolean,
-            registrationParts: boolean,
-            monitored: boolean,
+            actions: {
+                consult: boolean;
+                monitoring: boolean;
+            } | null;
+            search: {
+                data: boolean;
+                citations: boolean;
+                audiences: boolean;
+                habilitations: boolean;
+            } | null;
+            consulted: boolean;
+            monitored: boolean;
             partFound?: {
-                name: string,
-                document: string
-            },
+                name: string;
+                document: string;
+            };
             imported: boolean;
             idBatch: string
             instance: number;
@@ -350,6 +387,7 @@ export namespace ProcessApi {
             lastMovementId: string;
             lastMovementDescription: string;
             distribuited: string;
+            hasData: boolean;
             audiences: {
                 id: string;
                 date: string;
@@ -377,7 +415,6 @@ export namespace ProcessApi {
                 approved: boolean | null;
             }[];
             metadata: Record<string, any>;
-            monitoring: boolean;
             addedToMonitoring: boolean;
             dateSentence?: string;
             relatedCases?: RelatedCase[];
@@ -466,10 +503,16 @@ export namespace ProcessApi {
                 cnj: string;
                 metadata?: Record<string, any>;
             }[];
-            monitoring: boolean;
-            registration: boolean;
-            monitoringParts?: boolean;
-            registrationParts?: boolean;
+            actions: {
+                consult: boolean;
+                monitoring: boolean;
+            };
+            search: {
+                data: boolean;
+                citations: boolean;
+                audiences: boolean;
+                habilitations: boolean;
+            };
         };
 
         export type Response = {

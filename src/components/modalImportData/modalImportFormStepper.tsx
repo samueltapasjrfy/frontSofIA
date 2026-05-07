@@ -15,14 +15,14 @@ const STEP_STATUS_COLOR = {
 
 const STEP_STATUS_TEXT_COLOR = {
   wait: "text-gray-500",
-  process: "text-gray-500",
+  process: "text-white",
   finish: "text-white",
   error: "text-gray-500",
 }
 
 const STEP_STATUS_BORDER_COLOR = {
   wait: "#e5e7eb",
-  process: "#A1A1A1",
+  process: "#0146cf",
   finish: "#0d6efd",
   error: "#ef4444",
 }
