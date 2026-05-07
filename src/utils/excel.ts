@@ -4,14 +4,14 @@ import dayjs from "dayjs";
 import * as XLSX from 'xlsx';
 import { normalizeString } from "./str";
 
-export const  exportProcessNormal = async (response: ProcessApi.FindAll.Response): Promise<XLSX.WorkBook> => {
+export const exportProcessNormal = async (response: ProcessApi.FindAll.Response): Promise<XLSX.WorkBook> => {
     // Preparar dados para exportação
     const data = response.processes.map(pub => {
         const hasPartsFound = pub.partFound?.name;
         let habilitado = '-';
         if (hasPartsFound) {
             habilitado = "Sim";
-        } else if (pub.monitoringParts && !hasPartsFound) {
+        } else if (pub.actions?.monitoring && !hasPartsFound) {
             habilitado = "Não";
         }
         return {
@@ -150,7 +150,7 @@ export const  exportProcessNormal = async (response: ProcessApi.FindAll.Response
     return wb;
 }
 
-export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, user: LoginResponse): Promise<XLSX.WorkBook> => {
+export const exportProcessFC = async (response: ProcessApi.FindAll.Response, user: LoginResponse): Promise<XLSX.WorkBook> => {
     // Preparar dados para exportação
     const data = response.processes.map(process => {
         const parties = Array.isArray(process.parties) ? process.parties : [];
@@ -158,17 +158,17 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
         const reuPart = parties.find(party => ['reu', 'parte passiva'].includes(normalizeString(party.type || ''))) ?? null;
 
         console.log({
-            area: process.area, 
-            areaInfo: process.metadata?.areasFC, 
+            area: process.area,
+            areaInfo: process.metadata?.areasFC,
             nature: process.nature,
-            natureInfo: process.metadata?.naturesFC, 
+            natureInfo: process.metadata?.naturesFC,
             client: process.metadata?.cliente,
             advLider: process.metadata?.advLiderResponsavel,
-            advLiderInfo: process.metadata?.advogadosFC, 
+            advLiderInfo: process.metadata?.advogadosFC,
             nucleo: process.metadata?.nucleo,
-            nucleoInfo: process.metadata?.nucleosFC, 
+            nucleoInfo: process.metadata?.nucleosFC,
             comarca: process.judicialDistrict,
-            comarcaInfo: process.metadata?.judicialDistrictsFC, 
+            comarcaInfo: process.metadata?.judicialDistrictsFC,
         })
         return {
             'Dt_cadastro_pasta': new Date().toLocaleDateString(),
@@ -201,7 +201,7 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
             'tipo_parte ': '7', //7 = Réu
             'cliente? Se o cliente é o Autor ou Réu': process.metadata?.clienteAutorOuReu, //Adaptar para tbpartesprocesso ?
             'Data_andamento': process.lastMovement,
-            'Cobrável':'',
+            'Cobrável': '',
             'Disponível_sitecliente': '',
             'Associado': '',
             'status_and': '',
@@ -275,13 +275,13 @@ export const  exportProcessFC = async (response: ProcessApi.FindAll.Response, us
     // Planilha principal de processos
     const mainWs = XLSX.utils.json_to_sheet(data);
     const mainColWidths = [
-        { wch: 15 }, 
-        { wch: 15 }, 
-        { wch: 25 }, 
-        { wch: 25 }, 
-        { wch: 15 }, 
-        { wch: 25 }, 
-        { wch: 10 }, 
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 25 },
+        { wch: 25 },
+        { wch: 15 },
+        { wch: 25 },
+        { wch: 10 },
     ];
     mainWs['!cols'] = mainColWidths;
     XLSX.utils.book_append_sheet(wb, mainWs, 'Processos');
