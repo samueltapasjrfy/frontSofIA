@@ -21,6 +21,7 @@ const litigationColumns = {
   litigation: 'Processo',
   instance: 'Instância',
   idInternal: 'ID',
+  clientCode: 'Código Cliente',
   controlClient: 'Controle Cliente',
   clientName: 'Cliente',
   advLiderResponsavel: 'Líder | Advogado',
@@ -30,6 +31,12 @@ const litigationColumns = {
 }
 
 const metadataColumns = [{
+  key: litigationColumns.clientCode,
+  example: '12345',
+  previewWidth: 200,
+  variant: ['CÓDIGO CLIENTE', 'CODIGO CLIENTE', 'CÓD_CLIENTE', 'COD_CLIENTE', 'CLIENT CODE'],
+},
+{
   key: litigationColumns.controlClient,
   example: '1234567890',
   previewWidth: 200,
@@ -109,6 +116,7 @@ export default function ProcessesPage() {
         cnj: row[expectedColumnsToRows[litigationColumns.litigation]],
         metadata: {
           idInternal: row[expectedColumnsToRows[litigationColumns.idInternal]] || undefined,
+          codigoCliente: row[expectedColumnsToRows[litigationColumns.clientCode]] || undefined,
           controleCliente: row[expectedColumnsToRows[litigationColumns.controlClient]] || undefined,
           cliente: row[expectedColumnsToRows[litigationColumns.clientName]] || undefined,
           advLiderResponsavel: row[expectedColumnsToRows[litigationColumns.advLiderResponsavel]] || undefined,
@@ -137,6 +145,7 @@ export default function ProcessesPage() {
         cnj: data.litigationNumber,
         metadata: {
           idInternal: data.idInternal,
+          codigoCliente: data.clientCode,
           controleCliente: data.controlClient,
           cliente: data.clientName,
           advLiderResponsavel: data.advLiderResponsavel,
