@@ -304,85 +304,33 @@ export const exportProcessFC = async (response: ProcessApi.FindAll.Response, use
     XLSX.utils.book_append_sheet(wb, partiesWs, 'Partes');
 
 
-    const dataOriginal = response.processes.map(pub => {
-        const hasPartsFound = pub.partFound?.name;
-        let habilitado = '-';
-        if (hasPartsFound) {
-            habilitado = "Sim";
-        } else if (pub.actions?.monitoring && !hasPartsFound) {
-            habilitado = "Não";
+    const audiencesData: any[] = [];
+    response.processes.forEach(proc => {
+        if (proc.audiences && proc.audiences.length > 0) {
+            proc.audiences.forEach(aud => {
+                audiencesData.push({
+                    'Nº Processo': proc.cnj || '-',
+                    'Data': aud.date ? dayjs(aud.date).format('DD/MM/YYYY HH:mm') : '-',
+                    'Descrição': aud.description ? String(aud.description).slice(0, 32760) : '-',
+                    'Tipo': aud.type || '-',
+                    'Status': aud.status || '-'
+                });
+            });
         }
-        return {
-            'Nº Processo': pub.cnj || '-',
-            'Instância': pub.instance || '-',
-            'Status': pub.imported ? 'Importado' : pub.status?.value || '-',
-            'Data Inserção': pub.createdAt
-                ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm')
-                : '-',
-            'Citado': pub.cited ? 'Sim' : 'Não',
-            'Data da Citação': pub.citedAt
-                ? dayjs(pub.citedAt).format('DD/MM/YYYY')
-                : '-',
-            'Habilitado': habilitado,
-            'Núcleo': pub.metadata?.nucleo || '-',
-            'Cliente': pub.metadata?.cliente || '-',
-            'Controle Cliente': pub.metadata?.controleCliente || '-',
-            'Autor ou Réu': pub.metadata?.clienteAutorOuReu || '-',
-            'Data Terceirização': pub.metadata?.dataTerceirizacao || '-',
-            'Adv Líder / Responsável': pub.metadata?.advLiderResponsavel || '-',
-            'Data Distribuição': pub.dateDistribution ? dayjs(pub.dateDistribution).format('DD/MM/YYYY') : '-',
-            'Segredo de Justiça': pub.secret ? 'Sim' : 'Não',
-            'Tribunal': pub.jurisdiction || '-',
-            'Juiz': pub.judge || '-',
-            'Valor': pub.value ? Number(pub.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-',
-            'Comarca': pub.judicialDistrict || '-',
-            'Liminar': pub.preliminaryInjunction ? 'Sim' : 'Não',
-            'Foro': pub.foro || '-',
-            'Vara': pub.vara || '-',
-            'UF': pub.uf || '-',
-            'Classes': pub.classes ? pub.classes.join(', ') : '-',
-            'Assunto Extra': pub.extraSubject || '-',
-            'Área': pub.area || '-',
-            'Arquivado': pub.archived ? 'Sim' : 'Não',
-            'Extinto': pub.extinct ? 'Sim' : 'Não',
-            'Justiça Gratuita': pub.legalAid ? 'Sim' : 'Não',
-            'Fonte do Sistema': pub.system || '-',
-            'Tribunal Original': pub.originalCourt || '-',
-            'Natureza': pub.nature || '-',
-            // 'Audiências': pub.audiences ? pub.audiences.map(aud => `${dayjs(aud.date).format('DD/MM/YYYY')}: ${aud.text} (${aud.type}, ${aud.status})`).join('; ') : '-'
-        };
     });
 
-    // Planilha principal de processos
-    const mainWsOriginal = XLSX.utils.json_to_sheet(dataOriginal);
-    const mainColWidthsOriginal = [
-        { wch: 25 }, // Nº Processo
-        { wch: 10 }, // Instância
-        { wch: 15 }, // Status
-        { wch: 15 }, // Data Inserção
-        { wch: 15 }, // Citado
-        { wch: 15 }, // Data da Citação
-        { wch: 15 }, // Segredo de Justiça
-        { wch: 15 }, // Tribunal
-        { wch: 15 }, // Juiz
-        { wch: 15 }, // Valor
-        { wch: 15 }, // Comarca
-        { wch: 15 }, // Liminar
-        { wch: 15 }, // Foro
-        { wch: 15 }, // Vara
-        { wch: 15 }, // UF
-        { wch: 15 }, // Classes
-        { wch: 15 }, // Assunto Extra
-        { wch: 15 }, // Área
-        { wch: 15 }, // Arquivado
-        { wch: 15 }, // Extinto
-        { wch: 15 }, // Justiça Gratuita
-        { wch: 15 }, // Fonte do Sistema
-        { wch: 15 }, // Tribunal Original
-        { wch: 15 }, // Natureza
-    ];
-    mainWsOriginal['!cols'] = mainColWidthsOriginal;
-    XLSX.utils.book_append_sheet(wb, mainWsOriginal, 'Processos_Original');
+    if (audiencesData.length > 0) {
+        const audiencesWs = XLSX.utils.json_to_sheet(audiencesData);
+        const audiencesColWidths = [
+            { wch: 25 }, // Nº Processo
+            { wch: 20 }, // Data
+            { wch: 40 }, // Descrição
+            { wch: 15 }, // Tipo
+            { wch: 15 }, // Status
+        ];
+        audiencesWs['!cols'] = audiencesColWidths;
+        XLSX.utils.book_append_sheet(wb, audiencesWs, 'Audiências');
+    }
 
 
     return wb;
