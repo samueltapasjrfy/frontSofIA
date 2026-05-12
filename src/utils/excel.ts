@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import * as XLSX from 'xlsx';
 import { normalizeString } from "./str";
 
-export const exportProcessNormal = async (response: ProcessApi.FindAll.Response): Promise<XLSX.WorkBook> => {
+export const exportProcessNormal = async (response: ProcessApi.FindAll.Response, audiences= true, parties= true): Promise<XLSX.WorkBook> => {
     // Preparar dados para exportação
     const data = response.processes.map(pub => {
         const hasPartsFound = pub.partFound?.name;
@@ -57,6 +57,7 @@ export const exportProcessNormal = async (response: ProcessApi.FindAll.Response)
 
     // Preparar dados para a aba de audiências
     const audiencesData: any[] = [];
+    if (audiences) 
     response.processes.forEach(proc => {
         if (proc.audiences && proc.audiences.length > 0) {
             proc.audiences.forEach(aud => {
@@ -73,6 +74,7 @@ export const exportProcessNormal = async (response: ProcessApi.FindAll.Response)
 
     // Preparar dados para a aba de partes contrárias
     const partiesData: any[] = [];
+    if (parties) 
     response.processes.forEach(proc => {
         if (proc.parties && proc.parties.length > 0) {
             proc.parties.forEach(party => {
@@ -121,7 +123,7 @@ export const exportProcessNormal = async (response: ProcessApi.FindAll.Response)
     XLSX.utils.book_append_sheet(wb, mainWs, 'Processos');
 
     // Planilha de audiências
-    if (audiencesData.length > 0) {
+    if (audiencesData.length > 0 && audiences) {
         const audiencesWs = XLSX.utils.json_to_sheet(audiencesData);
         const audiencesColWidths = [
             { wch: 25 }, // Nº Processo
@@ -135,7 +137,7 @@ export const exportProcessNormal = async (response: ProcessApi.FindAll.Response)
     }
 
     // Planilha de partes contrárias
-    if (partiesData.length > 0) {
+    if (partiesData.length > 0 && parties) {
         const partiesWs = XLSX.utils.json_to_sheet(partiesData);
         const partiesColWidths = [
             { wch: 25 }, // Nº Processo
@@ -157,19 +159,6 @@ export const exportProcessFC = async (response: ProcessApi.FindAll.Response, use
         const autorPart = parties.find(party => ['autor', 'parte ativa'].includes(normalizeString(party.type || ''))) ?? null;
         const reuPart = parties.find(party => ['reu', 'parte passiva'].includes(normalizeString(party.type || ''))) ?? null;
 
-        console.log({
-            area: process.area,
-            areaInfo: process.metadata?.areasFC,
-            nature: process.nature,
-            natureInfo: process.metadata?.naturesFC,
-            client: process.metadata?.cliente,
-            advLider: process.metadata?.advLiderResponsavel,
-            advLiderInfo: process.metadata?.advogadosFC,
-            nucleo: process.metadata?.nucleo,
-            nucleoInfo: process.metadata?.nucleosFC,
-            comarca: process.judicialDistrict,
-            comarcaInfo: process.metadata?.judicialDistrictsFC,
-        })
         return {
             'Dt_cadastro_pasta': new Date().toLocaleDateString(),
             'User_cadastro_pasta': "Cadastro automatizado Jurify",
@@ -313,6 +302,88 @@ export const exportProcessFC = async (response: ProcessApi.FindAll.Response, use
         partiesWs['!cols'] = partiesColWidths;
     }
     XLSX.utils.book_append_sheet(wb, partiesWs, 'Partes');
+
+
+    const dataOriginal = response.processes.map(pub => {
+        const hasPartsFound = pub.partFound?.name;
+        let habilitado = '-';
+        if (hasPartsFound) {
+            habilitado = "Sim";
+        } else if (pub.actions?.monitoring && !hasPartsFound) {
+            habilitado = "Não";
+        }
+        return {
+            'Nº Processo': pub.cnj || '-',
+            'Instância': pub.instance || '-',
+            'Status': pub.imported ? 'Importado' : pub.status?.value || '-',
+            'Data Inserção': pub.createdAt
+                ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm')
+                : '-',
+            'Citado': pub.cited ? 'Sim' : 'Não',
+            'Data da Citação': pub.citedAt
+                ? dayjs(pub.citedAt).format('DD/MM/YYYY')
+                : '-',
+            'Habilitado': habilitado,
+            'Núcleo': pub.metadata?.nucleo || '-',
+            'Cliente': pub.metadata?.cliente || '-',
+            'Controle Cliente': pub.metadata?.controleCliente || '-',
+            'Autor ou Réu': pub.metadata?.clienteAutorOuReu || '-',
+            'Data Terceirização': pub.metadata?.dataTerceirizacao || '-',
+            'Adv Líder / Responsável': pub.metadata?.advLiderResponsavel || '-',
+            'Data Distribuição': pub.dateDistribution ? dayjs(pub.dateDistribution).format('DD/MM/YYYY') : '-',
+            'Segredo de Justiça': pub.secret ? 'Sim' : 'Não',
+            'Tribunal': pub.jurisdiction || '-',
+            'Juiz': pub.judge || '-',
+            'Valor': pub.value ? Number(pub.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-',
+            'Comarca': pub.judicialDistrict || '-',
+            'Liminar': pub.preliminaryInjunction ? 'Sim' : 'Não',
+            'Foro': pub.foro || '-',
+            'Vara': pub.vara || '-',
+            'UF': pub.uf || '-',
+            'Classes': pub.classes ? pub.classes.join(', ') : '-',
+            'Assunto Extra': pub.extraSubject || '-',
+            'Área': pub.area || '-',
+            'Arquivado': pub.archived ? 'Sim' : 'Não',
+            'Extinto': pub.extinct ? 'Sim' : 'Não',
+            'Justiça Gratuita': pub.legalAid ? 'Sim' : 'Não',
+            'Fonte do Sistema': pub.system || '-',
+            'Tribunal Original': pub.originalCourt || '-',
+            'Natureza': pub.nature || '-',
+            // 'Audiências': pub.audiences ? pub.audiences.map(aud => `${dayjs(aud.date).format('DD/MM/YYYY')}: ${aud.text} (${aud.type}, ${aud.status})`).join('; ') : '-'
+        };
+    });
+
+    // Planilha principal de processos
+    const mainWsOriginal = XLSX.utils.json_to_sheet(dataOriginal);
+    const mainColWidthsOriginal = [
+        { wch: 25 }, // Nº Processo
+        { wch: 10 }, // Instância
+        { wch: 15 }, // Status
+        { wch: 15 }, // Data Inserção
+        { wch: 15 }, // Citado
+        { wch: 15 }, // Data da Citação
+        { wch: 15 }, // Segredo de Justiça
+        { wch: 15 }, // Tribunal
+        { wch: 15 }, // Juiz
+        { wch: 15 }, // Valor
+        { wch: 15 }, // Comarca
+        { wch: 15 }, // Liminar
+        { wch: 15 }, // Foro
+        { wch: 15 }, // Vara
+        { wch: 15 }, // UF
+        { wch: 15 }, // Classes
+        { wch: 15 }, // Assunto Extra
+        { wch: 15 }, // Área
+        { wch: 15 }, // Arquivado
+        { wch: 15 }, // Extinto
+        { wch: 15 }, // Justiça Gratuita
+        { wch: 15 }, // Fonte do Sistema
+        { wch: 15 }, // Tribunal Original
+        { wch: 15 }, // Natureza
+    ];
+    mainWsOriginal['!cols'] = mainColWidthsOriginal;
+    XLSX.utils.book_append_sheet(wb, mainWsOriginal, 'Processos_Original');
+
 
     return wb;
 }

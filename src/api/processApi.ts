@@ -145,8 +145,9 @@ export const ProcessApi = {
             }
 
             const idCompany = user.companies?.[0]?.id;
+            const isFC = idCompany === COMPANIES.FC;
             const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
-            const wb = (idCompany === COMPANIES.FC) ? await exportProcessFC(response.data, user) : await exportProcessNormal(response.data);
+            const wb = isFC ? await exportProcessFC(response.data, user) : await exportProcessNormal(response.data);
 
             // Gerar arquivo e fazer download
             const excelBuffer = XLSX.write(wb, {
