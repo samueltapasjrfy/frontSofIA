@@ -582,6 +582,16 @@ export namespace ProcessApi {
                 createdAt: string;
                 approved: boolean | null;
             }[];
+            actions: {
+                consult: boolean;
+                monitoring: boolean;
+            };
+            search: {
+                data: boolean;
+                citations: boolean;
+                audiences: boolean;
+                habilitations: boolean;
+            };
         };
 
         export type Response = {

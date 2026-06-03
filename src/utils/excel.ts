@@ -4,56 +4,57 @@ import dayjs from "dayjs";
 import * as XLSX from 'xlsx';
 import { normalizeString } from "./str";
 
+const adaptProcessNormal = (process: ProcessApi.FindAll.Process): any => {
+    const hasPartsFound = process.partFound?.name;
+    let habilitado = '-';
+    if (hasPartsFound) {
+        habilitado = "Sim";
+    } else if (process.actions?.monitoring && !hasPartsFound) {
+        habilitado = "Não";
+    }
+    return {
+        'Nº Processo': process.cnj || '-',
+        'Instância': process.instance || '-',
+        'Status': process.imported ? 'Importado' : process.status?.value || '-',
+        'Data Inserção': process.createdAt
+            ? dayjs(process.createdAt).format('DD/MM/YYYY HH:mm')
+            : '-',
+        'Citado': process.cited ? 'Sim' : 'Não',
+        'Data da Citação': process.citedAt
+            ? dayjs(process.citedAt).format('DD/MM/YYYY')
+            : '-',
+        'Habilitado': habilitado,
+        'Núcleo': process.metadata?.nucleo || '-',
+        'Cliente': process.metadata?.cliente || '-',
+        'Controle Cliente': process.metadata?.controleCliente || '-',
+        'Autor ou Réu': process.metadata?.clienteAutorOuReu || '-',
+        'Data Terceirização': process.metadata?.dataTerceirizacao || '-',
+        'Adv Líder / Responsável': process.metadata?.advLiderResponsavel || '-',
+        'Data Distribuição': process.dateDistribution ? dayjs(process.dateDistribution).format('DD/MM/YYYY') : '-',
+        'Segredo de Justiça': process.secret ? 'Sim' : 'Não',
+        'Tribunal': process.jurisdiction || '-',
+        'Juiz': process.judge || '-',
+        'Valor': process.value ? Number(process.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-',
+        'Comarca': process.judicialDistrict || '-',
+        'Liminar': process.preliminaryInjunction ? 'Sim' : 'Não',
+        'Foro': process.foro || '-',
+        'Vara': process.vara || '-',
+        'UF': process.uf || '-',
+        'Classes': process.classes ? process.classes.join(', ') : '-',
+        'Assunto Extra': process.extraSubject || '-',
+        'Área': process.area || '-',
+        'Arquivado': process.archived ? 'Sim' : 'Não',
+        'Extinto': process.extinct ? 'Sim' : 'Não',
+        'Justiça Gratuita': process.legalAid ? 'Sim' : 'Não',
+        'Fonte do Sistema': process.system || '-',
+        'Tribunal Original': process.originalCourt || '-',
+        'Natureza': process.nature || '-',
+        // 'Audiências': pub.audiences ? pub.audiences.map(aud => `${dayjs(aud.date).format('DD/MM/YYYY')}: ${aud.text} (${aud.type}, ${aud.status})`).join('; ') : '-'
+    };
+}
 export const exportProcessNormal = async (response: ProcessApi.FindAll.Response, audiences= true, parties= true): Promise<XLSX.WorkBook> => {
     // Preparar dados para exportação
-    const data = response.processes.map(pub => {
-        const hasPartsFound = pub.partFound?.name;
-        let habilitado = '-';
-        if (hasPartsFound) {
-            habilitado = "Sim";
-        } else if (pub.actions?.monitoring && !hasPartsFound) {
-            habilitado = "Não";
-        }
-        return {
-            'Nº Processo': pub.cnj || '-',
-            'Instância': pub.instance || '-',
-            'Status': pub.imported ? 'Importado' : pub.status?.value || '-',
-            'Data Inserção': pub.createdAt
-                ? dayjs(pub.createdAt).format('DD/MM/YYYY HH:mm')
-                : '-',
-            'Citado': pub.cited ? 'Sim' : 'Não',
-            'Data da Citação': pub.citedAt
-                ? dayjs(pub.citedAt).format('DD/MM/YYYY')
-                : '-',
-            'Habilitado': habilitado,
-            'Núcleo': pub.metadata?.nucleo || '-',
-            'Cliente': pub.metadata?.cliente || '-',
-            'Controle Cliente': pub.metadata?.controleCliente || '-',
-            'Autor ou Réu': pub.metadata?.clienteAutorOuReu || '-',
-            'Data Terceirização': pub.metadata?.dataTerceirizacao || '-',
-            'Adv Líder / Responsável': pub.metadata?.advLiderResponsavel || '-',
-            'Data Distribuição': pub.dateDistribution ? dayjs(pub.dateDistribution).format('DD/MM/YYYY') : '-',
-            'Segredo de Justiça': pub.secret ? 'Sim' : 'Não',
-            'Tribunal': pub.jurisdiction || '-',
-            'Juiz': pub.judge || '-',
-            'Valor': pub.value ? Number(pub.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-',
-            'Comarca': pub.judicialDistrict || '-',
-            'Liminar': pub.preliminaryInjunction ? 'Sim' : 'Não',
-            'Foro': pub.foro || '-',
-            'Vara': pub.vara || '-',
-            'UF': pub.uf || '-',
-            'Classes': pub.classes ? pub.classes.join(', ') : '-',
-            'Assunto Extra': pub.extraSubject || '-',
-            'Área': pub.area || '-',
-            'Arquivado': pub.archived ? 'Sim' : 'Não',
-            'Extinto': pub.extinct ? 'Sim' : 'Não',
-            'Justiça Gratuita': pub.legalAid ? 'Sim' : 'Não',
-            'Fonte do Sistema': pub.system || '-',
-            'Tribunal Original': pub.originalCourt || '-',
-            'Natureza': pub.nature || '-',
-            // 'Audiências': pub.audiences ? pub.audiences.map(aud => `${dayjs(aud.date).format('DD/MM/YYYY')}: ${aud.text} (${aud.type}, ${aud.status})`).join('; ') : '-'
-        };
-    });
+    const data = response.processes.map(adaptProcessNormal);
 
     // Preparar dados para a aba de audiências
     const audiencesData: any[] = [];
@@ -303,6 +304,9 @@ export const exportProcessFC = async (response: ProcessApi.FindAll.Response, use
     }
     XLSX.utils.book_append_sheet(wb, partiesWs, 'Partes');
 
+    const processNormal = response.processes.map(adaptProcessNormal);
+    const processNormalWs = XLSX.utils.json_to_sheet(processNormal);
+    XLSX.utils.book_append_sheet(wb, processNormalWs, 'Processos - Indicativos');
 
     const audiencesData: any[] = [];
     response.processes.forEach(proc => {

@@ -212,6 +212,16 @@ export function MonitoringTable({ onRefresh, className }: MonitoringTableProps) 
             )
         },
         {
+            key: 'actions',
+            label: 'Habilitação',
+            className: 'font-semibold text-gray-700 py-3 w-[15%]',
+            render: (process) => (
+                <span className="font-medium text-gray-700" style={{ wordBreak: 'break-all' }}>
+                    {process.actions?.monitoring && process.search?.habilitations ? 'Sim' : 'Não'}
+                </span>
+            )
+        },
+        {
             key: 'requester',
             label: 'Solicitante',
             className: 'font-semibold text-gray-700 py-3 w-[15%]',
