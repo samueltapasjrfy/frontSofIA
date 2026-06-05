@@ -624,12 +624,16 @@ export function ProcessTable({
     }
 
     try {
-      await ProcessApi.exportToXLSX({
+      const { fcError } = await ProcessApi.exportToXLSX({
         ...filters,
         initialDate,
         finalDate,
       }, user);
-      toast.success('Arquivo exportado com sucesso!');
+      if (fcError) {
+        toast.error('Ocorreu um erro ao buscar dados do FC, mas o arquivo foi exportado normalmente');
+      } else {
+        toast.success('Arquivo exportado com sucesso!');
+      }
     } catch {
       toast.error('Erro ao exportar arquivo');
     }

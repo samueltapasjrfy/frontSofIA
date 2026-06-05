@@ -132,12 +132,13 @@ export const ProcessApi = {
         };
     },
 
-    exportToXLSX: async (params: ProcessApi.FindAll.Params["filter"], user: LoginResponse): Promise<void> => {
+    exportToXLSX: async (params: ProcessApi.FindAll.Params["filter"], user: LoginResponse): Promise<{ fcError: boolean }> => {
         try {
             // Buscar todas as publicações sem paginação
             const queryParams = new URLSearchParams();
             queryParams.set('noPagination', 'true');
             queryParams.set('adapter', 'false');
+            if (user.companies?.[0]?.id === COMPANIES.FC) queryParams.set('getFcData', 'true');
             if (params) {
                 Object.entries(params).forEach(([key, value]) => {
                     appendFilterToQueryParams(queryParams, key, value);
@@ -147,6 +148,7 @@ export const ProcessApi = {
             const idCompany = user.companies?.[0]?.id;
             const isFC = idCompany === COMPANIES.FC;
             const response = await http.get<ProcessApi.FindAll.Response>(`/Process?${queryParams.toString()}`);
+            
             const wb = isFC ? await exportProcessFC(response.data, user) : await exportProcessNormal(response.data);
 
             // Gerar arquivo e fazer download
@@ -163,6 +165,7 @@ export const ProcessApi = {
             const fileName = `exportacao_painel_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
 
             saveAs(dataBlob, fileName);
+            return { fcError: response.data.fcError };
         } catch (error) {
             console.error('Erro ao exportar processos:', error);
             throw error; // Propagar erro para ser tratado no componente
@@ -431,6 +434,7 @@ export namespace ProcessApi {
         export type Response = {
             processes: Process[];
             total: number;
+            fcError: boolean;
         };
     }
 
