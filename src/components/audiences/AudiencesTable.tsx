@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 import { toast } from "sonner";
 import { Pagination } from "../pagination";
+import { ReportsApi } from "@/api/reportsApi";
 import { useAudiences } from "@/hooks/useAudiences";
 import { TableButtons } from "../tableButtons";
 import { DatePickerWithRange } from "../dateRangePicker";
@@ -41,6 +42,11 @@ import ModalViewText from "../modalViewText";
 import { AudiencesApi } from "@/api/audiencesApi";
 
 dayjs.locale("pt-br");
+
+const buildDefaultAudiencePeriod = (): DateRange => ({
+    from: dayjs().subtract(3, "month").startOf("day").toDate(),
+    to: dayjs().startOf("day").toDate(),
+});
 
 interface AudiencesTableProps {
     onRefresh: () => Promise<void>;
@@ -60,11 +66,14 @@ export function AudiencesTable({
     className,
 }: AudiencesTableProps) {
     const [filters, setFilters] = useState<AudiencesApi.FindAll.Params>({});
-    const [showFilters, setShowFilters] = useState(false);
-    const { getAudiencesQuery, changeFilter, audienceParams, updateStatusBulk } = useAudiences(1, 10);
+    const [showFilters, setShowFilters] = useState(true);
+    const [date, setDate] = useState<DateRange | undefined>(() => buildDefaultAudiencePeriod());
+    const { getAudiencesQuery, changeFilter, audienceParams, updateStatusBulk } = useAudiences(1, 10, {
+        dateStart: date?.from?.toISOString(),
+        dateEnd: date?.to?.toISOString(),
+    });
     const [selectedAudiences, setSelectedAudiences] = useState<Map<string, { id: string; cnj: string }>>(new Map());
     const [isPerformingAction, setIsPerformingAction] = useState(false);
-    const [date, setDate] = useState<DateRange | undefined>(undefined);
     const [selectedText, setSelectedText] = useState("");
 
     // Funções para gerenciar a seleção de audiências
@@ -339,14 +348,18 @@ export function AudiencesTable({
             finalDate = dayjs(d.to).format("YYYY-MM-DD");
         }
         try {
-            await AudiencesApi.exportToXLSX({
-                ...filters,
-                dateStart: initialDate,
-                dateEnd: finalDate,
+            const response = await ReportsApi.createAudience({
+                ...(filters.cnj ? { cnj: filters.cnj } : {}),
+                ...(filters.approvedStatus != null ? { approvedStatus: filters.approvedStatus } : {}),
+                ...(initialDate && finalDate ? { dateStart: initialDate, dateEnd: finalDate } : {}),
             });
-            toast.success('Arquivo exportado com sucesso!');
+            if (response.error) {
+                toast.error(response.message || 'Erro ao solicitar exportação');
+                return;
+            }
+            toast.success('A solicitação está em processamento e em breve estará disponível em Relatórios.');
         } catch {
-            toast.error('Erro ao exportar arquivo');
+            toast.error('Erro ao solicitar exportação');
         }
     };
 

@@ -5,10 +5,15 @@ import { useCallback, useState } from "react";
 import { AudiencesApi } from "@/api/audiencesApi";
 import { toast } from "sonner";
 
-export function useAudiences(initialPage: number = 1, initialLimit: number = 10) {
+export function useAudiences(
+    initialPage: number = 1,
+    initialLimit: number = 10,
+    initialParams?: Partial<AudiencesApi.FindAll.Params>,
+) {
     const [audienceParams, setAudienceParams] = useState<AudiencesApi.FindAll.Params>({
         page: initialPage,
         limit: initialLimit,
+        ...initialParams,
     });
 
     const queryClient = useQueryClient();
