@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, ReactNode, useRef, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -77,6 +79,9 @@ export function AudiencesTable({
     const [isPerformingAction, setIsPerformingAction] = useState(false);
     const [selectedText, setSelectedText] = useState("");
     const [exportConfirmOpen, setExportConfirmOpen] = useState(false);
+    const [exportNoticeOpen, setExportNoticeOpen] = useState(false);
+    const pathname = usePathname();
+    const reportsHref = pathname?.startsWith("/v2") ? "/v2/relatorios" : "/v1/relatorios";
 
     // Funções para gerenciar a seleção de audiências
     const handleSelectAll = (checked: boolean) => {
@@ -380,7 +385,7 @@ export function AudiencesTable({
                 toast.error(response.message || 'Erro ao solicitar exportação');
                 return;
             }
-            toast.success('A solicitação está em processamento e em breve estará disponível em Relatórios.');
+            setExportNoticeOpen(true);
         } catch {
             toast.error('Erro ao solicitar exportação');
         }
@@ -608,6 +613,23 @@ export function AudiencesTable({
                     setExportConfirmOpen(false);
                     void submitExport();
                 }}
+            />
+            <ConfirmDialog
+                open={exportNoticeOpen}
+                title="Exportação solicitada"
+                description={
+                    <>
+                        A solicitação está em processamento e em breve estará disponível em{" "}
+                        <Link href={reportsHref} className="font-medium text-primary-blue underline" onClick={() => setExportNoticeOpen(false)}>
+                            Relatórios
+                        </Link>
+                        .
+                    </>
+                }
+                confirmLabel="Ok"
+                showCancel={false}
+                onOpenChange={setExportNoticeOpen}
+                onConfirm={() => setExportNoticeOpen(false)}
             />
         </div>
     );
