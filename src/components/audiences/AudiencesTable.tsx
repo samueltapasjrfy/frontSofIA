@@ -68,12 +68,13 @@ export function AudiencesTable({
     onRefresh,
     className,
 }: AudiencesTableProps) {
-    const [filters, setFilters] = useState<AudiencesApi.FindAll.Params>({});
+    const [filters, setFilters] = useState<AudiencesApi.FindAll.Params>({ monitoring: true });
     const [showFilters, setShowFilters] = useState(true);
     const [date, setDate] = useState<DateRange | undefined>(() => buildDefaultAudiencePeriod());
     const { getAudiencesQuery, changeFilter, audienceParams, updateStatusBulk } = useAudiences(1, 10, {
         dateStart: date?.from?.toISOString(),
         dateEnd: date?.to?.toISOString(),
+        monitoring: true,
     });
     const [selectedAudiences, setSelectedAudiences] = useState<Map<string, { id: string; cnj: string }>>(new Map());
     const [isPerformingAction, setIsPerformingAction] = useState(false);
@@ -332,6 +333,7 @@ export function AudiencesTable({
         setFilters({
             cnj: "",
             approvedStatus: null,
+            monitoring: true,
         });
         setDate(undefined);
         changeFilter({
@@ -339,6 +341,7 @@ export function AudiencesTable({
             limit: audienceParams.limit,
             cnj: undefined,
             approvedStatus: null,
+            monitoring: true,
         });
     };
 
@@ -380,6 +383,7 @@ export function AudiencesTable({
                 ...(filters.cnj ? { cnj: filters.cnj } : {}),
                 ...(filters.approvedStatus != null ? { approvedStatus: filters.approvedStatus } : {}),
                 ...(initialDate && finalDate ? { dateStart: initialDate, dateEnd: finalDate } : {}),
+                ...(typeof filters.monitoring === "boolean" ? { monitoring: filters.monitoring } : {}),
             });
             if (response.error) {
                 toast.error(response.message || 'Erro ao solicitar exportação');
@@ -487,6 +491,25 @@ export function AudiencesTable({
                                 <option value="1">Aprovadas</option>
                                 <option value="2">Reprovadas</option>
                                 <option value="3">Pendentes</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="monitoring" className="block text-sm font-medium text-gray-700 mb-1">
+                                Monitorando
+                            </label>
+                            <select
+                                id="monitoring"
+                                value={filters.monitoring === false ? "false" : filters.monitoring === true ? "true" : ""}
+                                onChange={(e) => {
+                                    const monitoring = e.target.value === "" ? undefined : e.target.value === "true";
+                                    setFilters(prev => ({ ...prev, monitoring }));
+                                    changeFilter({ monitoring, page: 1 });
+                                }}
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                                <option value="true">Sim</option>
+                                <option value="false">Não</option>
+                                <option value="">Todos</option>
                             </select>
                         </div>
                         <div>
