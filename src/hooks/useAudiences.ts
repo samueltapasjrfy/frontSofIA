@@ -23,6 +23,10 @@ export function useAudiences(
         queryFn: async () => {
             const params: Record<string, any> = {};
             Object.entries(audienceParams).forEach(([key, value]) => {
+                if (key === "monitoring") {
+                    if (typeof value === "boolean") params[key] = value;
+                    return;
+                }
                 if (value) {
                     params[key] = value;
                 }

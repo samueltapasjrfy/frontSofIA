@@ -30,6 +30,7 @@ export namespace ReportsApi {
             approvedStatus?: number;
             dateStart?: string;
             dateEnd?: string;
+            monitoring?: boolean;
         };
 
         export type Response = {

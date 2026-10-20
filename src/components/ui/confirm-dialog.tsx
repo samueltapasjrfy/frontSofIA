@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -13,9 +14,10 @@ import {
 type ConfirmDialogProps = {
     open: boolean;
     title?: string;
-    description: string;
+    description: ReactNode;
     confirmLabel?: string;
     cancelLabel?: string;
+    showCancel?: boolean;
     onConfirm: () => void;
     onOpenChange: (open: boolean) => void;
 };
@@ -26,6 +28,7 @@ export function ConfirmDialog({
     description,
     confirmLabel = "Continuar",
     cancelLabel = "Cancelar",
+    showCancel = true,
     onConfirm,
     onOpenChange,
 }: ConfirmDialogProps) {
@@ -39,9 +42,11 @@ export function ConfirmDialog({
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2">
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        {cancelLabel}
-                    </Button>
+                    {showCancel && (
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            {cancelLabel}
+                        </Button>
+                    )}
                     <Button onClick={onConfirm}>
                         {confirmLabel}
                     </Button>
