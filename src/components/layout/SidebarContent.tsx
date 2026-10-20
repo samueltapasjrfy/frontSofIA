@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   FileText,
+  ClipboardList,
   ChevronLeft,
   ChevronRight,
   Scale,
@@ -185,6 +186,11 @@ export function SidebarContent({
       href: "/v1/publicacoes",
     },
     {
+      icon: <ClipboardList size={20} />,
+      label: "Relatórios",
+      href: "/v1/relatorios",
+    },
+    {
       icon: <Webhook size={20} />,
       label: "Webhooks",
       href: "/v1/webhooks",
@@ -220,6 +226,11 @@ export function SidebarContent({
       icon: <FileText size={20} />,
       label: "Publicações",
       href: "/v2/publicacoes",
+    },
+    {
+      icon: <ClipboardList size={20} />,
+      label: "Relatórios",
+      href: "/v2/relatorios",
     },
     // {
     //   icon: <Webhook size={20} />,

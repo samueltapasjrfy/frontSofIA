@@ -1,8 +1,5 @@
 import { http } from "./fetch";
 import { APIResponse } from "./response";
-import { saveAs } from 'file-saver';
-import * as XLSX from 'xlsx';
-import dayjs from "dayjs";
 
 export const AudiencesApi = {
     findAll: async (params: AudiencesApi.FindAll.Params): Promise<AudiencesApi.FindAll.Response> => {
@@ -22,71 +19,6 @@ export const AudiencesApi = {
             message: response.message,
             error: response.error
         };
-    },
-
-    exportToXLSX: async (params: AudiencesApi.FindAll.Params): Promise<void> => {
-        try {
-            // Buscar todas as audiências sem paginação
-            const queryParams = new URLSearchParams();
-            queryParams.set('noPagination', 'true');
-            if (params.page) queryParams.set('page', params.page.toString());
-            if (params.limit) queryParams.set('limit', params.limit.toString());
-            if (params.cnj) queryParams.set('cnj', params.cnj);
-            if (params.dateStart) queryParams.set('dateStart', params.dateStart);
-            if (params.dateEnd) queryParams.set('dateEnd', params.dateEnd);
-            if (params.approvedStatus !== undefined && params.approvedStatus !== null) {
-                queryParams.set('approvedStatus', params.approvedStatus.toString());
-            }
-
-            const response = await http.get<AudiencesApi.FindAll.Response>(`/audiences?${queryParams.toString()}`);
-
-            // Preparar dados para exportação
-            const data = response.data.audiences.map(audience => ({
-                'Nº Processo': audience.process?.cnj || '-',
-                'Data': audience.date ? dayjs(audience.date).format('DD/MM/YYYY HH:mm') : '-',
-                'Local': audience.location || '-',
-                'Descrição': audience.description ? String(audience.description).slice(0, 32760) : '-',
-                'Tipo': audience.type?.type || '-',
-                'Status': audience.status?.status || '-',
-                'Aprovação': audience.approved === null ? 'Pendente' : audience.approved ? 'Aprovada' : 'Reprovada'
-            }));
-
-            // Criar workbook e worksheet
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(data);
-
-            // Definir larguras das colunas
-            const colWidths = [
-                { wch: 25 }, // Nº Processo
-                { wch: 20 }, // Data
-                { wch: 30 }, // Local
-                { wch: 50 }, // Descrição
-                { wch: 20 }, // Tipo
-                { wch: 20 }, // Status
-                { wch: 15 }, // Aprovação
-            ];
-            ws['!cols'] = colWidths;
-
-            XLSX.utils.book_append_sheet(wb, ws, 'Audiências');
-
-            // Gerar arquivo e fazer download
-            const excelBuffer = XLSX.write(wb, {
-                bookType: 'xlsx',
-                type: 'array'
-            });
-
-            const dataBlob = new Blob([excelBuffer], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            });
-
-            // Nome do arquivo com timestamp
-            const fileName = `audiencias_${dayjs().format('YYYY-MM-DD_HH-mm')}.xlsx`;
-
-            saveAs(dataBlob, fileName);
-        } catch (error) {
-            console.error('Erro ao exportar audiências:', error);
-            throw error; // Propagar erro para ser tratado no componente
-        }
     },
 }
 
@@ -110,12 +42,57 @@ export namespace AudiencesApi {
             type: { id: number; type: string };
             status: { id: number; status: string };
             approved: boolean | null;
-            process: { id: string; cnj: string } | null;
+            process: {
+                id: string;
+                cnj: string;
+                info: ProcessInfo | null;
+            } | null;
         };
 
         export type Response = {
             audiences: Audience[];
             total: number;
+        };
+
+        export type InfoAudience = {
+            date: string;
+            text: string;
+            type: string;
+            status: string;
+        };
+
+        export type RelatedCase = {
+            process: string;
+            instance: number;
+            court: string;
+            distributionDate: string;
+        };
+
+        export type ProcessInfo = {
+            uf: string | null;
+            area: string | null;
+            vara: string | null;
+            citado: boolean | null;
+            foro: string | null;
+            juiz: string | null;
+            valor: number | null;
+            natureza: string | null;
+            segredoJustica: boolean | null;
+            sistema: string | null;
+            dataCitacao: string | null;
+            classes: string[] | null;
+            extinto: boolean | null;
+            arquivado: boolean | null;
+            instancia: number | string | null;
+            justicaGratuita: boolean | null;
+            audiencias: InfoAudience[] | null;
+            dataCriacao: string | null;
+            dataSentenca: string | null;
+            assuntoExtra: string | null;
+            tribunal: string | null;
+            processosRelacionados: RelatedCase[] | null;
+            comarca: string | null;
+            liminar: boolean | null;
         };
     }
 
