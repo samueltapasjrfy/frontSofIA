@@ -159,6 +159,7 @@ export function ReportsTable() {
                     <TableHeader>
                         <TableRow className="bg-gray-50 border-b">
                             <TableHead>Data</TableHead>
+                            <TableHead>Solicitante</TableHead>
                             <TableHead>Tipo</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Arquivo</TableHead>
@@ -168,13 +169,13 @@ export function ReportsTable() {
                     <TableBody>
                         {reportsQuery.isError ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                                     Erro ao carregar relatórios
                                 </TableCell>
                             </TableRow>
                         ) : reportsQuery.isFetching && reports.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                                     <div className="flex justify-center items-center">
                                         <RefreshCw className="h-5 w-5 animate-spin mr-2" />
                                         Carregando relatórios...
@@ -183,7 +184,7 @@ export function ReportsTable() {
                             </TableRow>
                         ) : reports.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                                     <div className="flex flex-col items-center">
                                         <Search className="h-8 w-8 mb-2 text-gray-400" />
                                         <p>Nenhum relatório encontrado</p>
@@ -201,6 +202,7 @@ export function ReportsTable() {
                                 <TableCell className="py-3">
                                     {report.createdAt ? dayjs(report.createdAt).format("DD/MM/YYYY HH:mm") : "-"}
                                 </TableCell>
+                                <TableCell className="py-3">{report.requesterName || "-"}</TableCell>
                                 <TableCell className="py-3">{labelOf(TYPE_LABELS, report.type.name)}</TableCell>
                                 <TableCell className="py-3">
                                     <span

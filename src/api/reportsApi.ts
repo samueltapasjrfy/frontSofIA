@@ -53,6 +53,7 @@ export namespace ReportsApi {
             createdAt: string;
             fileName: string | null;
             errorMessage: string | null;
+            requesterName: string | null;
             type: { id: number; name: string };
             status: { id: number; name: string };
         };
