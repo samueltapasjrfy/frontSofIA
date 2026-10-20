@@ -40,6 +40,7 @@ import { TruncateText } from "../truncateText";
 import PopConfirm from "../ui/popconfirm";
 import ModalViewText from "../modalViewText";
 import { AudiencesApi } from "@/api/audiencesApi";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 dayjs.locale("pt-br");
 
@@ -75,6 +76,7 @@ export function AudiencesTable({
     const [selectedAudiences, setSelectedAudiences] = useState<Map<string, { id: string; cnj: string }>>(new Map());
     const [isPerformingAction, setIsPerformingAction] = useState(false);
     const [selectedText, setSelectedText] = useState("");
+    const [exportConfirmOpen, setExportConfirmOpen] = useState(false);
 
     // Funções para gerenciar a seleção de audiências
     const handleSelectAll = (checked: boolean) => {
@@ -347,6 +349,27 @@ export function AudiencesTable({
             initialDate = dayjs(d.from).format("YYYY-MM-DD");
             finalDate = dayjs(d.to).format("YYYY-MM-DD");
         }
+
+        const rangeExceedsOneYear = Boolean(
+            d?.from && d?.to && dayjs(d.to).startOf("day").isAfter(dayjs(d.from).startOf("day").add(1, "year"))
+        );
+        if (!initialDate || !finalDate || rangeExceedsOneYear) {
+            setExportConfirmOpen(true);
+            return;
+        }
+
+        await submitExport();
+    };
+
+    const submitExport = async () => {
+        let initialDate = undefined;
+        let finalDate = undefined;
+        const d = date as DateRange;
+        if (d && d.from && d.to) {
+            initialDate = dayjs(d.from).format("YYYY-MM-DD");
+            finalDate = dayjs(d.to).format("YYYY-MM-DD");
+        }
+
         try {
             const response = await ReportsApi.createAudience({
                 ...(filters.cnj ? { cnj: filters.cnj } : {}),
@@ -574,6 +597,17 @@ export function AudiencesTable({
                 isOpen={!!selectedText}
                 onClose={() => setSelectedText("")}
                 text={selectedText}
+            />
+            <ConfirmDialog
+                open={exportConfirmOpen}
+                title="Exportar relatório"
+                description="Esse relatório pode demorar algumas horas para ficar pronto com os filtros atuais. Deseja continuar?"
+                confirmLabel="Continuar"
+                onOpenChange={setExportConfirmOpen}
+                onConfirm={() => {
+                    setExportConfirmOpen(false);
+                    void submitExport();
+                }}
             />
         </div>
     );
