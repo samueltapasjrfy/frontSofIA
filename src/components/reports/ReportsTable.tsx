@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 const TYPE_LABELS: Record<string, string> = {
     audiencias: "Audiências",
+    citacoes: "Citações",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -162,6 +163,7 @@ export function ReportsTable() {
                             <TableHead>Solicitante</TableHead>
                             <TableHead>Tipo</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Itens</TableHead>
                             <TableHead>Arquivo</TableHead>
                             <TableHead className="w-16" />
                         </TableRow>
@@ -169,13 +171,13 @@ export function ReportsTable() {
                     <TableBody>
                         {reportsQuery.isError ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                                     Erro ao carregar relatórios
                                 </TableCell>
                             </TableRow>
                         ) : reportsQuery.isFetching && reports.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                                     <div className="flex justify-center items-center">
                                         <RefreshCw className="h-5 w-5 animate-spin mr-2" />
                                         Carregando relatórios...
@@ -184,7 +186,7 @@ export function ReportsTable() {
                             </TableRow>
                         ) : reports.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                                     <div className="flex flex-col items-center">
                                         <Search className="h-8 w-8 mb-2 text-gray-400" />
                                         <p>Nenhum relatório encontrado</p>
@@ -214,6 +216,9 @@ export function ReportsTable() {
                                     >
                                         {labelOf(STATUS_LABELS, report.status.name)}
                                     </span>
+                                </TableCell>
+                                <TableCell className="py-3">
+                                    {report.info?.total != null ? report.info.total.toLocaleString("pt-BR") : "-"}
                                 </TableCell>
                                 <TableCell className="py-3">{report.fileName || "-"}</TableCell>
                                 <TableCell className="py-3">

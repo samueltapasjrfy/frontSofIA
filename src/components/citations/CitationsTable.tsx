@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, ReactNode, useRef, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -41,8 +43,15 @@ import { TruncateText } from "../truncateText";
 import PopConfirm from "../ui/popconfirm";
 import ModalViewText from "../modalViewText";
 import { CitationsApi } from "@/api/citationsApi";
+import { ReportsApi } from "@/api/reportsApi";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 dayjs.locale("pt-br");
+
+const buildDefaultCitationPeriod = (): DateRange => ({
+    from: dayjs().subtract(3, "month").startOf("day").toDate(),
+    to: dayjs().startOf("day").toDate(),
+});
 
 interface CitationsTableProps {
     onRefresh: () => Promise<void>;
@@ -61,13 +70,21 @@ export function CitationsTable({
     onRefresh,
     className,
 }: CitationsTableProps) {
-    const [filters, setFilters] = useState<CitationsApi.FindAll.Params>({});
-    const [showFilters, setShowFilters] = useState(false);
-    const { getCitationsQuery, changeFilter, citationParams, updateStatusBulk } = useCitations(1, 10);
+    const [filters, setFilters] = useState<CitationsApi.FindAll.Params>({ monitoring: true });
+    const [showFilters, setShowFilters] = useState(true);
+    const [date, setDate] = useState<DateRange | undefined>(() => buildDefaultCitationPeriod());
+    const { getCitationsQuery, changeFilter, citationParams, updateStatusBulk } = useCitations(1, 10, {
+        dateStart: date?.from?.toISOString(),
+        dateEnd: date?.to?.toISOString(),
+        monitoring: true,
+    });
     const [selectedCitations, setSelectedCitations] = useState<Map<number, { id: number; cnj: string }>>(new Map());
     const [isPerformingAction, setIsPerformingAction] = useState(false);
-    const [date, setDate] = useState<DateRange | undefined>(undefined);
     const [selectedText, setSelectedText] = useState("");
+    const [exportConfirmOpen, setExportConfirmOpen] = useState(false);
+    const [exportNoticeOpen, setExportNoticeOpen] = useState(false);
+    const pathname = usePathname();
+    const reportsHref = pathname?.startsWith("/v2") ? "/v2/relatorios" : "/v1/relatorios";
 
     // Funções para gerenciar a seleção de citações
     const handleSelectAll = (checked: boolean) => {
@@ -277,6 +294,7 @@ export function CitationsTable({
         setFilters({
             cnj: "",
             approvedStatus: null,
+            monitoring: true,
         });
         setDate(undefined);
         changeFilter({
@@ -284,6 +302,7 @@ export function CitationsTable({
             limit: citationParams.limit,
             cnj: undefined,
             approvedStatus: null,
+            monitoring: true,
         });
     };
 
@@ -299,15 +318,41 @@ export function CitationsTable({
             initialDate = dayjs(d.from).format("YYYY-MM-DD");
             finalDate = dayjs(d.to).format("YYYY-MM-DD");
         }
+
+        const rangeExceedsOneYear = Boolean(
+            d?.from && d?.to && dayjs(d.to).startOf("day").isAfter(dayjs(d.from).startOf("day").add(1, "year"))
+        );
+        if (!initialDate || !finalDate || rangeExceedsOneYear) {
+            setExportConfirmOpen(true);
+            return;
+        }
+
+        await submitExport();
+    };
+
+    const submitExport = async () => {
+        let initialDate = undefined;
+        let finalDate = undefined;
+        const d = date as DateRange;
+        if (d && d.from && d.to) {
+            initialDate = dayjs(d.from).format("YYYY-MM-DD");
+            finalDate = dayjs(d.to).format("YYYY-MM-DD");
+        }
+
         try {
-            await CitationsApi.exportToXLSX({
-                ...filters,
-                dateStart: initialDate,
-                dateEnd: finalDate,
+            const response = await ReportsApi.createCitation({
+                ...(filters.cnj ? { cnj: filters.cnj } : {}),
+                ...(filters.approvedStatus != null ? { approvedStatus: filters.approvedStatus } : {}),
+                ...(initialDate && finalDate ? { dateStart: initialDate, dateEnd: finalDate } : {}),
+                ...(typeof filters.monitoring === "boolean" ? { monitoring: filters.monitoring } : {}),
             });
-            toast.success('Arquivo exportado com sucesso!');
+            if (response.error) {
+                toast.error(response.message || 'Erro ao solicitar exportação');
+                return;
+            }
+            setExportNoticeOpen(true);
         } catch {
-            toast.error('Erro ao exportar arquivo');
+            toast.error('Erro ao solicitar exportação');
         }
     };
 
@@ -407,6 +452,25 @@ export function CitationsTable({
                                 <option value="1">Aprovadas</option>
                                 <option value="2">Reprovadas</option>
                                 <option value="3">Pendentes</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="citation-monitoring" className="block text-sm font-medium text-gray-700 mb-1">
+                                Monitorando
+                            </label>
+                            <select
+                                id="citation-monitoring"
+                                value={filters.monitoring === false ? "false" : filters.monitoring === true ? "true" : ""}
+                                onChange={(e) => {
+                                    const monitoring = e.target.value === "" ? undefined : e.target.value === "true";
+                                    setFilters(prev => ({ ...prev, monitoring }));
+                                    changeFilter({ monitoring, page: 1 });
+                                }}
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                                <option value="true">Sim</option>
+                                <option value="false">Não</option>
+                                <option value="">Todos</option>
                             </select>
                         </div>
                         <div>
@@ -527,6 +591,34 @@ export function CitationsTable({
                 isOpen={!!selectedText}
                 onClose={() => setSelectedText("")}
                 text={selectedText}
+            />
+            <ConfirmDialog
+                open={exportConfirmOpen}
+                title="Exportar relatório"
+                description="Esse relatório pode demorar para ficar pronto com os filtros atuais. Deseja continuar?"
+                confirmLabel="Continuar"
+                onOpenChange={setExportConfirmOpen}
+                onConfirm={() => {
+                    setExportConfirmOpen(false);
+                    void submitExport();
+                }}
+            />
+            <ConfirmDialog
+                open={exportNoticeOpen}
+                title="Exportação solicitada"
+                description={
+                    <>
+                        A solicitação está em processamento e em breve estará disponível em{" "}
+                        <Link href={reportsHref} className="font-medium text-primary-blue underline" onClick={() => setExportNoticeOpen(false)}>
+                            Relatórios
+                        </Link>
+                        .
+                    </>
+                }
+                confirmLabel="Ok"
+                showCancel={false}
+                onOpenChange={setExportNoticeOpen}
+                onConfirm={() => setExportNoticeOpen(false)}
             />
         </div>
     );

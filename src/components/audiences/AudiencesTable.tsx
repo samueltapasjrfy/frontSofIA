@@ -629,7 +629,7 @@ export function AudiencesTable({
             <ConfirmDialog
                 open={exportConfirmOpen}
                 title="Exportar relatório"
-                description="Esse relatório pode demorar algumas horas para ficar pronto com os filtros atuais. Deseja continuar?"
+                description="Esse relatório pode demorar para ficar pronto com os filtros atuais. Deseja continuar?"
                 confirmLabel="Continuar"
                 onOpenChange={setExportConfirmOpen}
                 onConfirm={() => {
