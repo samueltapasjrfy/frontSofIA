@@ -7,6 +7,11 @@ export const ReportsApi = {
         return response;
     },
 
+    createCitation: async (params: ReportsApi.CreateAudience.Params): Promise<APIResponse<ReportsApi.CreateAudience.Response>> => {
+        const response = await http.post<ReportsApi.CreateAudience.Response>('/reports/citations', params);
+        return response;
+    },
+
     find: async (params: ReportsApi.Find.Params): Promise<ReportsApi.Find.Response> => {
         const response = await http.get<ReportsApi.Find.Response>('/reports', params);
         return response.data;

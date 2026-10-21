@@ -5,10 +5,15 @@ import { useCallback, useState } from "react";
 import { CitationsApi } from "@/api/citationsApi";
 import { toast } from "sonner";
 
-export function useCitations(initialPage: number = 1, initialLimit: number = 10) {
+export function useCitations(
+    initialPage: number = 1,
+    initialLimit: number = 10,
+    initialParams?: Partial<CitationsApi.FindAll.Params>,
+) {
     const [citationParams, setCitationParams] = useState<CitationsApi.FindAll.Params>({
         page: initialPage,
         limit: initialLimit,
+        ...initialParams,
     });
 
     const queryClient = useQueryClient();
@@ -18,6 +23,10 @@ export function useCitations(initialPage: number = 1, initialLimit: number = 10)
         queryFn: async () => {
             const params: Record<string, any> = {};
             Object.entries(citationParams).forEach(([key, value]) => {
+                if (key === "monitoring") {
+                    if (typeof value === "boolean") params[key] = value;
+                    return;
+                }
                 if (value) {
                     params[key] = value;
                 }

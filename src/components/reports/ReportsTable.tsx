@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 const TYPE_LABELS: Record<string, string> = {
     audiencias: "Audiências",
+    citacoes: "Citações",
 };
 
 const STATUS_LABELS: Record<string, string> = {

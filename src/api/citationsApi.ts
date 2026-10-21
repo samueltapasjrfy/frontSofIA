@@ -93,6 +93,7 @@ export namespace CitationsApi {
             dateStart?: string;
             dateEnd?: string;
             approvedStatus?: number | null;
+            monitoring?: boolean | null;
             noPagination?: boolean;
         };
 
